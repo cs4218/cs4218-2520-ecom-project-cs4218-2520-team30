@@ -102,17 +102,6 @@ const Register = () => {
           </div>
           <div className="mb-3">
             <input
-              type="Date"
-              value={DOB}
-              onChange={(e) => setDOB(e.target.value)}
-              className="form-control"
-              id="exampleInputDOB1"
-              placeholder="Enter Your DOB"
-              required
-            />
-          </div>
-          <div className="mb-3">
-            <input
               type="text"
               value={answer}
               onChange={(e) => setAnswer(e.target.value)}
