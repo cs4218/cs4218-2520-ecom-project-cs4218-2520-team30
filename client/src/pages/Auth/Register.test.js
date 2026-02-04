@@ -94,4 +94,101 @@ describe('Register Component', () => {
     await waitFor(() => expect(axios.post).toHaveBeenCalled());
     expect(toast.error).toHaveBeenCalledWith('Something went wrong');
   });
+
+  it('should display error when password is less than 6 characters', async () => {
+    axios.get.mockResolvedValueOnce({ data: [] });
+    
+    const { getByText, getByPlaceholderText } = render(
+      <MemoryRouter initialEntries={['/register']}>
+        <Routes>
+          <Route path="/register" element={<Register />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    fireEvent.change(getByPlaceholderText('Enter Your Name'), { target: { value: 'John Doe' } });
+    fireEvent.change(getByPlaceholderText('Enter Your Email'), { target: { value: 'test@example.com' } });
+    fireEvent.change(getByPlaceholderText('Enter Your Password'), { target: { value: '12345' } });
+    fireEvent.change(getByPlaceholderText('Enter Your Phone'), { target: { value: '1234567890' } });
+    fireEvent.change(getByPlaceholderText('Enter Your Address'), { target: { value: '123 Street' } });
+    fireEvent.change(getByPlaceholderText('What is Your Favorite sports'), { target: { value: 'Football' } });
+
+    fireEvent.click(getByText('REGISTER'));
+
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith('Password must be at least 6 characters long'));
+    expect(axios.post).not.toHaveBeenCalled();
+  });
+
+  it('should display error when phone contains non-numeric characters', async () => {
+    axios.get.mockResolvedValueOnce({ data: [] });
+    
+    const { getByText, getByPlaceholderText } = render(
+      <MemoryRouter initialEntries={['/register']}>
+        <Routes>
+          <Route path="/register" element={<Register />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    fireEvent.change(getByPlaceholderText('Enter Your Name'), { target: { value: 'John Doe' } });
+    fireEvent.change(getByPlaceholderText('Enter Your Email'), { target: { value: 'test@example.com' } });
+    fireEvent.change(getByPlaceholderText('Enter Your Password'), { target: { value: 'password123' } });
+    fireEvent.change(getByPlaceholderText('Enter Your Phone'), { target: { value: '123-456-7890' } });
+    fireEvent.change(getByPlaceholderText('Enter Your Address'), { target: { value: '123 Street' } });
+    fireEvent.change(getByPlaceholderText('What is Your Favorite sports'), { target: { value: 'Football' } });
+
+    fireEvent.click(getByText('REGISTER'));
+
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith('Phone number must contain only numbers'));
+    expect(axios.post).not.toHaveBeenCalled();
+  });
+
+  it('should accept password with exactly 6 characters', async () => {
+    axios.post.mockResolvedValueOnce({ data: { success: true } });
+    axios.get.mockResolvedValueOnce({ data: [] });
+
+    const { getByText, getByPlaceholderText } = render(
+      <MemoryRouter initialEntries={['/register']}>
+        <Routes>
+          <Route path="/register" element={<Register />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    fireEvent.change(getByPlaceholderText('Enter Your Name'), { target: { value: 'John Doe' } });
+    fireEvent.change(getByPlaceholderText('Enter Your Email'), { target: { value: 'test@example.com' } });
+    fireEvent.change(getByPlaceholderText('Enter Your Password'), { target: { value: 'pass12' } });
+    fireEvent.change(getByPlaceholderText('Enter Your Phone'), { target: { value: '1234567890' } });
+    fireEvent.change(getByPlaceholderText('Enter Your Address'), { target: { value: '123 Street' } });
+    fireEvent.change(getByPlaceholderText('What is Your Favorite sports'), { target: { value: 'Football' } });
+
+    fireEvent.click(getByText('REGISTER'));
+
+    await waitFor(() => expect(axios.post).toHaveBeenCalled());
+    expect(toast.success).toHaveBeenCalledWith('Register Successfully, please login');
+  });
+
+  it('should display error when phone contains letters', async () => {
+    axios.get.mockResolvedValueOnce({ data: [] });
+    
+    const { getByText, getByPlaceholderText } = render(
+      <MemoryRouter initialEntries={['/register']}>
+        <Routes>
+          <Route path="/register" element={<Register />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    fireEvent.change(getByPlaceholderText('Enter Your Name'), { target: { value: 'John Doe' } });
+    fireEvent.change(getByPlaceholderText('Enter Your Email'), { target: { value: 'test@example.com' } });
+    fireEvent.change(getByPlaceholderText('Enter Your Password'), { target: { value: 'password123' } });
+    fireEvent.change(getByPlaceholderText('Enter Your Phone'), { target: { value: '123abc7890' } });
+    fireEvent.change(getByPlaceholderText('Enter Your Address'), { target: { value: '123 Street' } });
+    fireEvent.change(getByPlaceholderText('What is Your Favorite sports'), { target: { value: 'Football' } });
+
+    fireEvent.click(getByText('REGISTER'));
+
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith('Phone number must contain only numbers'));
+    expect(axios.post).not.toHaveBeenCalled();
+  });
 });
