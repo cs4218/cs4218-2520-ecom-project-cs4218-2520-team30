@@ -67,10 +67,37 @@ export const loginController = async (req, res) => {
   try {
     const { email, password } = req.body;
     //validation
-    if (!email || !password) {
+    if (!email && !password) {
       return res.status(404).send({
         success: false,
-        message: "Invalid email or password",
+        message: "Email and password are required",
+      });
+    }
+    if (!email) {
+      return res.status(404).send({
+        success: false,
+        message: "Email is required",
+      });
+    }
+    if (!password) {
+      return res.status(404).send({
+        success: false,
+        message: "Password is required",
+      });
+    }
+    //email format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).send({
+        success: false,
+        message: "Email must be a valid format",
+      });
+    }
+    //password length validation
+    if (password.length < 6) {
+      return res.status(400).send({
+        success: false,
+        message: "Password must be at least 6 characters long",
       });
     }
     //check user
@@ -78,14 +105,14 @@ export const loginController = async (req, res) => {
     if (!user) {
       return res.status(404).send({
         success: false,
-        message: "Email is not registerd",
+        message: "Email is not registered",
       });
     }
     const match = await comparePassword(password, user.password);
     if (!match) {
       return res.status(200).send({
         success: false,
-        message: "Invalid Password",
+        message: "Invalid password",
       });
     }
     //token
@@ -94,7 +121,7 @@ export const loginController = async (req, res) => {
     });
     res.status(200).send({
       success: true,
-      message: "login successfully",
+      message: "Login successfully",
       user: {
         _id: user._id,
         name: user.name,
