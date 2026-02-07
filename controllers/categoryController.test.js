@@ -3,9 +3,9 @@ import { jest } from "@jest/globals";
 import {
     createCategoryController,
     updateCategoryController,
-    categoryControlller,
+    categoryController,
     singleCategoryController,
-    deleteCategoryCOntroller,
+    deleteCategoryController,
 } from "./categoryController.js";
 import categoryModel from "../models/categoryModel.js";
 
@@ -32,9 +32,9 @@ describe("Category Controller Tests", () => {
     // Tests:
     // 1. createCategoryController 4 tests
     // 2. updateCategoryController 2 tests
-    // 3. categoryControlller 3 tests
+    // 3. categoryController 3 tests
     // 4. singleCategoryController 2 tests
-    // 5. deleteCategoryCOntroller 2 tests
+    // 5. deleteCategoryController 2 tests
     // total tests: 13
 
     // createCategoryController
@@ -60,7 +60,7 @@ describe("Category Controller Tests", () => {
             expect(res.status).toHaveBeenCalledWith(201);
             expect(res.send).toHaveBeenCalledWith({
                 success: true,
-                message: "new category created",
+                message: "New Category Created",
                 category: {
                     name: "Electronics",
                     slug: "electronics",
@@ -74,7 +74,7 @@ describe("Category Controller Tests", () => {
 
             await createCategoryController(req, res);
 
-            expect(res.status).toHaveBeenCalledWith(401);
+            expect(res.status).toHaveBeenCalledWith(400);
             expect(res.send).toHaveBeenCalledWith({ message: "Name is required" });
             expect(categoryModel.findOne).not.toHaveBeenCalled();
         });
@@ -94,7 +94,7 @@ describe("Category Controller Tests", () => {
             expect(categoryModel.findOne).toHaveBeenCalledWith({ name: "Books" });
             expect(res.status).toHaveBeenCalledWith(200);
             expect(res.send).toHaveBeenCalledWith({
-                success: true,
+                success: false,
                 message: "Category Already Exists",
             });
         });
@@ -167,8 +167,8 @@ describe("Category Controller Tests", () => {
         });
     });
 
-    // categoryControlller
-    describe("categoryControlller (get all categories)", () => {
+    // categoryController
+    describe("categoryController (get all categories)", () => {
         // test 1: return all categories successfully
         test("should return all categories successfully", async () => {
             const mockCategories = [
@@ -179,7 +179,7 @@ describe("Category Controller Tests", () => {
 
             categoryModel.find.mockResolvedValue(mockCategories);
 
-            await categoryControlller(req, res);
+            await categoryController(req, res);
 
             expect(categoryModel.find).toHaveBeenCalledWith({});
             expect(res.status).toHaveBeenCalledWith(200);
@@ -194,7 +194,7 @@ describe("Category Controller Tests", () => {
         test("should return empty array when no categories exist", async () => {
             categoryModel.find.mockResolvedValue([]);
 
-            await categoryControlller(req, res);
+            await categoryController(req, res);
 
             expect(categoryModel.find).toHaveBeenCalledWith({});
             expect(res.status).toHaveBeenCalledWith(200);
@@ -209,7 +209,7 @@ describe("Category Controller Tests", () => {
         test("should return 500 on database error", async () => {
             categoryModel.find.mockRejectedValue(new Error("Database connection failed"));
 
-            await categoryControlller(req, res);
+            await categoryController(req, res);
 
             expect(res.status).toHaveBeenCalledWith(500);
             expect(res.send).toHaveBeenCalledWith(
@@ -263,8 +263,8 @@ describe("Category Controller Tests", () => {
         });
     });
 
-    // deleteCategoryCOntroller
-    describe("deleteCategoryCOntroller", () => {
+    // deleteCategoryController
+    describe("deleteCategoryController", () => {
         // test 1: delete category successfully
         test("should delete category successfully", async () => {
             req.params.id = "123abc";
@@ -274,7 +274,7 @@ describe("Category Controller Tests", () => {
                 name: "Electronics",
             });
 
-            await deleteCategoryCOntroller(req, res);
+            await deleteCategoryController(req, res);
 
             expect(categoryModel.findByIdAndDelete).toHaveBeenCalledWith("123abc");
             expect(res.status).toHaveBeenCalledWith(200);
@@ -290,7 +290,7 @@ describe("Category Controller Tests", () => {
 
             categoryModel.findByIdAndDelete.mockRejectedValue(new Error("Delete failed"));
 
-            await deleteCategoryCOntroller(req, res);
+            await deleteCategoryController(req, res);
 
             expect(res.status).toHaveBeenCalledWith(500);
             expect(res.send).toHaveBeenCalledWith(
