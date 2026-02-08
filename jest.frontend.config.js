@@ -30,6 +30,8 @@ export default {
     "client/src/components/Header.js",
     "client/src/components/Layout.js",
     "client/src/components/Spinner.js",
+    "client/src/pages/About.js",
+    "client/src/pages/Pagenotfound.js",
   ],
   coverageThreshold: {
     global: {
