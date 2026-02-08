@@ -11,34 +11,34 @@ jest.mock('axios');
 jest.mock('react-hot-toast');
 
 jest.mock('../../context/auth', () => ({
-    useAuth: jest.fn(() => [null, jest.fn()]) // Mock useAuth hook to return null state and a mock function for setAuth
-  }));
+  useAuth: jest.fn(() => [null, jest.fn()]) // Mock useAuth hook to return null state and a mock function for setAuth
+}));
 
-  jest.mock('../../context/cart', () => ({
-    useCart: jest.fn(() => [null, jest.fn()]) // Mock useCart hook to return null state and a mock function
-  }));
-    
+jest.mock('../../context/cart', () => ({
+  useCart: jest.fn(() => [null, jest.fn()]) // Mock useCart hook to return null state and a mock function
+}));
+
 jest.mock('../../context/search', () => ({
-    useSearch: jest.fn(() => [{ keyword: '' }, jest.fn()]) // Mock useSearch hook to return null state and a mock function
-  }));  
+  useSearch: jest.fn(() => [{ keyword: '' }, jest.fn()]) // Mock useSearch hook to return null state and a mock function
+}));
 
-  Object.defineProperty(window, 'localStorage', {
-    value: {
-      setItem: jest.fn(),
-      getItem: jest.fn(),
-      removeItem: jest.fn(),
-    },
-    writable: true,
-  });
+Object.defineProperty(window, 'localStorage', {
+  value: {
+    setItem: jest.fn(),
+    getItem: jest.fn(),
+    removeItem: jest.fn(),
+  },
+  writable: true,
+});
 
-window.matchMedia = window.matchMedia || function() {
-    return {
-      matches: false,
-      addListener: function() {},
-      removeListener: function() {}
-    };
+window.matchMedia = window.matchMedia || function () {
+  return {
+    matches: false,
+    addListener: function () { },
+    removeListener: function () { }
   };
-      
+};
+
 
 describe('Register Component', () => {
   beforeEach(() => {
@@ -47,14 +47,15 @@ describe('Register Component', () => {
 
   it('should register the user successfully', async () => {
     axios.post.mockResolvedValueOnce({ data: { success: true } });
+    axios.get.mockResolvedValueOnce({ data: { categories: [] } });
 
     const { getByText, getByPlaceholderText } = render(
-        <MemoryRouter initialEntries={['/register']}>
-          <Routes>
-            <Route path="/register" element={<Register />} />
-          </Routes>
-        </MemoryRouter>
-      );
+      <MemoryRouter initialEntries={['/register']}>
+        <Routes>
+          <Route path="/register" element={<Register />} />
+        </Routes>
+      </MemoryRouter>
+    );
 
     fireEvent.change(getByPlaceholderText('Enter Your Name'), { target: { value: 'John Doe' } });
     fireEvent.change(getByPlaceholderText('Enter Your Email'), { target: { value: 'test@example.com' } });
@@ -72,14 +73,15 @@ describe('Register Component', () => {
 
   it('should display error message on failed registration', async () => {
     axios.post.mockRejectedValueOnce({ message: 'User already exists' });
+    axios.get.mockResolvedValueOnce({ data: { categories: [] } });
 
     const { getByText, getByPlaceholderText } = render(
-        <MemoryRouter initialEntries={['/register']}>
-          <Routes>
-            <Route path="/register" element={<Register />} />
-          </Routes>
-        </MemoryRouter>
-      );
+      <MemoryRouter initialEntries={['/register']}>
+        <Routes>
+          <Route path="/register" element={<Register />} />
+        </Routes>
+      </MemoryRouter>
+    );
 
     fireEvent.change(getByPlaceholderText('Enter Your Name'), { target: { value: 'John Doe' } });
     fireEvent.change(getByPlaceholderText('Enter Your Email'), { target: { value: 'test@example.com' } });
