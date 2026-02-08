@@ -29,9 +29,9 @@ export default {
   // jest code coverage
   collectCoverage: true,
   collectCoverageFrom: [
-    "client/src/pages/admin/CreateCategory.js",
-    "client/src/pages/admin/CreateProduct.js",
-    "client/src/pages/admin/UpdateProduct.js"
+    "client/src/pages/Auth/**",
+    "client/src/components/Form/**",
+    "client/src/pages/admin/**"
   ],
   coverageThreshold: {
     global: {
