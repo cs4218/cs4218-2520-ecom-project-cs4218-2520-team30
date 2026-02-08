@@ -153,7 +153,7 @@ describe('CreateProduct Component', () => {
             data: { success: true, category: mockCategories }
         });
         axios.post.mockResolvedValueOnce({
-            data: { success: false, message: 'Product created' }
+            data: { success: true, message: 'Product created' }
         });
 
         // Act
@@ -352,15 +352,15 @@ describe('CreateProduct Component', () => {
     });
 
     // ----------------------------------------------------------
-    // EDGE CASE: Handles product creation with success:true (error case)
+    // EDGE CASE: Handles product creation failure (success:false)
     // ----------------------------------------------------------
-    it('should display error toast when create product returns success true', async () => {
+    it('should display error toast when create product returns success false', async () => {
         // Arrange
         axios.get.mockResolvedValueOnce({
             data: { success: true, category: [] }
         });
         axios.post.mockResolvedValueOnce({
-            data: { success: true, message: 'Product already exists' }
+            data: { success: false, message: 'Product already exists' }
         });
 
         // Act
