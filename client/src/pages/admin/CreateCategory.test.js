@@ -196,7 +196,7 @@ describe('CreateCategory Component', () => {
 
         // Assert
         await waitFor(() => {
-            expect(toast.error).toHaveBeenCalledWith('somthing went wrong in input form');
+            expect(toast.error).toHaveBeenCalledWith('something went wrong in input form');
         });
     });
 
@@ -212,7 +212,7 @@ describe('CreateCategory Component', () => {
 
         // Assert
         await waitFor(() => {
-            expect(toast.error).toHaveBeenCalledWith('Something wwent wrong in getting catgeory');
+            expect(toast.error).toHaveBeenCalledWith('Something went wrong in getting category');
         });
     });
 
@@ -279,7 +279,7 @@ describe('CreateCategory Component', () => {
 
         // Assert
         await waitFor(() => {
-            expect(toast.error).toHaveBeenCalledWith('Somtihing went wrong');
+            expect(toast.error).toHaveBeenCalledWith('Something went wrong');
         });
     });
 
@@ -471,7 +471,7 @@ describe('CreateCategory Component', () => {
 
         // Assert
         await waitFor(() => {
-            expect(toast.error).toHaveBeenCalledWith('Somtihing went wrong');
+            expect(toast.error).toHaveBeenCalledWith('Something went wrong');
         });
     });
 
