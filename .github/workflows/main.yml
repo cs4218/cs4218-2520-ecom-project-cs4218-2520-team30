@@ -33,4 +33,5 @@ jobs:
       run: |
         cd client
         npm install
-    - run: npm run test
+    - run: npm run test:frontend
+    - run: npm run test:backend
