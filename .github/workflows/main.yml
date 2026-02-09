@@ -29,5 +29,6 @@ jobs:
 
     - run: npm ci
     - run: npm install
+    - run: npm install --save-dev jest
     - run: npm run test:frontend
     - run: npm run test:backend
