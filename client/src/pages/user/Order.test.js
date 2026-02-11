@@ -3,18 +3,16 @@ import { render, fireEvent, waitFor, screen } from '@testing-library/react';
 import axios from 'axios';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import '@testing-library/jest-dom/extend-expect';
-import toast from 'react-hot-toast';
 import Orders from './Orders';
+import { useAuth } from '../../context/auth';
 
 // Mocking axios.post
 jest.mock('axios');
 jest.mock('react-hot-toast');
 
 jest.mock('../../context/auth', () => ({
-    useAuth: jest.fn(() => [{
-        token: true,
-    }, jest.fn()])
-}));
+    useAuth: jest.fn()
+}))
 
 jest.mock('../../hooks/useCategory', () => ({
     __esModule: true,
@@ -54,6 +52,7 @@ describe('Order Component', () => {
 
     it('renders orders table with headers', async () => {
         // Arrange
+        useAuth.mockReturnValue([{ token: 'token' }, jest.fn()]);
         axios.get.mockResolvedValueOnce({
             data: [{
                 _id: 1,
@@ -73,7 +72,7 @@ describe('Order Component', () => {
                     success: true,
                 },
                 buyer: {
-                    name: "Stephane"
+                    name: "Buyer 1"
                 },
                 status: false,
                 createdAt: null
@@ -111,5 +110,155 @@ describe('Order Component', () => {
         await waitFor(() => {
             expect(screen.getByText('Quantity')).toBeInTheDocument();
         });
+    });
+
+    it('should throw error message if get fails', async () => {
+        // Arrange
+        useAuth.mockReturnValue([{ token: 'token' }, jest.fn()]);
+        axios.get.mockRejectedValueOnce('axios get error');
+        const logSpy = jest.spyOn(console, 'log');
+
+
+        // Act
+        render(
+            <MemoryRouter initialEntries={['/orders']}>
+                <Routes>
+                    <Route path="/orders" element={<Orders />} />
+                </Routes>
+            </MemoryRouter>
+        );
+
+        // Assert
+        await waitFor(() => expect(axios.get).toHaveBeenCalled());
+        await waitFor(() => expect(logSpy).toHaveBeenCalledWith('axios get error'));
+        logSpy.mockRestore()
+    });
+
+    it('renders orders table with correct rows and Failed payment', async () => {
+        // Arrange
+        useAuth.mockReturnValue([{ token: 'token' }, jest.fn()]);
+        axios.get.mockResolvedValueOnce({
+            data: [{
+                _id: 1,
+                products: [
+                    {
+                        _id: 1,
+                        name: 'product 1',
+                        description: 'product 1 description'
+                    },
+                    {
+                        _id: 2,
+                        name: 'product 2',
+                        description: 'product 2 description'
+                    },
+                ],
+                payment: {
+                    success: false,
+                },
+                buyer: {
+                    name: "Buyer 1"
+                },
+                status: false,
+                createdAt: null
+            }]
+        });
+
+
+        // Act
+        render(
+            <MemoryRouter initialEntries={['/orders']}>
+                <Routes>
+                    <Route path="/orders" element={<Orders />} />
+                </Routes>
+            </MemoryRouter>
+        );
+
+        // Assert
+        await waitFor(() => expect(axios.get).toHaveBeenCalled());
+        await waitFor(() => {
+            expect(screen.getByText('Buyer 1')).toBeInTheDocument();
+        });
+        await waitFor(() => {
+            expect(screen.getByText('product 1')).toBeInTheDocument();
+        });
+        await waitFor(() => {
+            expect(screen.getByText('product 2')).toBeInTheDocument();
+        });
+        await waitFor(() => {
+            expect(screen.getByText('product 1 description')).toBeInTheDocument();
+        });
+        await waitFor(() => {
+            expect(screen.getByText('product 2 description')).toBeInTheDocument();
+        });
+        await waitFor(() => {
+            expect(screen.getByText('Failed')).toBeInTheDocument();
+        });
+    });
+
+    it('renders orders table with correct rows and success payment', async () => {
+        // Arrange
+        useAuth.mockReturnValue([{ token: 'token' }, jest.fn()]);
+        axios.get.mockResolvedValueOnce({
+            data: [{
+                _id: 1,
+                products: [
+                    {
+                        _id: 1,
+                        name: 'product 1',
+                        description: 'product 1 description'
+                    },
+                ],
+                payment: {
+                    success: true,
+                },
+                buyer: {
+                    name: "Buyer 1"
+                },
+                status: false,
+                createdAt: null
+            }]
+        });
+
+
+        // Act
+        render(
+            <MemoryRouter initialEntries={['/orders']}>
+                <Routes>
+                    <Route path="/orders" element={<Orders />} />
+                </Routes>
+            </MemoryRouter>
+        );
+
+        // Assert
+        await waitFor(() => expect(axios.get).toHaveBeenCalled());
+        await waitFor(() => {
+            expect(screen.getByText('Buyer 1')).toBeInTheDocument();
+        });
+        await waitFor(() => {
+            expect(screen.getByText('product 1')).toBeInTheDocument();
+        });
+        await waitFor(() => {
+            expect(screen.getByText('product 1 description')).toBeInTheDocument();
+        });
+        await waitFor(() => {
+            expect(screen.getByText('Success')).toBeInTheDocument();
+        });
+    });
+
+    it('should not call get if token is invalid', async () => {
+        // Arrange
+        useAuth.mockReturnValue([{}, jest.fn()]);
+
+        // Act
+        render(
+            <MemoryRouter initialEntries={['/orders']}>
+                <Routes>
+                    <Route path="/orders" element={<Orders />} />
+                </Routes>
+            </MemoryRouter>
+        );
+
+        // Assert
+        await waitFor(() => expect(axios.get).not.toHaveBeenCalled());
     });
 });
