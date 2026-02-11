@@ -20,6 +20,12 @@ jest.mock('../../context/auth', () => ({
 }, jest.fn()]) // Mock useAuth hook to return null state and a mock function for setAuth
 }));
 
+jest.mock('../../hooks/useCategory', () => ({
+    __esModule: true,
+    default: jest.fn(() => []),
+}));
+
+
 jest.mock('../../context/cart', () => ({
     useCart: jest.fn(() => [null, jest.fn()]) // Mock useCart hook to return null state and a mock function
 }));
@@ -52,7 +58,6 @@ describe('Profile Component', () => {
 
     it('renders update profile form', () => {
         // Arrange
-        axios.get.mockRejectedValueOnce({ data: { category: [] } });
 
         // Act
         const { getByText, getByPlaceholderText } = render(
@@ -75,7 +80,6 @@ describe('Profile Component', () => {
 
     it('initial inputs should set user data except password', () => {
         // Arrange
-        axios.get.mockRejectedValueOnce({ data: { category: [] } });
 
         // Act
         const { getByPlaceholderText } = render(
@@ -97,7 +101,6 @@ describe('Profile Component', () => {
 
     it('should update user detail successfully', async () => {
         // Arrange
-        axios.get.mockResolvedValueOnce({ data: { category: [] } });
         axios.put.mockResolvedValueOnce({ data: { } });
         
 
@@ -124,7 +127,6 @@ describe('Profile Component', () => {
 
     it('should display error message on failed put', async () => {
         // Arrange
-        axios.get.mockResolvedValueOnce({ data: { category: [] } });
         axios.put.mockResolvedValueOnce({ data: { error: 'error message'} });
 
 
@@ -151,7 +153,6 @@ describe('Profile Component', () => {
 
     it('should display error message on put error', async () => {
         // Arrange
-        axios.get.mockResolvedValueOnce({ data: { category: [] } });
         axios.put.mockRejectedValueOnce({ message: 'network connection error' });
 
 
