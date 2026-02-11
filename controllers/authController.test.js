@@ -107,6 +107,7 @@ describe("Auth Controller test Registration", () => {
    * Testing Type: Communication-based
    * **/
   describe("Input validation for registration", () => {
+    //Tay Kai Jun, A0283343E
     test("expected to return error when name is missing", async () => {
       
       // Arrange
@@ -128,6 +129,7 @@ describe("Auth Controller test Registration", () => {
       expect(fakeRes.send).toHaveBeenCalledWith({ error: "Name is required" });
     });
 
+    //Tay Kai Jun, A0283343E
     test("expected to return error when email is missing", async () => {
 
       // Arrange
@@ -149,6 +151,7 @@ describe("Auth Controller test Registration", () => {
       expect(fakeRes.send).toHaveBeenCalledWith({ message: "Email is required" });
     });
 
+    //Tay Kai Jun, A0283343E
     test("expected to return error when password is missing", async () => {
       
       // Arrange
@@ -170,6 +173,7 @@ describe("Auth Controller test Registration", () => {
       expect(fakeRes.send).toHaveBeenCalledWith({ message: "Password is required" });
     });
 
+    //Tay Kai Jun, A0283343E
     test("expected to return error when phone is missing", async () => {
       
       // Arrange
@@ -191,6 +195,7 @@ describe("Auth Controller test Registration", () => {
       expect(fakeRes.send).toHaveBeenCalledWith({ message: "Phone no is required" });
     });
 
+    //Tay Kai Jun, A0283343E
     test("expected to return error when address is missing", async () => {
       
       // Arrange
@@ -212,6 +217,7 @@ describe("Auth Controller test Registration", () => {
       expect(fakeRes.send).toHaveBeenCalledWith({ message: "Address is required" });
     });
 
+    //Tay Kai Jun, A0283343E
     test("expected to return error when answer is missing", async () => {
       
       // Arrange
@@ -237,6 +243,7 @@ describe("Auth Controller test Registration", () => {
      * Test invalid email formats
      * **/
     describe("Email Format Validation", () => {
+      //Tay Kai Jun, A0283343E
       test("expected to return error when email format is invalid", async () => {
         
         // Arrange
@@ -259,6 +266,7 @@ describe("Auth Controller test Registration", () => {
         expect(fakeRes.send).toHaveBeenCalledWith({ message: "Email must be a valid format" });
       });
 
+      //Tay Kai Jun, A0283343E
       test("expected to return error when email is missing @ symbol", async () => {
         
         // Arrange
@@ -281,6 +289,7 @@ describe("Auth Controller test Registration", () => {
         expect(fakeRes.send).toHaveBeenCalledWith({ message: "Email must be a valid format" });
       });
 
+      //Tay Kai Jun, A0283343E
       test("expected to return error when email has multiple @ symbols", async () => {
         
         // Arrange
@@ -303,6 +312,7 @@ describe("Auth Controller test Registration", () => {
         expect(fakeRes.send).toHaveBeenCalledWith({ message: "Email must be a valid format" });
       });
 
+      //Tay Kai Jun, A0283343E
       test("expected to return error when email is missing domain", async () => {
         
         // Arrange
@@ -325,6 +335,7 @@ describe("Auth Controller test Registration", () => {
         expect(fakeRes.send).toHaveBeenCalledWith({ message: "Email must be a valid format" });
       });
 
+      //Tay Kai Jun, A0283343E
       test("expected to accept valid email with subdomain", async () => {
         
         // Arrange
@@ -354,6 +365,7 @@ describe("Auth Controller test Registration", () => {
         );
       });
 
+      //Tay Kai Jun, A0283343E
       test("expected to accept valid email with plus sign", async () => {
         
         // Arrange
@@ -389,6 +401,7 @@ describe("Auth Controller test Registration", () => {
      * test phone number validation
      * **/
     describe("phone Number Validation", () => {
+      //Tay Kai Jun, A0283343E
       test("expected to return error when phone number contains non-numeric characters", async () => {
         
         // Arrange
@@ -411,6 +424,7 @@ describe("Auth Controller test Registration", () => {
         expect(fakeRes.send).toHaveBeenCalledWith({ message: "Phone number must contain only numbers" });
       });
 
+      //Tay Kai Jun, A0283343E
       test("expected to return error when phone number contains letters", async () => {
         
         // Arrange
@@ -433,6 +447,7 @@ describe("Auth Controller test Registration", () => {
         expect(fakeRes.send).toHaveBeenCalledWith({ message: "Phone number must contain only numbers" });
       });
 
+      //Tay Kai Jun, A0283343E
       test("expected to return error when phone number contains spaces", async () => {
         
         // Arrange
@@ -455,6 +470,7 @@ describe("Auth Controller test Registration", () => {
         expect(fakeRes.send).toHaveBeenCalledWith({ message: "Phone number must contain only numbers" });
       });
 
+      //Tay Kai Jun, A0283343E
       test("expected to return error when phone number contains special characters", async () => {
         
         // Arrange
@@ -477,6 +493,7 @@ describe("Auth Controller test Registration", () => {
         expect(fakeRes.send).toHaveBeenCalledWith({ message: "Phone number must contain only numbers" });
       });
 
+      //Tay Kai Jun, A0283343E
       test("expected to accept valid short phone number", async () => {
         
         // Arrange
@@ -506,6 +523,7 @@ describe("Auth Controller test Registration", () => {
         );
       });
 
+      //Tay Kai Jun, A0283343E
       test("expected to accept valid long phone number", async () => {
         
         // Arrange
@@ -539,6 +557,7 @@ describe("Auth Controller test Registration", () => {
      * Test password length validation
      * **/
     describe("Password Length Validation", () => {
+      //Tay Kai Jun, A0283343E
       test("expected to return error when password is less than 6 characters", async () => {
         
         // Arrange
@@ -561,6 +580,7 @@ describe("Auth Controller test Registration", () => {
         expect(fakeRes.send).toHaveBeenCalledWith({ message: "Password must be at least 6 characters long" });
       });
 
+      //Tay Kai Jun, A0283343E
       test("expected to return error when password is exactly 5 characters", async () => {
         
         // Arrange
@@ -583,6 +603,7 @@ describe("Auth Controller test Registration", () => {
         expect(fakeRes.send).toHaveBeenCalledWith({ message: "Password must be at least 6 characters long" });
       });
 
+      //Tay Kai Jun, A0283343E
       test("expected to accept password with exactly 6 characters", async () => {
         
         // Arrange
@@ -612,6 +633,7 @@ describe("Auth Controller test Registration", () => {
         );
       });
 
+      //Tay Kai Jun, A0283343E
       test("expected to return error when password is empty string", async () => {
         
         // Arrange
@@ -634,6 +656,7 @@ describe("Auth Controller test Registration", () => {
         expect(fakeRes.send).toHaveBeenCalledWith({ message: "Password is required" });
       });
 
+      //Tay Kai Jun, A0283343E
       test("expected to accept password with special characters", async () => {
         
         // Arrange
@@ -663,6 +686,7 @@ describe("Auth Controller test Registration", () => {
         );
       });
 
+      //Tay Kai Jun, A0283343E
       test("expected to accept very long password", async () => {
         
         // Arrange
@@ -692,6 +716,7 @@ describe("Auth Controller test Registration", () => {
         );
       });
 
+      //Tay Kai Jun, A0283343E
       test("expected to accept password with only numbers (boundary case)", async () => {
         
         // Arrange
@@ -721,6 +746,7 @@ describe("Auth Controller test Registration", () => {
         );
       });
 
+      //Tay Kai Jun, A0283343E
       test("expected to accept password with spaces", async () => {
         
         // Arrange
@@ -756,6 +782,7 @@ describe("Auth Controller test Registration", () => {
    * Existing User Check for Registration
    * **/
   describe("Existing User Check for Registration", () => {
+    //Tay Kai Jun, A0283343E
     test("expected to return error when user already exists", async () => {
       
       // Arrange
@@ -785,6 +812,7 @@ describe("Auth Controller test Registration", () => {
    * Test Successful Registration
    * **/
   describe("Successful Registration", () => {
+    //Tay Kai Jun, A0283343E
     test("expected to register user successfully with hashed password", async () => {
      
       // Arrange
@@ -812,6 +840,7 @@ describe("Auth Controller test Registration", () => {
 
 describe("Auth Controller - Database Error Handling", () => {
   describe("Registration Error", () => {
+    //Tay Kai Jun, A0283343E
     test("expected to handle database error during registration (catch block)", async () => {
       
       // Arrange

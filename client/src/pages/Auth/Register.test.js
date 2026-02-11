@@ -46,6 +46,7 @@ describe('Register Component', () => {
     jest.clearAllMocks();
   });
 
+  //Tay Kai Jun, A0283343E
   it('should register the user successfully', async () => {
     axios.post.mockResolvedValueOnce({ data: { success: true } });
     axios.get.mockResolvedValueOnce({ data: [] });
@@ -71,6 +72,7 @@ describe('Register Component', () => {
     expect(toast.success).toHaveBeenCalledWith('Register Successfully, please login');
   });
 
+  //Tay Kai Jun, A0283343E
   it('should display error message on failed registration', async () => {
     axios.post.mockRejectedValueOnce({ message: 'User already exists' });
     axios.get.mockResolvedValueOnce({ data: [] }); 
@@ -95,6 +97,7 @@ describe('Register Component', () => {
     expect(toast.error).toHaveBeenCalledWith('Something went wrong');
   });
 
+  //Tay Kai Jun, A0283343E
   it('should display error when password is less than 6 characters', async () => {
     axios.get.mockResolvedValueOnce({ data: [] });
     
@@ -119,6 +122,7 @@ describe('Register Component', () => {
     expect(axios.post).not.toHaveBeenCalled();
   });
 
+  //Tay Kai Jun, A0283343E
   it('should display error when phone contains non-numeric characters', async () => {
     axios.get.mockResolvedValueOnce({ data: [] });
     
@@ -143,6 +147,7 @@ describe('Register Component', () => {
     expect(axios.post).not.toHaveBeenCalled();
   });
 
+  //Tay Kai Jun, A0283343E
   it('should accept password with exactly 6 characters', async () => {
     axios.post.mockResolvedValueOnce({ data: { success: true } });
     axios.get.mockResolvedValueOnce({ data: [] });
@@ -168,6 +173,7 @@ describe('Register Component', () => {
     expect(toast.success).toHaveBeenCalledWith('Register Successfully, please login');
   });
 
+  //Tay Kai Jun, A0283343E
   it('should display error when phone contains letters', async () => {
     axios.get.mockResolvedValueOnce({ data: [] });
     
