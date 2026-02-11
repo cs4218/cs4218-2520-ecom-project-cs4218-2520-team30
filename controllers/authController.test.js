@@ -62,6 +62,7 @@ const createFakeResponse = () => {
 describe("Auth Controller - Forgot Password", () => {
   
   describe("Successful Password Reset", () => {
+    //Tay Kai Jun, A0283343E
     test("should reset password when all inputs are valid", async () => {
       // Arrange
       const fakeReq = createFakeRequest({
@@ -87,6 +88,7 @@ describe("Auth Controller - Forgot Password", () => {
       });
     });
 
+    //Tay Kai Jun, A0283343E
     test("should accept valid email with subdomain", async () => {
       // Arrange
       const fakeReq = createFakeRequest({
@@ -112,6 +114,7 @@ describe("Auth Controller - Forgot Password", () => {
   });
 
   describe("Validation Errors", () => {
+    //Tay Kai Jun, A0283343E
     test("should return 400 when email is missing", async () => {
       // Arrange
       const fakeReq = createFakeRequest({
@@ -127,6 +130,7 @@ describe("Auth Controller - Forgot Password", () => {
       expect(fakeRes.send).toHaveBeenCalledWith({ message: "Email is required" });
     });
 
+    //Tay Kai Jun, A0283343E
     test("should return 400 when email format is invalid", async () => {
       // Arrange
       const fakeReq = createFakeRequest({
@@ -142,6 +146,7 @@ describe("Auth Controller - Forgot Password", () => {
       expect(fakeRes.send).toHaveBeenCalledWith({ message: "Invalid email format" });
     });
 
+    //Tay Kai Jun, A0283343E
     test("should return 400 when email is missing @ symbol", async () => {
       // Arrange
       const fakeReq = createFakeRequest({
@@ -157,6 +162,7 @@ describe("Auth Controller - Forgot Password", () => {
       expect(fakeRes.send).toHaveBeenCalledWith({ message: "Invalid email format" });
     });
 
+    //Tay Kai Jun, A0283343E
     test("should return 400 when answer is missing", async () => {
       // Arrange
       const fakeReq = createFakeRequest({
@@ -172,6 +178,7 @@ describe("Auth Controller - Forgot Password", () => {
       expect(fakeRes.send).toHaveBeenCalledWith({ message: "Answer is required" });
     });
 
+    //Tay Kai Jun, A0283343E
     test("should return 400 when new password is missing", async () => {
       // Arrange
       const fakeReq = createFakeRequest({
@@ -187,6 +194,7 @@ describe("Auth Controller - Forgot Password", () => {
       expect(fakeRes.send).toHaveBeenCalledWith({ message: "New password is required" });
     });
 
+    //Tay Kai Jun, A0283343E
     test("should return 400 when password is less than 6 characters", async () => {
       // Arrange
       const fakeReq = createFakeRequest({
@@ -202,6 +210,7 @@ describe("Auth Controller - Forgot Password", () => {
       expect(fakeRes.send).toHaveBeenCalledWith({ message: "Password must be at least 6 characters long" });
     });
 
+    //Tay Kai Jun, A0283343E
     test("should accept password with exactly 6 characters", async () => {
       // Arrange
       const fakeReq = createFakeRequest({
@@ -225,6 +234,7 @@ describe("Auth Controller - Forgot Password", () => {
       });
     });
 
+    //Tay Kai Jun, A0283343E
     test("should continue execution when email is empty string", async () => {
       // Arrange
       const fakeReq = createFakeRequest({
@@ -242,6 +252,7 @@ describe("Auth Controller - Forgot Password", () => {
   });
 
   describe("User Not Found", () => {
+    //Tay Kai Jun, A0283343E
     test("should return 404 when user with email and answer not found", async () => {
       // Arrange
       const fakeReq = createFakeRequest({
@@ -262,6 +273,7 @@ describe("Auth Controller - Forgot Password", () => {
       });
     });
 
+    //Tay Kai Jun, A0283343E
     test("should return 404 when email matches but answer is wrong", async () => {
       // Arrange
       const fakeReq = createFakeRequest({
@@ -284,6 +296,7 @@ describe("Auth Controller - Forgot Password", () => {
   });
 
   describe("Error Handling", () => {
+    //Tay Kai Jun, A0283343E
     test("should return 500 when database findOne fails", async () => {
       // Arrange
       const fakeReq = createFakeRequest({
@@ -309,6 +322,7 @@ describe("Auth Controller - Forgot Password", () => {
       consoleSpy.mockRestore();
     });
 
+    //Tay Kai Jun, A0283343E
     test("should return 500 when password hashing fails", async () => {
       // Arrange
       const fakeReq = createFakeRequest({
@@ -336,6 +350,7 @@ describe("Auth Controller - Forgot Password", () => {
       consoleSpy.mockRestore();
     });
 
+    //Tay Kai Jun, A0283343E
     test("should return 500 when database update fails", async () => {
       // Arrange
       const fakeReq = createFakeRequest({
