@@ -14,6 +14,7 @@ jest.mock("../../context/search", () => ({
   useSearch: jest.fn(),
 }));
 
+//Tay Kai Jun, A0283343E
 describe("SearchInput Component", () => {
   let mockNavigate;
   let mockSetValues;
@@ -32,7 +33,9 @@ describe("SearchInput Component", () => {
     jest.clearAllMocks();
   });
 
+  //Tay Kai Jun, A0283343E
   describe("Component Rendering", () => {
+    //Tay Kai Jun, A0283343E
     test("should render search input and button", () => {
       // Arrange
       // (setup done in beforeEach)
@@ -45,6 +48,7 @@ describe("SearchInput Component", () => {
       expect(screen.getByRole("button", { name: /search/i })).toBeInTheDocument();
     });
 
+    //Tay Kai Jun, A0283343E
     test("should display current keyword value in input", () => {
       // Arrange
       mockValues.keyword = "laptop";
@@ -58,7 +62,10 @@ describe("SearchInput Component", () => {
     });
   });
 
+  //Tay Kai Jun, A0283343E
   describe("User Input Handling", () => {
+
+    //Tay Kai Jun, A0283343E
     test("should update keyword when user types in search input", () => {
       // Arrange
       render(<SearchInput />);
@@ -74,6 +81,7 @@ describe("SearchInput Component", () => {
       });
     });
 
+    //Tay Kai Jun, A0283343E
     test("should handle empty string input", () => {
       // Arrange
       mockValues.keyword = "laptop";
@@ -92,7 +100,10 @@ describe("SearchInput Component", () => {
     });
   });
 
+  //Tay Kai Jun, A0283343E
   describe("Search Submission - Success Cases", () => {
+
+    //Tay Kai Jun, A0283343E
     test("should call API and navigate on successful search", async () => {
       // Arrange
       mockValues.keyword = "laptop";
@@ -119,6 +130,7 @@ describe("SearchInput Component", () => {
       });
     });
 
+    //Tay Kai Jun, A0283343E
     test("should handle search with special characters in keyword", async () => {
       // Arrange
       mockValues.keyword = "laptop & accessories";
@@ -143,6 +155,7 @@ describe("SearchInput Component", () => {
       });
     });
 
+    //Tay Kai Jun, A0283343E
     test("should handle empty search results", async () => {
       // Arrange
       mockValues.keyword = "nonexistent";
@@ -165,7 +178,10 @@ describe("SearchInput Component", () => {
     });
   });
 
+  //Tay Kai Jun, A0283343E
   describe("Search Submission - Error Cases", () => {
+
+    //Tay Kai Jun, A0283343E
     test("should log error when API call fails", async () => {
       // Arrange
       mockValues.keyword = "laptop";
@@ -188,6 +204,7 @@ describe("SearchInput Component", () => {
       consoleLogSpy.mockRestore();
     });
 
+    //Tay Kai Jun, A0283343E
     test("should handle 404 error from API", async () => {
       // Arrange
       mockValues.keyword = "laptop";
@@ -210,7 +227,10 @@ describe("SearchInput Component", () => {
     });
   });
 
+  //Tay Kai Jun, A0283343E
   describe("Form Submission Behavior", () => {
+    
+    //Tay Kai Jun, A0283343E
     test("should prevent default form submission", async () => {
       // Arrange
       mockValues.keyword = "test";
@@ -229,6 +249,7 @@ describe("SearchInput Component", () => {
       });
     });
 
+    //Tay Kai Jun, A0283343E
     test("should submit form when button is clicked", async () => {
       // Arrange
       mockValues.keyword = "test";

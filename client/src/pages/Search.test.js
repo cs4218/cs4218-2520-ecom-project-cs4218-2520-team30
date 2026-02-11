@@ -4,11 +4,12 @@ import "@testing-library/jest-dom";
 import Search from "./Search";
 import { useSearch } from "../context/search";
 import { BrowserRouter } from "react-router-dom";
-
+//Tay Kai Jun, A0283343E
 jest.mock("../context/search", () => ({
   useSearch: jest.fn(),
 }));
 
+//Tay Kai Jun, A0283343E
 jest.mock("./../components/Layout", () => {
   return function MockLayout({ children, title }) {
     return (
@@ -19,6 +20,7 @@ jest.mock("./../components/Layout", () => {
   };
 });
 
+//Tay Kai Jun, A0283343E
 describe("Search Page Component", () => {
   let mockSetValues;
 
@@ -34,7 +36,9 @@ describe("Search Page Component", () => {
     return render(<BrowserRouter>{component}</BrowserRouter>);
   };
 
+  //Tay Kai Jun, A0283343E
   describe("No Results State", () => {
+    //Tay Kai Jun, A0283343E
     test("should display 'No Products Found' when results array is empty", () => {
       // Arrange
       const mockValues = { keyword: "laptop", results: [] };
@@ -48,6 +52,7 @@ describe("Search Page Component", () => {
       expect(screen.getByText("No Products Found")).toBeInTheDocument();
     });
 
+    //Tay Kai Jun, A0283343E
     test("should display 'No Products Found' when results is null", () => {
       // Arrange
       const mockValues = { keyword: "test", results: null };
@@ -60,6 +65,7 @@ describe("Search Page Component", () => {
       expect(screen.getByText("No Products Found")).toBeInTheDocument();
     });
 
+    //Tay Kai Jun, A0283343E
     test("should render Layout with correct title", () => {
       // Arrange
       const mockValues = { keyword: "", results: [] };
@@ -76,7 +82,10 @@ describe("Search Page Component", () => {
     });
   });
 
+  //Tay Kai Jun, A0283343E
   describe("Results Display", () => {
+
+    //Tay Kai Jun, A0283343E
     test("should display correct count when products are found", () => {
       // Arrange
       const mockProducts = [
@@ -104,6 +113,7 @@ describe("Search Page Component", () => {
       expect(screen.queryByText("No Products Found")).not.toBeInTheDocument();
     });
 
+    //Tay Kai Jun, A0283343E
     test("should render all product cards with correct data", () => {
       // Arrange
       const mockProducts = [
@@ -135,6 +145,7 @@ describe("Search Page Component", () => {
       expect(screen.getByText("$ 699")).toBeInTheDocument();
     });
 
+    //Tay Kai Jun, A0283343E
     test("should display single product correctly", () => {
       // Arrange
       const mockProducts = [
@@ -156,6 +167,7 @@ describe("Search Page Component", () => {
       expect(screen.getByText("Tablet")).toBeInTheDocument();
     });
 
+    //Tay Kai Jun, A0283343E
     test("should truncate long descriptions to 30 characters", () => {
       // Arrange
       const mockProducts = [
@@ -179,6 +191,7 @@ describe("Search Page Component", () => {
     });
   });
 
+  //Tay Kai Jun, A0283343E
   describe("Product Card Actions", () => {
     test("should render 'More Details' button for each product", () => {
       // Arrange
@@ -228,7 +241,10 @@ describe("Search Page Component", () => {
     });
   });
 
+  //Tay Kai Jun, A0283343E
   describe("Product Images", () => {
+
+    //Tay Kai Jun, A0283343E
     test("should render product images with correct src and alt attributes", () => {
       // Arrange
       const mockProducts = [
@@ -254,6 +270,7 @@ describe("Search Page Component", () => {
       );
     });
 
+    //Tay Kai Jun, A0283343E
     test("should render images for all products", () => {
       // Arrange
       const mockProducts = [
@@ -289,7 +306,9 @@ describe("Search Page Component", () => {
     });
   });
 
+  //Tay Kai Jun, A0283343E
   describe("Edge Cases", () => {
+    //Tay Kai Jun, A0283343E
     test("should handle products with zero price", () => {
       // Arrange
       const mockProducts = [
@@ -310,6 +329,7 @@ describe("Search Page Component", () => {
       expect(screen.getByText("$ 0")).toBeInTheDocument();
     });
 
+    //Tay Kai Jun, A0283343E
     test("should handle products with very short descriptions", () => {
       // Arrange
       const mockProducts = [
@@ -330,6 +350,7 @@ describe("Search Page Component", () => {
       expect(screen.getByText("Short...")).toBeInTheDocument();
     });
 
+    //Tay Kai Jun, A0283343E
     test("should handle large number of results", () => {
       // Arrange
       const mockProducts = Array.from({ length: 50 }, (_, i) => ({
