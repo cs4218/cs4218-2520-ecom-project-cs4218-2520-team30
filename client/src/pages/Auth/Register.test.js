@@ -45,6 +45,7 @@ describe('Register Component', () => {
     jest.clearAllMocks();
   });
 
+  //Tay Kai Jun, A0283343E
   it('should register the user successfully', async () => {
     axios.post.mockResolvedValueOnce({ data: { success: true } });
 
@@ -70,6 +71,7 @@ describe('Register Component', () => {
     expect(toast.success).toHaveBeenCalledWith('Register Successfully, please login');
   });
 
+  //Tay Kai Jun, A0283343E
   it('should display error message on failed registration', async () => {
     axios.post.mockRejectedValueOnce({ message: 'User already exists' });
 

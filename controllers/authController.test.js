@@ -62,6 +62,7 @@ const createFakeResponse = () => {
 describe("Auth Controller - Test Protected Route", () => {
   
   describe("Successful Protected Route Access", () => {
+    //Tay Kai Jun, A0283343E
     test("expected to return 'Protected Routes' message", () => {
       const fakeReq = createFakeRequest({});
       const fakeRes = createFakeResponse();
@@ -72,6 +73,7 @@ describe("Auth Controller - Test Protected Route", () => {
       expect(fakeRes.send).toHaveBeenCalledWith("Protected Routes");
     });
 
+    //Tay Kai Jun, A0283343E
     test("expected to send response even with authenticated user in request", () => {
       const fakeReq = createFakeRequest({ user: { _id: "userId123" } });
       const fakeRes = createFakeResponse();
@@ -84,6 +86,7 @@ describe("Auth Controller - Test Protected Route", () => {
   });
 
   describe("Error Handling", () => {
+    //Tay Kai Jun, A0283343E
     test("expected to log error when both send calls fail", () => {
       const fakeReq = createFakeRequest({});
       const fakeRes = createFakeResponse();
@@ -108,6 +111,7 @@ describe("Auth Controller - Test Protected Route", () => {
   });
 
   describe("Middleware Integration Test", () => {
+    //Tay Kai Jun, A0283343E
     test("should work when middleware populates", () => {
       const fakeReq = createFakeRequest({
         user: { _id: "user123", email: "test@example.com", role: 1 }
@@ -120,6 +124,7 @@ describe("Auth Controller - Test Protected Route", () => {
       expect(fakeRes.send).toHaveBeenCalledTimes(1);
     });
 
+    //Tay Kai Jun, A0283343E
     test("should still respond even without req.user", () => {
       const fakeReq = createFakeRequest({});
       const fakeRes = createFakeResponse();
@@ -131,6 +136,7 @@ describe("Auth Controller - Test Protected Route", () => {
   });
 
   describe("Protected Route Purpose", () => {
+    //Tay Kai Jun, A0283343E
     test("should verify this is truly a protected endpoint", () => {
       const fakeReq = createFakeRequest({
         user: { _id: "user123", name: "Test User", role: 1 }
