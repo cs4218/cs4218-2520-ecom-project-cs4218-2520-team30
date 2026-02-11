@@ -103,6 +103,7 @@ const createFakeLoginRequest = (overrides = {}) =>
 describe("Auth Controller - Login", () => {
 
   describe("Input Validation", () => {
+    //Tay Kai Jun, A0283343E
     test("expected to return error when both email and password are missing", async () => {      
       // Arrange
       const fakeReq = createFakeRequest({ body: {} });
@@ -119,6 +120,7 @@ describe("Auth Controller - Login", () => {
       });
     });
 
+    //Tay Kai Jun, A0283343E
     test("expected to return error when email is missing", async () => {
       
       // Arrange
@@ -136,6 +138,7 @@ describe("Auth Controller - Login", () => {
       });
     });
 
+    //Tay Kai Jun, A0283343E
     test("expected to return error when password is missing", async () => {
       
       // Arrange
@@ -154,6 +157,7 @@ describe("Auth Controller - Login", () => {
     });
 
 
+    //Tay Kai Jun, A0283343E
     test("expected to return error when email is empty string", async () => {
       
       // Arrange
@@ -171,6 +175,7 @@ describe("Auth Controller - Login", () => {
       });
     });
 
+    //Tay Kai Jun, A0283343E
     test("expected to return error when password is empty string", async () => {
       
       // Arrange
@@ -190,6 +195,7 @@ describe("Auth Controller - Login", () => {
   });
 
   describe("Email Format Validation", () => {
+    //Tay Kai Jun, A0283343E
     test("expected to return error when email format is invalid", async () => {
       
       // Arrange
@@ -207,6 +213,7 @@ describe("Auth Controller - Login", () => {
       });
     });
 
+    //Tay Kai Jun, A0283343E
     test("expected to return error when email is missing @ symbol", async () => {
       
       // Arrange
@@ -224,6 +231,7 @@ describe("Auth Controller - Login", () => {
       });
     });
 
+    //Tay Kai Jun, A0283343E
     test("expected to return error when email has multiple @ symbols", async () => {
       
       // Arrange
@@ -241,6 +249,7 @@ describe("Auth Controller - Login", () => {
       });
     });
 
+    //Tay Kai Jun, A0283343E
     test("expected to return error when email is missing domain", async () => {
       
       // Arrange
@@ -260,6 +269,7 @@ describe("Auth Controller - Login", () => {
   });
 
   describe("Password Length Validation", () => {
+    //Tay Kai Jun, A0283343E
     test("expected to return error when password is less than 6 characters", async () => {
       
       // Arrange
@@ -277,6 +287,7 @@ describe("Auth Controller - Login", () => {
       });
     });
 
+    //Tay Kai Jun, A0283343E
     test("expected to return error when password is exactly 5 characters", async () => {
       
       // Arrange
@@ -294,6 +305,7 @@ describe("Auth Controller - Login", () => {
       });
     });
 
+    //Tay Kai Jun, A0283343E
     test("expected to return error when password is 1 character", async () => {
       
       // Arrange
@@ -313,6 +325,7 @@ describe("Auth Controller - Login", () => {
   });
 
   describe("User Not Found", () => {
+    //Tay Kai Jun, A0283343E
     test("expected to return error when user does not exist", async () => {
       
       // Arrange
@@ -333,6 +346,7 @@ describe("Auth Controller - Login", () => {
       expect(comparePassword).not.toHaveBeenCalled();
     });
 
+    //Tay Kai Jun, A0283343E
     test("expected to return error when trying to login with unregistered email", async () => {
       
       // Arrange
@@ -354,6 +368,7 @@ describe("Auth Controller - Login", () => {
   });
 
   describe("Invalid Password", () => {
+    //Tay Kai Jun, A0283343E
     test("expected to return error when password does not match", async () => {
     
       // Arrange
@@ -385,6 +400,7 @@ describe("Auth Controller - Login", () => {
       expect(JWT.sign).not.toHaveBeenCalled();
     });
 
+    //Tay Kai Jun, A0283343E
     test("expected to return error when password is completely incorrect", async () => {
       
       // Arrange
@@ -414,6 +430,7 @@ describe("Auth Controller - Login", () => {
       });
     });
 
+    //Tay Kai Jun, A0283343E
     test("expected to return error when password has misspelling", async () => {
 
       // Arrange
@@ -446,6 +463,7 @@ describe("Auth Controller - Login", () => {
   });
 
   describe("Successful Login", () => {
+    //Tay Kai Jun, A0283343E
     test("expected to login successfully and return token", async () => {
       
       // Arrange
@@ -490,6 +508,7 @@ describe("Auth Controller - Login", () => {
       );
     });
 
+    //Tay Kai Jun, A0283343E
     test("expected to login successfully with different user credentials", async () => {
       
       // Arrange
@@ -534,6 +553,7 @@ describe("Auth Controller - Login", () => {
       );
     });
 
+    //Tay Kai Jun, A0283343E
     test("expected to login successfully as admin user", async () => {
       
       // Arrange
@@ -579,6 +599,7 @@ describe("Auth Controller - Login", () => {
       );
     });
 
+    //Tay Kai Jun, A0283343E
     test("expected to exclude password from user data in response", async () => {
       
       // Arrange
@@ -615,6 +636,7 @@ describe("Auth Controller - Login", () => {
 describe("Auth Controller - Database Error Handling", () => {
 
   describe("Login Error", () => {
+    //Tay Kai Jun, A0283343E
     test("expected to handle database error during login", async () => {
 
       // Arrange
@@ -642,6 +664,7 @@ describe("Auth Controller - Database Error Handling", () => {
       consoleSpy.mockRestore();
     });
 
+    //Tay Kai Jun, A0283343E
     test("expected to handle network timeout error during login", async () => {
       
       // Arrange
