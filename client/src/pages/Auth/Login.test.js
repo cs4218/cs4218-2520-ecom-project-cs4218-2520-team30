@@ -12,79 +12,88 @@ jest.mock('react-hot-toast');
 
 jest.mock('../../context/auth', () => ({
     useAuth: jest.fn(() => [null, jest.fn()]) // Mock useAuth hook to return null state and a mock function for setAuth
-  }));
+}));
 
-  jest.mock('../../context/cart', () => ({
+jest.mock('../../context/cart', () => ({
     useCart: jest.fn(() => [null, jest.fn()]) // Mock useCart hook to return null state and a mock function
-  }));
-    
+}));
+
 jest.mock('../../context/search', () => ({
     useSearch: jest.fn(() => [{ keyword: '' }, jest.fn()]) // Mock useSearch hook to return null state and a mock function
-  }));  
+}));
 
-  Object.defineProperty(window, 'localStorage', {
+jest.mock('../../hooks/useCategory', () => ({
+    __esModule: true,
+    default: jest.fn(() => [])
+}));
+
+Object.defineProperty(window, 'localStorage', {
     value: {
-      setItem: jest.fn(),
-      getItem: jest.fn(),
-      removeItem: jest.fn(),
+        setItem: jest.fn(),
+        getItem: jest.fn(),
+        removeItem: jest.fn(),
     },
     writable: true,
-  });
+});
 
-window.matchMedia = window.matchMedia || function() {
+window.matchMedia = window.matchMedia || function () {
     return {
-      matches: false,
-      addListener: function() {},
-      removeListener: function() {}
+        matches: false,
+        addListener: function () { },
+        removeListener: function () { }
     };
-  };  
+};
 
 describe('Login Component', () => {
     beforeEach(() => {
         jest.clearAllMocks();
     });
 
+    //Tay Kai Jun, A0283343E
     it('renders login form', () => {
         const { getByText, getByPlaceholderText } = render(
-          <MemoryRouter initialEntries={['/login']}>
-            <Routes>
-              <Route path="/login" element={<Login />} />
-            </Routes>
-          </MemoryRouter>
+            <MemoryRouter initialEntries={['/login']}>
+                <Routes>
+                    <Route path="/login" element={<Login />} />
+                </Routes>
+            </MemoryRouter>
         );
-    
+
         expect(getByText('LOGIN FORM')).toBeInTheDocument();
         expect(getByPlaceholderText('Enter Your Email')).toBeInTheDocument();
         expect(getByPlaceholderText('Enter Your Password')).toBeInTheDocument();
-      });
-      it('inputs should be initially empty', () => {
+    });
+    //Tay Kai Jun, A0283343E
+    it('inputs should be initially empty', () => {
         const { getByText, getByPlaceholderText } = render(
-          <MemoryRouter initialEntries={['/login']}>
-            <Routes>
-              <Route path="/login" element={<Login />} />
-            </Routes>
-          </MemoryRouter>
+            <MemoryRouter initialEntries={['/login']}>
+                <Routes>
+                    <Route path="/login" element={<Login />} />
+                </Routes>
+            </MemoryRouter>
         );
-    
+
         expect(getByText('LOGIN FORM')).toBeInTheDocument();
         expect(getByPlaceholderText('Enter Your Email').value).toBe('');
         expect(getByPlaceholderText('Enter Your Password').value).toBe('');
-      });
-    
-      it('should allow typing email and password', () => {
+    });
+
+    //Tay Kai Jun, A0283343E
+    it('should allow typing email and password', () => {
         const { getByText, getByPlaceholderText } = render(
-          <MemoryRouter initialEntries={['/login']}>
-            <Routes>
-              <Route path="/login" element={<Login />} />
-            </Routes>
-          </MemoryRouter>
+            <MemoryRouter initialEntries={['/login']}>
+                <Routes>
+                    <Route path="/login" element={<Login />} />
+                </Routes>
+            </MemoryRouter>
         );
         fireEvent.change(getByPlaceholderText('Enter Your Email'), { target: { value: 'test@example.com' } });
         fireEvent.change(getByPlaceholderText('Enter Your Password'), { target: { value: 'password123' } });
         expect(getByPlaceholderText('Enter Your Email').value).toBe('test@example.com');
         expect(getByPlaceholderText('Enter Your Password').value).toBe('password123');
-      });
-      
+    });
+
+    //Tay Kai Jun, A0283343E
     it('should login the user successfully', async () => {
         axios.post.mockResolvedValueOnce({
             data: {
@@ -117,8 +126,118 @@ describe('Login Component', () => {
         });
     });
 
+    //Tay Kai Jun, A0283343E
     it('should display error message on failed login', async () => {
-        axios.post.mockRejectedValueOnce({ message: 'Invalid credentials' });
+        axios.post.mockRejectedValueOnce({
+            response: {
+                data: {
+                    message: 'Invalid password'
+                }
+            }
+        });
+
+        const { getByPlaceholderText, getByText } = render(
+            <MemoryRouter initialEntries={['/login']}>
+                <Routes>
+                    <Route path="/login" element={<Login />} />
+                </Routes>
+            </MemoryRouter>
+        );
+
+        fireEvent.change(getByPlaceholderText('Enter Your Email'), { target: { value: 'test@example.com' } });
+        fireEvent.change(getByPlaceholderText('Enter Your Password'), { target: { value: 'wrongpassword' } });
+        fireEvent.click(getByText('LOGIN'));
+
+        await waitFor(() => expect(axios.post).toHaveBeenCalled());
+        expect(toast.error).toHaveBeenCalledWith('Invalid password');
+    });
+
+    //Tay Kai Jun, A0283343E
+    it('should display error message when email is not registered', async () => {
+        axios.post.mockRejectedValueOnce({
+            response: {
+                data: {
+                    message: 'Email is not registered'
+                }
+            }
+        });
+
+        const { getByPlaceholderText, getByText } = render(
+            <MemoryRouter initialEntries={['/login']}>
+                <Routes>
+                    <Route path="/login" element={<Login />} />
+                </Routes>
+            </MemoryRouter>
+        );
+
+        fireEvent.change(getByPlaceholderText('Enter Your Email'), { target: { value: 'unregistered@example.com' } });
+        fireEvent.change(getByPlaceholderText('Enter Your Password'), { target: { value: 'password123' } });
+        fireEvent.click(getByText('LOGIN'));
+
+        await waitFor(() => expect(axios.post).toHaveBeenCalled());
+        expect(toast.error).toHaveBeenCalledWith('Email is not registered');
+    });
+
+    //Tay Kai Jun, A0283343E
+    it('should display error message when password is too short', async () => {
+        axios.post.mockRejectedValueOnce({
+            response: {
+                data: {
+                    message: 'Password must be at least 6 characters long'
+                }
+            }
+        });
+
+        const { getByPlaceholderText, getByText } = render(
+            <MemoryRouter initialEntries={['/login']}>
+                <Routes>
+                    <Route path="/login" element={<Login />} />
+                </Routes>
+            </MemoryRouter>
+        );
+
+        fireEvent.change(getByPlaceholderText('Enter Your Email'), { target: { value: 'test@example.com' } });
+        fireEvent.change(getByPlaceholderText('Enter Your Password'), { target: { value: 'short' } });
+        fireEvent.click(getByText('LOGIN'));
+
+        await waitFor(() => expect(axios.post).toHaveBeenCalled());
+        expect(toast.error).toHaveBeenCalledWith('Password must be at least 6 characters long');
+    });
+
+    //Tay Kai Jun, A0283343E
+    it('should display error message when server error occurs', async () => {
+        axios.post.mockRejectedValueOnce({
+            response: {
+                data: {
+                    message: 'Error in login'
+                }
+            }
+        });
+
+        const { getByPlaceholderText, getByText } = render(
+            <MemoryRouter initialEntries={['/login']}>
+                <Routes>
+                    <Route path="/login" element={<Login />} />
+                </Routes>
+            </MemoryRouter>
+        );
+
+        fireEvent.change(getByPlaceholderText('Enter Your Email'), { target: { value: 'test@example.com' } });
+        fireEvent.change(getByPlaceholderText('Enter Your Password'), { target: { value: 'validpass123' } });
+        fireEvent.click(getByText('LOGIN'));
+
+        await waitFor(() => expect(axios.post).toHaveBeenCalled());
+        expect(toast.error).toHaveBeenCalledWith('Error in login');
+    });
+
+    //Tay Kai Jun, A0283343E
+    it('should display error when success is false in response', async () => {
+        axios.post.mockResolvedValueOnce({
+            data: {
+                success: false,
+                message: 'Login failed'
+            }
+        });
 
         const { getByPlaceholderText, getByText } = render(
             <MemoryRouter initialEntries={['/login']}>
@@ -133,6 +252,21 @@ describe('Login Component', () => {
         fireEvent.click(getByText('LOGIN'));
 
         await waitFor(() => expect(axios.post).toHaveBeenCalled());
-        expect(toast.error).toHaveBeenCalledWith('Something went wrong');
+        expect(toast.error).toHaveBeenCalledWith('Login failed');
+    });
+
+    //Tay Kai Jun, A0283343E
+    it('should navigate to forgot password page when button is clicked', () => {
+        const { getByText } = render(
+            <MemoryRouter initialEntries={['/login']}>
+                <Routes>
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/forgot-password" element={<div>Forgot Password Page</div>} />
+                </Routes>
+            </MemoryRouter>
+        );
+
+        fireEvent.click(getByText('Forgot Password'));
+        expect(getByText('Forgot Password Page')).toBeInTheDocument();
     });
 });
