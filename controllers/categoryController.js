@@ -4,13 +4,14 @@ export const createCategoryController = async (req, res) => {
   try {
     const { name } = req.body;
     if (!name) {
+      // Alek Kwek, A0273471A
       return res.status(400).send({ message: "Name is required" });
     }
     const existingCategory = await categoryModel.findOne({ name });
     if (existingCategory) {
       return res.status(200).send({
-        success: false,
-        message: "Category Already Exists",
+        success: false, // Alek Kwek, A0273471A
+        message: "Category Already Exists", // Alek Kwek, A0273471A
       });
     }
     const category = await new categoryModel({
@@ -19,12 +20,13 @@ export const createCategoryController = async (req, res) => {
     }).save();
     res.status(201).send({
       success: true,
-      message: "New Category Created",
+      message: "New Category Created", // Alek Kwek, A0273471A
       category,
     });
   } catch (error) {
     console.log(error);
     res.status(500).send({
+      // Alek Kwek, A0273471A
       success: false,
       error,
       message: "Error in Category",
@@ -44,7 +46,7 @@ export const updateCategoryController = async (req, res) => {
     );
     res.status(200).send({
       success: true,
-      message: "Category Updated Successfully",
+      message: "Category Updated Successfully",// Alek Kwek, A0273471A
       category,
     });
   } catch (error) {
@@ -58,6 +60,7 @@ export const updateCategoryController = async (req, res) => {
 };
 
 // get all cat
+// Alek Kwek, A0273471A
 export const categoryController = async (req, res) => {
   try {
     const category = await categoryModel.find({});
@@ -82,7 +85,7 @@ export const singleCategoryController = async (req, res) => {
     const category = await categoryModel.findOne({ slug: req.params.slug });
     res.status(200).send({
       success: true,
-      message: "Get Single Category Successfully",
+      message: "Get Single Category Successfully", // Alek Kwek, A0273471A
       category,
     });
   } catch (error) {
@@ -96,13 +99,14 @@ export const singleCategoryController = async (req, res) => {
 };
 
 //delete category
+// Alek Kwek, A0273471A
 export const deleteCategoryController = async (req, res) => {
   try {
     const { id } = req.params;
     await categoryModel.findByIdAndDelete(id);
     res.status(200).send({
       success: true,
-      message: "Category Deleted Successfully",
+      message: "Category Deleted Successfully", // Alek Kwek, A0273471A
     });
   } catch (error) {
     console.log(error);

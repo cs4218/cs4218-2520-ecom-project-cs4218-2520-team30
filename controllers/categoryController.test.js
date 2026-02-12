@@ -9,12 +9,13 @@ import {
 } from "./categoryController.js";
 import categoryModel from "../models/categoryModel.js";
 
+// Alek Kwek, A0273471A
 // mock the category model
 jest.mock("../models/categoryModel.js");
-
+// Alek Kwek, A0273471A
 describe("Category Controller Tests", () => {
     let req, res;
-
+    // Alek Kwek, A0273471A
     beforeEach(() => {
         // Reset request and response objects before each test
         req = {
@@ -38,6 +39,7 @@ describe("Category Controller Tests", () => {
     // total tests: 13
 
     // createCategoryController
+    // Alek Kwek, A0273471A
     describe("createCategoryController", () => {
         // test 1: create a new category successfully
         test("should create a new category successfully", async () => {
@@ -68,6 +70,7 @@ describe("Category Controller Tests", () => {
             });
         });
 
+        // Alek Kwek, A0273471A
         // test 2: return 401 if name is missing    
         test("should return 401 if name is missing", async () => {
             req.body = {}; // no category name provided
@@ -80,6 +83,7 @@ describe("Category Controller Tests", () => {
         });
 
         // test 3: return 200 if category already exists
+        // Alek Kwek, A0273471A
         test("should return 200 if category already exists", async () => {
             req.body.name = "Books";
 
@@ -100,6 +104,7 @@ describe("Category Controller Tests", () => {
         });
 
         // test 4: return 500 on database error
+        // Alek Kwek, A0273471A
         test("should return 500 on database error", async () => {
             req.body.name = "Clothing";
 
@@ -119,6 +124,7 @@ describe("Category Controller Tests", () => {
     });
 
     // updateCategoryController
+    // Alek Kwek, A0273471A
     describe("updateCategoryController", () => {
         // test 1: update category successfully
         test("should update category successfully", async () => {
@@ -149,6 +155,7 @@ describe("Category Controller Tests", () => {
         });
 
         // test 2: return 500 on database error during update
+        // Alek Kwek, A0273471A
         test("should return 500 on database error during update", async () => {
             req.body.name = "Updated Category";
             req.params.id = "123abc";
@@ -168,6 +175,7 @@ describe("Category Controller Tests", () => {
     });
 
     // categoryController
+    // Alek Kwek, A0273471A
     describe("categoryController (get all categories)", () => {
         // test 1: return all categories successfully
         test("should return all categories successfully", async () => {
@@ -191,6 +199,7 @@ describe("Category Controller Tests", () => {
         });
 
         // test 2: return empty array when no categories exist
+        // Alek Kwek, A0273471A
         test("should return empty array when no categories exist", async () => {
             categoryModel.find.mockResolvedValue([]);
 
@@ -206,6 +215,7 @@ describe("Category Controller Tests", () => {
         });
 
         // test 3: return 500 on database error
+        // Alek Kwek, A0273471A
         test("should return 500 on database error", async () => {
             categoryModel.find.mockRejectedValue(new Error("Database connection failed"));
 
@@ -222,6 +232,7 @@ describe("Category Controller Tests", () => {
     });
 
     // singleCategoryController
+    // Alek Kwek, A0273471A
     describe("singleCategoryController", () => {
         // test 1: return single category by slug successfully
         test("should return single category by slug successfully", async () => {
@@ -264,6 +275,7 @@ describe("Category Controller Tests", () => {
     });
 
     // deleteCategoryController
+    // Alek Kwek, A0273471A
     describe("deleteCategoryController", () => {
         // test 1: delete category successfully
         test("should delete category successfully", async () => {
