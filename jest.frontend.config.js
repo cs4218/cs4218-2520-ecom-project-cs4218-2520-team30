@@ -20,12 +20,11 @@ export default {
   transformIgnorePatterns: ["/node_modules/(?!(styleMock\\.js)$)"],
 
   // only run these tests
-  // Alek Kwek, A0273471A
-
   testMatch: [
     "<rootDir>/client/src/pages/Auth/*.test.js",
-    "<rootDir>/client/src/components/Form/*.test.js",
-    "<rootDir>/client/src/pages/admin/*.test.js"
+    "<rootDir>/client/src/pages/Search.test.js",
+    "<rootDir>/client/src/components/Form/SearchInput.test.js",
+    "<rootDir>/client/src/context/search.test.js"
   ],
 
   // jest code coverage
@@ -34,13 +33,15 @@ export default {
   collectCoverage: true,
   collectCoverageFrom: [
     "client/src/pages/Auth/**",
-    "client/src/components/Form/**",
-    "client/src/pages/admin/**"
+    "client/src/pages/Search.js",
+    "client/src/components/Form/SearchInput.js",
+    "client/src/context/search.js"
   ],
   coverageThreshold: {
     global: {
       lines: 100,
       functions: 100,
+      branches: 100,
     },
   },
   setupFilesAfterEnv: ["<rootDir>/client/src/setupTests.js"],
