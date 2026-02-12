@@ -9,6 +9,7 @@ import CreateCategory from './CreateCategory';
 // ============================================================
 // MOCK EXTERNAL DEPENDENCIES (Isolation)
 // ============================================================
+// Alek Kwek, A0273471A
 
 // Mock axios for API calls
 jest.mock('axios');
@@ -46,6 +47,8 @@ jest.mock('antd', () => {
 });
 
 // Mock localStorage
+// Alek Kwek, A0273471A
+
 Object.defineProperty(window, 'localStorage', {
     value: {
         setItem: jest.fn(),
@@ -67,6 +70,8 @@ window.matchMedia = window.matchMedia || function () {
 // ============================================================
 // HELPER: Render component with router
 // ============================================================
+// Alek Kwek, A0273471A
+
 const renderCreateCategory = () => {
     return render(
         <MemoryRouter initialEntries={['/dashboard/admin/create-category']}>
@@ -80,6 +85,8 @@ const renderCreateCategory = () => {
 // ============================================================
 // TEST SUITE: CreateCategory Component
 // ============================================================
+// Alek Kwek, A0273471A
+
 describe('CreateCategory Component', () => {
     beforeEach(() => {
         jest.clearAllMocks();

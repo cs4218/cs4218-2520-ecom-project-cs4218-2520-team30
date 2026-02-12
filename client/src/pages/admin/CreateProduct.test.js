@@ -9,6 +9,7 @@ import CreateProduct from './CreateProduct';
 // ============================================================
 // MOCK EXTERNAL DEPENDENCIES (Isolation)
 // ============================================================
+// Alek Kwek, A0273471A
 
 // Mock axios for API calls
 jest.mock('axios');
@@ -80,6 +81,8 @@ global.URL.createObjectURL = jest.fn(() => 'mock-url');
 // ============================================================
 // HELPER: Render component with router
 // ============================================================
+// Alek Kwek, A0273471A
+
 const renderCreateProduct = () => {
     return render(
         <MemoryRouter initialEntries={['/dashboard/admin/create-product']}>
@@ -93,6 +96,8 @@ const renderCreateProduct = () => {
 // ============================================================
 // TEST SUITE: CreateProduct Component
 // ============================================================
+// Alek Kwek, A0273471A
+
 describe('CreateProduct Component', () => {
     beforeEach(() => {
         jest.clearAllMocks();

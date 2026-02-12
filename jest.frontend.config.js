@@ -20,6 +20,8 @@ export default {
   transformIgnorePatterns: ["/node_modules/(?!(styleMock\\.js)$)"],
 
   // only run these tests
+  // Alek Kwek, A0273471A
+
   testMatch: [
     "<rootDir>/client/src/pages/Auth/*.test.js",
     "<rootDir>/client/src/components/Form/*.test.js",
@@ -27,6 +29,8 @@ export default {
   ],
 
   // jest code coverage
+  // Alek Kwek, A0273471A
+
   collectCoverage: true,
   collectCoverageFrom: [
     "client/src/pages/Auth/**",

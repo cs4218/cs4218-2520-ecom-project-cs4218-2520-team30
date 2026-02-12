@@ -46,10 +46,12 @@ const CreateProduct = () => {
       productData.append("quantity", quantity);
       productData.append("photo", photo);
       productData.append("category", category);
+      // Alek Kwek, A0273471A
       const { data } = await axios.post(
         "/api/v1/product/create-product",
         productData
       );
+      // Alek Kwek, A0273471A
       if (data?.success) {
         toast.success("Product Created Successfully");
         navigate("/dashboard/admin/products");

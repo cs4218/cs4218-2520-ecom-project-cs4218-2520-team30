@@ -9,6 +9,7 @@ import UpdateProduct from './UpdateProduct';
 // ============================================================
 // MOCK EXTERNAL DEPENDENCIES (Isolation)
 // ============================================================
+// Alek Kwek, A0273471A
 
 // Mock axios for API calls
 jest.mock('axios');
@@ -111,6 +112,8 @@ const mockCategories = [
 // ============================================================
 // TEST SUITE: UpdateProduct Component
 // ============================================================
+// Alek Kwek, A0273471A
+
 describe('UpdateProduct Component', () => {
     beforeEach(() => {
         jest.clearAllMocks();

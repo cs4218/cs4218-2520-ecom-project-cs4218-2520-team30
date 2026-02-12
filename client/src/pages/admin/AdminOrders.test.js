@@ -12,6 +12,7 @@ import { useAuth } from '../../context/auth';
 // ============================================================
 
 // Mock axios for API calls
+// Alek Kwek, A0273471A
 jest.mock('axios');
 jest.mock('react-hot-toast');
 
@@ -79,6 +80,7 @@ window.matchMedia = window.matchMedia || function () {
 // ============================================================
 // HELPER: Render component with router
 // ============================================================
+// Alek Kwek, A0273471A
 const renderAdminOrders = () => {
     return render(
         <MemoryRouter initialEntries={['/dashboard/admin/orders']}>
@@ -116,7 +118,10 @@ const mockOrders = [
 // ============================================================
 // TEST SUITE: AdminOrders Component
 // ============================================================
+// Alek Kwek, A0273471A
 describe('AdminOrders Component', () => {
+    // Alek Kwek, A0273471A
+
     beforeEach(() => {
         jest.clearAllMocks();
         // Default mock for useCategory hook API call
@@ -131,6 +136,8 @@ describe('AdminOrders Component', () => {
     // ----------------------------------------------------------
     // HAPPY PATH: Renders all orders page with title
     // ----------------------------------------------------------
+    // Alek Kwek, A0273471A
+
     it('should render all orders page with title', async () => {
         // Arrange
         useAuth.mockReturnValue([{ user: { name: 'Admin' }, token: 'mock-token' }, jest.fn()]);
@@ -148,6 +155,8 @@ describe('AdminOrders Component', () => {
     // ----------------------------------------------------------
     // HAPPY PATH: Fetches orders when auth token is present
     // ----------------------------------------------------------
+    // Alek Kwek, A0273471A
+
     it('should fetch orders when auth token is present', async () => {
         // Arrange
         useAuth.mockReturnValue([{ user: { name: 'Admin' }, token: 'valid-token' }, jest.fn()]);
@@ -165,6 +174,8 @@ describe('AdminOrders Component', () => {
     // ----------------------------------------------------------
     // EDGE CASE: Does not fetch orders without token
     // ----------------------------------------------------------
+    // Alek Kwek, A0273471A
+
     it('should not fetch orders when auth token is missing', async () => {
         // Arrange
         useAuth.mockReturnValue([{ user: null, token: '' }, jest.fn()]);
@@ -181,6 +192,8 @@ describe('AdminOrders Component', () => {
     // ----------------------------------------------------------
     // HAPPY PATH: Displays order data in table
     // ----------------------------------------------------------
+    // Alek Kwek, A0273471A
+
     it('should display order data in table', async () => {
         // Arrange
         useAuth.mockReturnValue([{ user: { name: 'Admin' }, token: 'valid-token' }, jest.fn()]);
@@ -201,6 +214,8 @@ describe('AdminOrders Component', () => {
     // ----------------------------------------------------------
     // HAPPY PATH: Displays product information within orders
     // ----------------------------------------------------------
+    // Alek Kwek, A0273471A
+
     it('should display product details within orders', async () => {
         // Arrange
         useAuth.mockReturnValue([{ user: { name: 'Admin' }, token: 'valid-token' }, jest.fn()]);
@@ -219,6 +234,8 @@ describe('AdminOrders Component', () => {
     // ----------------------------------------------------------
     // HAPPY PATH: Updates order status when changed
     // ----------------------------------------------------------
+    // Alek Kwek, A0273471A
+
     it('should update order status when select value changes', async () => {
         // Arrange
         useAuth.mockReturnValue([{ user: { name: 'Admin' }, token: 'valid-token' }, jest.fn()]);
@@ -247,6 +264,8 @@ describe('AdminOrders Component', () => {
     // ----------------------------------------------------------
     // EDGE CASE: Handles status update error gracefully
     // ----------------------------------------------------------
+    // Alek Kwek, A0273471A
+
     it('should handle status update error gracefully', async () => {
         // Arrange
         const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
@@ -276,6 +295,8 @@ describe('AdminOrders Component', () => {
     // ----------------------------------------------------------
     // HAPPY PATH: Displays correct table headers
     // ----------------------------------------------------------
+    // Alek Kwek, A0273471A
+
     it('should display correct table headers', async () => {
         // Arrange
         useAuth.mockReturnValue([{ user: { name: 'Admin' }, token: 'valid-token' }, jest.fn()]);
@@ -297,6 +318,8 @@ describe('AdminOrders Component', () => {
     // ----------------------------------------------------------
     // EDGE CASE: Handles getOrders fetch error gracefully
     // ----------------------------------------------------------
+    // Alek Kwek, A0273471A
+
     it('should handle getOrders fetch error gracefully', async () => {
         // Arrange
         const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
