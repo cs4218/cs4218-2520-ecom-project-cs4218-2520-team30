@@ -10,6 +10,7 @@ import { useAuth } from '../../context/auth';
 // ============================================================
 
 // Mock context hooks
+// Alek Kwek, A0273471A
 jest.mock('../../context/auth', () => ({
     useAuth: jest.fn()
 }));
@@ -44,6 +45,7 @@ window.matchMedia = window.matchMedia || function () {
 // ============================================================
 // HELPER: Render component with router
 // ============================================================
+// Alek Kwek, A0273471A
 const renderAdminDashboard = () => {
     return render(
         <MemoryRouter initialEntries={['/dashboard/admin']}>
@@ -57,6 +59,7 @@ const renderAdminDashboard = () => {
 // ============================================================
 // TEST SUITE: AdminDashboard Component
 // ============================================================
+// Alek Kwek, A0273471A
 describe('AdminDashboard Component', () => {
     beforeEach(() => {
         jest.clearAllMocks();
@@ -65,6 +68,7 @@ describe('AdminDashboard Component', () => {
     // ----------------------------------------------------------
     // HAPPY PATH: Renders admin dashboard with user information
     // ----------------------------------------------------------
+    // Alek Kwek, A0273471A
     it('should render admin dashboard with user name, email, and phone', () => {
         // Arrange
         const mockAuth = {
@@ -89,6 +93,7 @@ describe('AdminDashboard Component', () => {
     // ----------------------------------------------------------
     // EDGE CASE: Handles missing user data gracefully
     // ----------------------------------------------------------
+    // Alek Kwek, A0273471A
     it('should handle missing user data without crashing', () => {
         // Arrange
         useAuth.mockReturnValue([{ user: null, token: '' }, jest.fn()]);
@@ -105,6 +110,7 @@ describe('AdminDashboard Component', () => {
     // ----------------------------------------------------------
     // EDGE CASE: Handles partially missing user data
     // ----------------------------------------------------------
+    // Alek Kwek, A0273471A
     it('should handle partially missing user data', () => {
         // Arrange
         const mockAuth = {
@@ -129,6 +135,7 @@ describe('AdminDashboard Component', () => {
     // ----------------------------------------------------------
     // HAPPY PATH: Displays admin panel heading
     // ----------------------------------------------------------
+    // Alek Kwek, A0273471A
     it('should display the admin dashboard layout correctly', () => {
         // Arrange
         const mockAuth = {

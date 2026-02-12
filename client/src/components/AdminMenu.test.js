@@ -4,7 +4,10 @@ import { MemoryRouter } from "react-router-dom";
 import "@testing-library/jest-dom";
 import AdminMenu from "./AdminMenu";
 
+// Alek Kwek, A0273471A
 describe("AdminMenu Component", () => {
+    // Alek Kwek, A0273471A
+
     test("renders the Admin Panel header correctly", () => {
         // Arrange
         const headingName = /admin panel/i;
@@ -21,6 +24,7 @@ describe("AdminMenu Component", () => {
         expect(headingElement).toBeInTheDocument();
     });
 
+    // Alek Kwek, A0273471A
     test("contains a navigation link to Create Category", () => {
         // Arrange
         const expectedPath = "/dashboard/admin/create-category";
@@ -39,6 +43,7 @@ describe("AdminMenu Component", () => {
         expect(link).toHaveAttribute("href", expectedPath);
     });
 
+    // Alek Kwek, A0273471A
     test("contains a navigation link to Create Product", () => {
         // Arrange
         const expectedPath = "/dashboard/admin/create-product";
@@ -57,6 +62,7 @@ describe("AdminMenu Component", () => {
         expect(link).toHaveAttribute("href", expectedPath);
     });
 
+    // Alek Kwek, A0273471A
     test("contains a navigation link to Products", () => {
         // Arrange
         const expectedPath = "/dashboard/admin/products";
@@ -76,6 +82,7 @@ describe("AdminMenu Component", () => {
         expect(link).toHaveAttribute("href", expectedPath);
     });
 
+    // Alek Kwek, A0273471A
     test("contains a navigation link to Orders", () => {
         // Arrange
         const expectedPath = "/dashboard/admin/orders";
@@ -94,6 +101,7 @@ describe("AdminMenu Component", () => {
         expect(link).toHaveAttribute("href", expectedPath);
     });
 
+    // Alek Kwek, A0273471A
     test("does not display the Users link (commented out code)", () => {
         // Arrange
         const linkName = /users/i;
