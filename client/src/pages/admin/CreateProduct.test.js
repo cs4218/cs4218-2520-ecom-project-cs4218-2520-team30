@@ -9,6 +9,7 @@ import CreateProduct from './CreateProduct';
 // ============================================================
 // MOCK EXTERNAL DEPENDENCIES (Isolation)
 // ============================================================
+// Alek Kwek, A0273471A
 
 // Mock axios for API calls
 jest.mock('axios');
@@ -80,6 +81,8 @@ global.URL.createObjectURL = jest.fn(() => 'mock-url');
 // ============================================================
 // HELPER: Render component with router
 // ============================================================
+// Alek Kwek, A0273471A
+
 const renderCreateProduct = () => {
     return render(
         <MemoryRouter initialEntries={['/dashboard/admin/create-product']}>
@@ -93,6 +96,8 @@ const renderCreateProduct = () => {
 // ============================================================
 // TEST SUITE: CreateProduct Component
 // ============================================================
+// Alek Kwek, A0273471A
+
 describe('CreateProduct Component', () => {
     beforeEach(() => {
         jest.clearAllMocks();
@@ -153,7 +158,7 @@ describe('CreateProduct Component', () => {
             data: { success: true, category: mockCategories }
         });
         axios.post.mockResolvedValueOnce({
-            data: { success: false, message: 'Product created' }
+            data: { success: true, message: 'Product created' }
         });
 
         // Act
@@ -352,15 +357,15 @@ describe('CreateProduct Component', () => {
     });
 
     // ----------------------------------------------------------
-    // EDGE CASE: Handles product creation with success:true (error case)
+    // EDGE CASE: Handles product creation failure (success:false)
     // ----------------------------------------------------------
-    it('should display error toast when create product returns success true', async () => {
+    it('should display error toast when create product returns success false', async () => {
         // Arrange
         axios.get.mockResolvedValueOnce({
             data: { success: true, category: [] }
         });
         axios.post.mockResolvedValueOnce({
-            data: { success: true, message: 'Product already exists' }
+            data: { success: false, message: 'Product already exists' }
         });
 
         // Act

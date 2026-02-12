@@ -6,10 +6,12 @@ import CategoryForm from './CategoryForm';
 // ============================================================
 // UNIT TESTS: CategoryForm Component
 // ============================================================
+// Alek Kwek, A0273471A
 describe('CategoryForm Component', () => {
     // ----------------------------------------------------------
     // RENDERING: Input field and submit button render correctly
     // ----------------------------------------------------------
+    // Alek Kwek, A0273471A
     describe('Rendering', () => {
         it('should render input field with correct placeholder', () => {
             // Arrange
@@ -70,6 +72,7 @@ describe('CategoryForm Component', () => {
     // ----------------------------------------------------------
     // INTERACTION: Typing into input calls setValue
     // ----------------------------------------------------------
+    // Alek Kwek, A0273471A
     describe('Interaction', () => {
         it('should call setValue when typing into the input field', () => {
             // Arrange
@@ -122,6 +125,7 @@ describe('CategoryForm Component', () => {
     // ----------------------------------------------------------
     // SUBMISSION: Clicking submit calls handleSubmit
     // ----------------------------------------------------------
+    // Alek Kwek, A0273471A
     describe('Submission', () => {
         it('should call handleSubmit when form is submitted', () => {
             // Arrange

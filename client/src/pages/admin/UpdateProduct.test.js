@@ -9,6 +9,7 @@ import UpdateProduct from './UpdateProduct';
 // ============================================================
 // MOCK EXTERNAL DEPENDENCIES (Isolation)
 // ============================================================
+// Alek Kwek, A0273471A
 
 // Mock axios for API calls
 jest.mock('axios');
@@ -111,6 +112,8 @@ const mockCategories = [
 // ============================================================
 // TEST SUITE: UpdateProduct Component
 // ============================================================
+// Alek Kwek, A0273471A
+
 describe('UpdateProduct Component', () => {
     beforeEach(() => {
         jest.clearAllMocks();
@@ -168,7 +171,7 @@ describe('UpdateProduct Component', () => {
             .mockResolvedValueOnce({ data: { product: mockProduct } })
             .mockResolvedValueOnce({ data: { success: true, category: mockCategories } });
         axios.put.mockResolvedValueOnce({
-            data: { success: false, message: 'Product updated' }
+            data: { success: true, message: 'Product updated' }
         });
 
         // Act
@@ -509,9 +512,9 @@ describe('UpdateProduct Component', () => {
     });
 
     // ----------------------------------------------------------
-    // EDGE CASE: Handles update with success:true (error case)
+    // EDGE CASE: Handles update failure (success:false)
     // ----------------------------------------------------------
-    it('should display error toast when update returns success true', async () => {
+    it('should display error toast when update returns success false', async () => {
         // Arrange
         axios.get.mockImplementation((url) => {
             if (url.includes('/get-product/')) {
@@ -523,7 +526,7 @@ describe('UpdateProduct Component', () => {
             return Promise.resolve({ data: {} });
         });
         axios.put.mockResolvedValueOnce({
-            data: { success: true, message: 'Update failed' }
+            data: { success: false, message: 'Update failed' }
         });
 
         // Act
@@ -582,7 +585,7 @@ describe('UpdateProduct Component', () => {
             return Promise.resolve({ data: {} });
         });
         axios.put.mockResolvedValueOnce({
-            data: { success: false, message: 'Product updated' }
+            data: { success: true, message: 'Product updated' }
         });
 
         // Act
@@ -623,7 +626,7 @@ describe('UpdateProduct Component', () => {
             return Promise.resolve({ data: {} });
         });
         axios.put.mockResolvedValueOnce({
-            data: { success: false, message: 'Product updated' }
+            data: { success: true, message: 'Product updated' }
         });
 
         // Act
