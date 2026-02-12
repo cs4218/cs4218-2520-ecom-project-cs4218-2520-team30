@@ -80,10 +80,37 @@ export const loginController = async (req, res) => {
   try {
     const { email, password } = req.body;
     //validation
-    if (!email || !password) {
+    if (!email && !password) {
       return res.status(404).send({
         success: false,
-        message: "Invalid email or password",
+        message: "Email and password are required",
+      });
+    }
+    if (!email) {
+      return res.status(404).send({
+        success: false,
+        message: "Email is required",
+      });
+    }
+    if (!password) {
+      return res.status(404).send({
+        success: false,
+        message: "Password is required",
+      });
+    }
+    //email format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).send({
+        success: false,
+        message: "Email must be a valid format",
+      });
+    }
+    //password length validation
+    if (password.length < 6) {
+      return res.status(400).send({
+        success: false,
+        message: "Password must be at least 6 characters long",
       });
     }
     //check user
