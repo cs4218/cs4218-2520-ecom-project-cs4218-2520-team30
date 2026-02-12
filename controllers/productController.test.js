@@ -16,6 +16,7 @@ jest.mock("../models/categoryModel.js");
 jest.mock('fs');
 jest.mock('slugify');
 
+// Alek Kwek, A0273471A
 jest.mock('braintree', () => ({
     BraintreeGateway: jest.fn().mockImplementation(() => ({
         clientToken: {
@@ -30,6 +31,7 @@ jest.mock('braintree', () => ({
     }
 }));
 
+// Alek Kwek, A0273471A
 describe('createProductController', () => {
     let req, res;
 
@@ -184,6 +186,7 @@ describe('createProductController', () => {
     });
 });
 
+// Alek Kwek, A0273471A
 describe('updateProductController', () => {
     let req, res;
 
@@ -342,6 +345,8 @@ describe('updateProductController', () => {
         );
     });
 });
+
+// Alek Kwek, A0273471A
 describe('deleteProductController', () => {
     let req, res;
 

@@ -37,6 +37,7 @@ export const createProductController = async (req, res) => {
       case photo && photo.size > 1000000:
         return res
           .status(500)
+          // Alek Kwek, A0273471A
           .send({ error: "Photo is Required and should be less than 1mb" });
     }
 
@@ -73,6 +74,7 @@ export const getProductController = async (req, res) => {
     res.status(200).send({
       success: true,
       countTotal: products.length,
+      // Alek Kwek, A0273471A
       message: "All Products",
       products,
     });
@@ -80,6 +82,7 @@ export const getProductController = async (req, res) => {
     console.log(error);
     res.status(500).send({
       success: false,
+      // Alek Kwek, A0273471A
       message: "Error in getting products",
       error: error.message,
     });
@@ -101,6 +104,7 @@ export const getSingleProductController = async (req, res) => {
     console.log(error);
     res.status(500).send({
       success: false,
+      // Alek Kwek, A0273471A
       message: "Error while getting single product",
       error,
     });
@@ -137,6 +141,7 @@ export const deleteProductController = async (req, res) => {
     console.log(error);
     res.status(500).send({
       success: false,
+      // Alek Kwek, A0273471A
       message: "Error while deleting product",
       error,
     });
@@ -144,6 +149,7 @@ export const deleteProductController = async (req, res) => {
 };
 
 //update product
+// Alek Kwek, A0273471A
 export const updateProductController = async (req, res) => {
   try {
     const { name, description, price, category, quantity, shipping } =
@@ -164,6 +170,7 @@ export const updateProductController = async (req, res) => {
       case photo && photo.size > 1000000:
         return res
           .status(500)
+          // Alek Kwek, A0273471A
           .send({ error: "Photo is Required and should be less than 1mb" });
     }
 
@@ -187,6 +194,7 @@ export const updateProductController = async (req, res) => {
     res.status(500).send({
       success: false,
       error,
+      // Alek Kwek, A0273471A
       message: "Error In Updating Product",
     });
   }
@@ -208,6 +216,8 @@ export const productFiltersController = async (req, res) => {
     console.log(error);
     res.status(400).send({
       success: false,
+
+      // Alek Kwek, A0273471A
       message: "Error While Filtering Products",
       error,
     });
@@ -281,6 +291,7 @@ export const searchProductController = async (req, res) => {
 };
 
 // similar products
+// Alek Kwek, A0273471A
 export const relatedProductController = async (req, res) => {
   try {
     const { pid, cid } = req.params;
@@ -305,7 +316,7 @@ export const relatedProductController = async (req, res) => {
     });
   }
 };
-
+// Alek Kwek, A0273471A
 // get products by category
 export const productCategoryController = async (req, res) => {
   try {
@@ -347,6 +358,7 @@ export const brainTreePaymentController = async (req, res) => {
   try {
     const { nonce, cart } = req.body;
     let total = 0;
+    // Alek Kwek, A0273471A
     cart.forEach((i) => {
       total += i.price;
     });
