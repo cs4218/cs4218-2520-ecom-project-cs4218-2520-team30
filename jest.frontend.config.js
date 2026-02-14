@@ -24,6 +24,7 @@ export default {
     "<rootDir>/client/src/pages/Auth/*.test.js",
     "<rootDir>/client/src/pages/Search.test.js",
     "<rootDir>/client/src/components/Form/SearchInput.test.js",
+    "<rootDir>/client/src/components/*.test.js",
     "<rootDir>/client/src/context/search.test.js"
   ],
 
@@ -33,7 +34,11 @@ export default {
     "client/src/pages/Auth/**",
     "client/src/pages/Search.js",
     "client/src/components/Form/SearchInput.js",
-    "client/src/context/search.js"
+    "client/src/context/search.js",
+    "client/src/components/Header.js",
+    "client/src/components/Footer.js",
+    "client/src/components/Layout.js",
+    "client/src/components/Spinner.js"
   ],
   coverageThreshold: {
     global: {
