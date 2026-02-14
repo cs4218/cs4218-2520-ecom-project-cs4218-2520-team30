@@ -24,6 +24,7 @@ export default {
     "<rootDir>/client/src/pages/Auth/*.test.js",
     "<rootDir>/client/src/pages/Search.test.js",
     "<rootDir>/client/src/components/Form/SearchInput.test.js",
+    "<rootDir>/client/src/components/*.test.js",
     "<rootDir>/client/src/context/search.test.js"
   ],
 
