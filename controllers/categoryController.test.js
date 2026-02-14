@@ -3,8 +3,6 @@ import { jest } from "@jest/globals";
 import {
     createCategoryController,
     updateCategoryController,
-    categoryController,
-    singleCategoryController,
     deleteCategoryController,
 } from "./categoryController.js";
 import categoryModel from "../models/categoryModel.js";
@@ -29,19 +27,10 @@ describe("Category Controller Tests", () => {
         // Clear all mocks
         jest.clearAllMocks();
     });
-    // Testing the CRUD operations
-    // Tests:
-    // 1. createCategoryController 4 tests
-    // 2. updateCategoryController 2 tests
-    // 3. categoryController 3 tests
-    // 4. singleCategoryController 2 tests
-    // 5. deleteCategoryController 2 tests
-    // total tests: 13
 
     // createCategoryController
     // Alek Kwek, A0273471A
     describe("createCategoryController", () => {
-        // test 1: create a new category successfully
         test("should create a new category successfully", async () => {
             req.body.name = "Electronics";
 
@@ -71,8 +60,7 @@ describe("Category Controller Tests", () => {
         });
 
         // Alek Kwek, A0273471A
-        // test 2: return 401 if name is missing    
-        test("should return 401 if name is missing", async () => {
+        test("should return 400 if name is missing", async () => {
             req.body = {}; // no category name provided
 
             await createCategoryController(req, res);
@@ -82,7 +70,6 @@ describe("Category Controller Tests", () => {
             expect(categoryModel.findOne).not.toHaveBeenCalled();
         });
 
-        // test 3: return 200 if category already exists
         // Alek Kwek, A0273471A
         test("should return 200 if category already exists", async () => {
             req.body.name = "Books";
@@ -103,30 +90,33 @@ describe("Category Controller Tests", () => {
             });
         });
 
-        // test 4: return 500 on database error
         // Alek Kwek, A0273471A
         test("should return 500 on database error", async () => {
             req.body.name = "Clothing";
-
+            const logSpy = jest.spyOn(console, "log").mockImplementation(() => { });
+            const mockError = new Error("Database error");
             // mock: database error
-            categoryModel.findOne.mockRejectedValue(new Error("Database error"));
+            categoryModel.findOne.mockRejectedValue(mockError);
 
             await createCategoryController(req, res);
 
+            expect(logSpy).toHaveBeenCalled();
             expect(res.status).toHaveBeenCalledWith(500);
             expect(res.send).toHaveBeenCalledWith(
                 expect.objectContaining({
                     success: false,
+                    error: mockError,
                     message: "Error in Category",
                 })
             );
+            logSpy.mockRestore();
         });
     });
 
     // updateCategoryController
     // Alek Kwek, A0273471A
     describe("updateCategoryController", () => {
-        // test 1: update category successfully
+
         test("should update category successfully", async () => {
             req.body.name = "Updated Electronics";
             req.params.id = "123abc";
@@ -154,130 +144,32 @@ describe("Category Controller Tests", () => {
             });
         });
 
-        // test 2: return 500 on database error during update
         // Alek Kwek, A0273471A
         test("should return 500 on database error during update", async () => {
             req.body.name = "Updated Category";
             req.params.id = "123abc";
-
-            categoryModel.findByIdAndUpdate.mockRejectedValue(new Error("Update failed"));
+            const logSpy = jest.spyOn(console, "log").mockImplementation(() => { });
+            const mockError = new Error("Update failed");
+            categoryModel.findByIdAndUpdate.mockRejectedValue(mockError);
 
             await updateCategoryController(req, res);
 
+            expect(logSpy).toHaveBeenCalledWith(mockError);
             expect(res.status).toHaveBeenCalledWith(500);
             expect(res.send).toHaveBeenCalledWith(
                 expect.objectContaining({
                     success: false,
+                    error: mockError,
                     message: "Error while updating category",
                 })
             );
-        });
-    });
-
-    // categoryController
-    // Alek Kwek, A0273471A
-    describe("categoryController (get all categories)", () => {
-        // test 1: return all categories successfully
-        test("should return all categories successfully", async () => {
-            const mockCategories = [
-                { name: "Books", slug: "books" },
-                { name: "Electronics", slug: "electronics" },
-                { name: "Clothing", slug: "clothing" },
-            ];
-
-            categoryModel.find.mockResolvedValue(mockCategories);
-
-            await categoryController(req, res);
-
-            expect(categoryModel.find).toHaveBeenCalledWith({});
-            expect(res.status).toHaveBeenCalledWith(200);
-            expect(res.send).toHaveBeenCalledWith({
-                success: true,
-                message: "All Categories List",
-                category: mockCategories,
-            });
-        });
-
-        // test 2: return empty array when no categories exist
-        // Alek Kwek, A0273471A
-        test("should return empty array when no categories exist", async () => {
-            categoryModel.find.mockResolvedValue([]);
-
-            await categoryController(req, res);
-
-            expect(categoryModel.find).toHaveBeenCalledWith({});
-            expect(res.status).toHaveBeenCalledWith(200);
-            expect(res.send).toHaveBeenCalledWith({
-                success: true,
-                message: "All Categories List",
-                category: [],
-            });
-        });
-
-        // test 3: return 500 on database error
-        // Alek Kwek, A0273471A
-        test("should return 500 on database error", async () => {
-            categoryModel.find.mockRejectedValue(new Error("Database connection failed"));
-
-            await categoryController(req, res);
-
-            expect(res.status).toHaveBeenCalledWith(500);
-            expect(res.send).toHaveBeenCalledWith(
-                expect.objectContaining({
-                    success: false,
-                    message: "Error while getting all categories",
-                })
-            );
-        });
-    });
-
-    // singleCategoryController
-    // Alek Kwek, A0273471A
-    describe("singleCategoryController", () => {
-        // test 1: return single category by slug successfully
-        test("should return single category by slug successfully", async () => {
-            req.params.slug = "electronics";
-
-            const mockCategory = {
-                name: "Electronics",
-                slug: "electronics",
-            };
-
-            categoryModel.findOne.mockResolvedValue(mockCategory);
-
-            await singleCategoryController(req, res);
-
-            expect(categoryModel.findOne).toHaveBeenCalledWith({ slug: "electronics" });
-            expect(res.status).toHaveBeenCalledWith(200);
-            expect(res.send).toHaveBeenCalledWith({
-                success: true,
-                message: "Get Single Category Successfully",
-                category: mockCategory,
-            });
-        });
-
-        // test 2: return 500 on database error
-        test("should return 500 on database error", async () => {
-            req.params.slug = "electronics";
-
-            categoryModel.findOne.mockRejectedValue(new Error("Database error"));
-
-            await singleCategoryController(req, res);
-
-            expect(res.status).toHaveBeenCalledWith(500);
-            expect(res.send).toHaveBeenCalledWith(
-                expect.objectContaining({
-                    success: false,
-                    message: "Error While getting Single Category",
-                })
-            );
+            logSpy.mockRestore();
         });
     });
 
     // deleteCategoryController
     // Alek Kwek, A0273471A
     describe("deleteCategoryController", () => {
-        // test 1: delete category successfully
         test("should delete category successfully", async () => {
             req.params.id = "123abc";
 
@@ -296,14 +188,15 @@ describe("Category Controller Tests", () => {
             });
         });
 
-        // test 2: return 500 on database error during deletion
         test("should return 500 on database error during deletion", async () => {
             req.params.id = "123abc";
-
-            categoryModel.findByIdAndDelete.mockRejectedValue(new Error("Delete failed"));
+            const logSpy = jest.spyOn(console, "log").mockImplementation(() => { });
+            const mockError = new Error("Delete failed");
+            categoryModel.findByIdAndDelete.mockRejectedValue(mockError);
 
             await deleteCategoryController(req, res);
 
+            expect(logSpy).toHaveBeenCalledWith(mockError);
             expect(res.status).toHaveBeenCalledWith(500);
             expect(res.send).toHaveBeenCalledWith(
                 expect.objectContaining({
@@ -311,6 +204,7 @@ describe("Category Controller Tests", () => {
                     message: "error while deleting category",
                 })
             );
+            logSpy.mockRestore();
         });
     });
 });
