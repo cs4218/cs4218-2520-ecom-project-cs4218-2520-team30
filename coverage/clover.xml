@@ -1,61 +1,180 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1771055329742" clover="3.2.0">
-  <project timestamp="1771055329742" name="All files">
-    <metrics statements="44" coveredstatements="5" conditionals="4" coveredconditionals="0" methods="6" coveredmethods="1" elements="54" coveredelements="6" complexity="0" loc="44" ncloc="44" packages="2" files="2" classes="2"/>
-    <package name="config">
-      <metrics statements="5" coveredstatements="5" conditionals="0" coveredconditionals="0" methods="1" coveredmethods="1"/>
-      <file name="db.js" path="/Users/johannsenlum/Documents/Projects/cs4218/cs4218-2520-ecom-project-cs4218-2520-team30/config/db.js">
-        <metrics statements="5" coveredstatements="5" conditionals="0" coveredconditionals="0" methods="1" coveredmethods="1"/>
-        <line num="3" count="1" type="stmt"/>
-        <line num="4" count="2" type="stmt"/>
-        <line num="5" count="2" type="stmt"/>
-        <line num="6" count="1" type="stmt"/>
-        <line num="8" count="1" type="stmt"/>
+<coverage generated="1771056234369" clover="3.2.0">
+  <project timestamp="1771056234369" name="All files">
+    <metrics statements="145" coveredstatements="71" conditionals="39" coveredconditionals="19" methods="41" coveredmethods="21" elements="225" coveredelements="111" complexity="0" loc="145" ncloc="145" packages="4" files="6" classes="6"/>
+    <package name="components.Form">
+      <metrics statements="12" coveredstatements="0" conditionals="0" coveredconditionals="0" methods="3" coveredmethods="0"/>
+      <file name="SearchInput.js" path="/Users/johannsenlum/Documents/Projects/cs4218/cs4218-2520-ecom-project-cs4218-2520-team30/client/src/components/Form/SearchInput.js">
+        <metrics statements="12" coveredstatements="0" conditionals="0" coveredconditionals="0" methods="3" coveredmethods="0"/>
+        <line num="5" count="0" type="stmt"/>
+        <line num="6" count="0" type="stmt"/>
+        <line num="7" count="0" type="stmt"/>
+        <line num="9" count="0" type="stmt"/>
+        <line num="10" count="0" type="stmt"/>
+        <line num="11" count="0" type="stmt"/>
+        <line num="12" count="0" type="stmt"/>
+        <line num="15" count="0" type="stmt"/>
+        <line num="16" count="0" type="stmt"/>
+        <line num="18" count="0" type="stmt"/>
+        <line num="21" count="0" type="stmt"/>
+        <line num="30" count="0" type="stmt"/>
       </file>
     </package>
-    <package name="controllers">
-      <metrics statements="39" coveredstatements="0" conditionals="4" coveredconditionals="0" methods="5" coveredmethods="0"/>
-      <file name="categoryController.js" path="/Users/johannsenlum/Documents/Projects/cs4218/cs4218-2520-ecom-project-cs4218-2520-team30/controllers/categoryController.js">
-        <metrics statements="39" coveredstatements="0" conditionals="4" coveredconditionals="0" methods="5" coveredmethods="0"/>
+    <package name="context">
+      <metrics statements="5" coveredstatements="0" conditionals="0" coveredconditionals="0" methods="2" coveredmethods="0"/>
+      <file name="search.js" path="/Users/johannsenlum/Documents/Projects/cs4218/cs4218-2520-ecom-project-cs4218-2520-team30/client/src/context/search.js">
+        <metrics statements="5" coveredstatements="0" conditionals="0" coveredconditionals="0" methods="2" coveredmethods="0"/>
         <line num="3" count="0" type="stmt"/>
         <line num="4" count="0" type="stmt"/>
         <line num="5" count="0" type="stmt"/>
-        <line num="6" count="0" type="cond" truecount="0" falsecount="2"/>
-        <line num="7" count="0" type="stmt"/>
+        <line num="10" count="0" type="stmt"/>
+        <line num="18" count="0" type="stmt"/>
+      </file>
+    </package>
+    <package name="pages">
+      <metrics statements="75" coveredstatements="71" conditionals="23" coveredconditionals="19" methods="23" coveredmethods="21"/>
+      <file name="HomePage.js" path="/Users/johannsenlum/Documents/Projects/cs4218/cs4218-2520-ecom-project-cs4218-2520-team30/client/src/pages/HomePage.js">
+        <metrics statements="71" coveredstatements="71" conditionals="19" coveredconditionals="19" methods="21" coveredmethods="21"/>
+        <line num="12" count="1" type="stmt"/>
+        <line num="13" count="61" type="stmt"/>
+        <line num="14" count="61" type="stmt"/>
+        <line num="15" count="61" type="stmt"/>
+        <line num="16" count="60" type="stmt"/>
+        <line num="17" count="60" type="stmt"/>
+        <line num="18" count="60" type="stmt"/>
+        <line num="19" count="60" type="stmt"/>
+        <line num="20" count="60" type="stmt"/>
+        <line num="21" count="60" type="stmt"/>
+        <line num="24" count="60" type="stmt"/>
+        <line num="25" count="14" type="stmt"/>
+        <line num="26" count="14" type="stmt"/>
+        <line num="27" count="13" type="cond" truecount="2" falsecount="0"/>
+        <line num="28" count="12" type="stmt"/>
+        <line num="31" count="1" type="stmt"/>
+        <line num="35" count="60" type="stmt"/>
+        <line num="36" count="14" type="stmt"/>
+        <line num="37" count="14" type="stmt"/>
+        <line num="40" count="60" type="stmt"/>
+        <line num="41" count="20" type="stmt"/>
+        <line num="42" count="20" type="stmt"/>
+        <line num="43" count="20" type="stmt"/>
+        <line num="44" count="13" type="stmt"/>
+        <line num="45" count="13" type="stmt"/>
+        <line num="47" count="7" type="stmt"/>
+        <line num="48" count="7" type="stmt"/>
+        <line num="53" count="60" type="stmt"/>
+        <line num="54" count="14" type="stmt"/>
+        <line num="55" count="14" type="stmt"/>
+        <line num="56" count="13" type="stmt"/>
+        <line num="58" count="1" type="stmt"/>
+        <line num="62" count="60" type="stmt"/>
+        <line num="63" count="16" type="cond" truecount="2" falsecount="0"/>
+        <line num="64" count="2" type="stmt"/>
+        <line num="67" count="60" type="stmt"/>
+        <line num="68" count="2" type="stmt"/>
+        <line num="69" count="2" type="stmt"/>
+        <line num="70" count="2" type="stmt"/>
+        <line num="71" count="1" type="stmt"/>
+        <line num="72" count="1" type="stmt"/>
+        <line num="74" count="1" type="stmt"/>
+        <line num="75" count="1" type="stmt"/>
+        <line num="80" count="60" type="stmt"/>
+        <line num="81" count="5" type="stmt"/>
+        <line num="82" count="5" type="cond" truecount="2" falsecount="0"/>
+        <line num="83" count="4" type="stmt"/>
+        <line num="85" count="1" type="stmt"/>
+        <line num="87" count="5" type="stmt"/>
+        <line num="89" count="60" type="stmt"/>
+        <line num="90" count="21" type="cond" truecount="4" falsecount="0"/>
+        <line num="93" count="60" type="stmt"/>
+        <line num="94" count="21" type="cond" truecount="4" falsecount="0"/>
+        <line num="98" count="60" type="stmt"/>
+        <line num="99" count="6" type="stmt"/>
+        <line num="100" count="6" type="stmt"/>
+        <line num="104" count="4" type="stmt"/>
+        <line num="106" count="2" type="stmt"/>
+        <line num="109" count="60" type="stmt"/>
+        <line num="124" count="18" type="stmt"/>
+        <line num="126" count="5" type="stmt"/>
+        <line num="135" count="2" type="stmt"/>
+        <line num="137" count="60" type="stmt"/>
+        <line num="146" count="1" type="stmt"/>
+        <line num="156" count="15" type="stmt"/>
+        <line num="178" count="1" type="stmt"/>
+        <line num="185" count="1" type="stmt"/>
+        <line num="186" count="1" type="stmt"/>
+        <line num="190" count="1" type="stmt"/>
+        <line num="205" count="2" type="stmt"/>
+        <line num="206" count="2" type="stmt"/>
+      </file>
+      <file name="Search.js" path="/Users/johannsenlum/Documents/Projects/cs4218/cs4218-2520-ecom-project-cs4218-2520-team30/client/src/pages/Search.js">
+        <metrics statements="4" coveredstatements="0" conditionals="4" coveredconditionals="0" methods="2" coveredmethods="0"/>
+        <line num="4" count="0" type="stmt"/>
+        <line num="5" count="0" type="stmt"/>
+        <line num="6" count="0" type="stmt"/>
+        <line num="18" count="0" type="stmt"/>
+      </file>
+    </package>
+    <package name="pages.Auth">
+      <metrics statements="53" coveredstatements="0" conditionals="16" coveredconditionals="0" methods="13" coveredmethods="0"/>
+      <file name="Login.js" path="/Users/johannsenlum/Documents/Projects/cs4218/cs4218-2520-ecom-project-cs4218-2520-team30/client/src/pages/Auth/Login.js">
+        <metrics statements="22" coveredstatements="0" conditionals="8" coveredconditionals="0" methods="5" coveredmethods="0"/>
         <line num="9" count="0" type="stmt"/>
-        <line num="10" count="0" type="cond" truecount="0" falsecount="2"/>
+        <line num="10" count="0" type="stmt"/>
         <line num="11" count="0" type="stmt"/>
+        <line num="12" count="0" type="stmt"/>
+        <line num="15" count="0" type="stmt"/>
         <line num="16" count="0" type="stmt"/>
         <line num="20" count="0" type="stmt"/>
-        <line num="26" count="0" type="stmt"/>
-        <line num="27" count="0" type="stmt"/>
+        <line num="21" count="0" type="stmt"/>
+        <line num="22" count="0" type="stmt"/>
+        <line num="23" count="0" type="stmt"/>
+        <line num="27" count="0" type="cond" truecount="0" falsecount="4"/>
+        <line num="28" count="0" type="cond" truecount="0" falsecount="2"/>
         <line num="36" count="0" type="stmt"/>
-        <line num="37" count="0" type="stmt"/>
-        <line num="38" count="0" type="stmt"/>
-        <line num="39" count="0" type="stmt"/>
-        <line num="40" count="0" type="stmt"/>
-        <line num="45" count="0" type="stmt"/>
+        <line num="41" count="0" type="stmt"/>
+        <line num="42" count="0" type="cond" truecount="0" falsecount="2"/>
+        <line num="44" count="0" type="stmt"/>
+        <line num="47" count="0" type="stmt"/>
+        <line num="48" count="0" type="stmt"/>
         <line num="51" count="0" type="stmt"/>
+        <line num="62" count="0" type="stmt"/>
+        <line num="73" count="0" type="stmt"/>
+        <line num="85" count="0" type="stmt"/>
+      </file>
+      <file name="Register.js" path="/Users/johannsenlum/Documents/Projects/cs4218/cs4218-2520-ecom-project-cs4218-2520-team30/client/src/pages/Auth/Register.js">
+        <metrics statements="31" coveredstatements="0" conditionals="8" coveredconditionals="0" methods="8" coveredmethods="0"/>
+        <line num="7" count="0" type="stmt"/>
+        <line num="8" count="0" type="stmt"/>
+        <line num="9" count="0" type="stmt"/>
+        <line num="10" count="0" type="stmt"/>
+        <line num="11" count="0" type="stmt"/>
+        <line num="12" count="0" type="stmt"/>
+        <line num="13" count="0" type="stmt"/>
+        <line num="14" count="0" type="stmt"/>
+        <line num="17" count="0" type="stmt"/>
+        <line num="18" count="0" type="stmt"/>
+        <line num="21" count="0" type="cond" truecount="0" falsecount="2"/>
+        <line num="22" count="0" type="stmt"/>
+        <line num="23" count="0" type="stmt"/>
+        <line num="26" count="0" type="cond" truecount="0" falsecount="2"/>
+        <line num="27" count="0" type="stmt"/>
+        <line num="28" count="0" type="stmt"/>
+        <line num="31" count="0" type="stmt"/>
+        <line num="32" count="0" type="stmt"/>
+        <line num="40" count="0" type="cond" truecount="0" falsecount="4"/>
+        <line num="41" count="0" type="stmt"/>
+        <line num="42" count="0" type="stmt"/>
+        <line num="44" count="0" type="stmt"/>
+        <line num="47" count="0" type="stmt"/>
+        <line num="48" count="0" type="stmt"/>
         <line num="52" count="0" type="stmt"/>
         <line num="61" count="0" type="stmt"/>
-        <line num="62" count="0" type="stmt"/>
-        <line num="63" count="0" type="stmt"/>
-        <line num="64" count="0" type="stmt"/>
-        <line num="70" count="0" type="stmt"/>
-        <line num="71" count="0" type="stmt"/>
-        <line num="80" count="0" type="stmt"/>
-        <line num="81" count="0" type="stmt"/>
-        <line num="82" count="0" type="stmt"/>
-        <line num="83" count="0" type="stmt"/>
-        <line num="89" count="0" type="stmt"/>
-        <line num="90" count="0" type="stmt"/>
-        <line num="99" count="0" type="stmt"/>
-        <line num="100" count="0" type="stmt"/>
-        <line num="101" count="0" type="stmt"/>
-        <line num="102" count="0" type="stmt"/>
-        <line num="103" count="0" type="stmt"/>
-        <line num="108" count="0" type="stmt"/>
-        <line num="109" count="0" type="stmt"/>
+        <line num="73" count="0" type="stmt"/>
+        <line num="84" count="0" type="stmt"/>
+        <line num="95" count="0" type="stmt"/>
+        <line num="106" count="0" type="stmt"/>
+        <line num="117" count="0" type="stmt"/>
       </file>
     </package>
   </project>
