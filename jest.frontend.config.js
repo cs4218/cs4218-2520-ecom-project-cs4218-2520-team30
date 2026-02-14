@@ -39,6 +39,10 @@ export default {
     "client/src/context/search.js",
     "client/src/pages/About.js",
     "client/src/pages/Pagenotfound.js",
+    "client/src/components/Header.js",
+    "client/src/components/Footer.js",
+    "client/src/components/Layout.js",
+    "client/src/components/Spinner.js"
   ],
   coverageThreshold: {
     global: {
