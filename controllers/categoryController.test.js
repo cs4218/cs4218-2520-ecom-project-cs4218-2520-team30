@@ -1,15 +1,24 @@
-import { jest } from "@jest/globals";
-// import
+import slugify from "slugify";
 import {
+    categoryController,
+    singleCategoryController,
     createCategoryController,
     updateCategoryController,
     deleteCategoryController,
 } from "./categoryController.js";
 import categoryModel from "../models/categoryModel.js";
 
-// Alek Kwek, A0273471A
-// mock the category model
 jest.mock("../models/categoryModel.js");
+jest.mock("slugify");
+const mockSave = jest.fn();
+beforeEach(() => {
+    categoryModel.mockImplementation(function (data) {
+        return { save: mockSave };
+    });
+});
+
+
+// mock the category model
 // Alek Kwek, A0273471A
 describe("Category Controller Tests", () => {
     let req, res;
@@ -32,6 +41,7 @@ describe("Category Controller Tests", () => {
     // Alek Kwek, A0273471A
     describe("createCategoryController", () => {
         test("should create a new category successfully", async () => {
+            // ARRANGE
             req.body.name = "Electronics";
 
             // mock: category doesn't exist
@@ -45,8 +55,10 @@ describe("Category Controller Tests", () => {
                 }),
             }));
 
+            // ACT
             await createCategoryController(req, res);
 
+            // ASSERT
             expect(categoryModel.findOne).toHaveBeenCalledWith({ name: "Electronics" });
             expect(res.status).toHaveBeenCalledWith(201);
             expect(res.send).toHaveBeenCalledWith({
@@ -61,10 +73,13 @@ describe("Category Controller Tests", () => {
 
         // Alek Kwek, A0273471A
         test("should return 400 if name is missing", async () => {
+            // ARRANGE
             req.body = {}; // no category name provided
 
+            // ACT
             await createCategoryController(req, res);
 
+            // ASSERT
             expect(res.status).toHaveBeenCalledWith(400);
             expect(res.send).toHaveBeenCalledWith({ message: "Name is required" });
             expect(categoryModel.findOne).not.toHaveBeenCalled();
@@ -72,6 +87,7 @@ describe("Category Controller Tests", () => {
 
         // Alek Kwek, A0273471A
         test("should return 200 if category already exists", async () => {
+            // ARRANGE
             req.body.name = "Books";
 
             // mock: category already exists
@@ -80,8 +96,10 @@ describe("Category Controller Tests", () => {
                 slug: "books",
             });
 
+            // ACT
             await createCategoryController(req, res);
 
+            // ASSERT
             expect(categoryModel.findOne).toHaveBeenCalledWith({ name: "Books" });
             expect(res.status).toHaveBeenCalledWith(200);
             expect(res.send).toHaveBeenCalledWith({
@@ -92,14 +110,17 @@ describe("Category Controller Tests", () => {
 
         // Alek Kwek, A0273471A
         test("should return 500 on database error", async () => {
+            // ARRANGE
             req.body.name = "Clothing";
             const logSpy = jest.spyOn(console, "log").mockImplementation(() => { });
             const mockError = new Error("Database error");
             // mock: database error
             categoryModel.findOne.mockRejectedValue(mockError);
 
+            // ACT
             await createCategoryController(req, res);
 
+            // ASSERT
             expect(logSpy).toHaveBeenCalled();
             expect(res.status).toHaveBeenCalledWith(500);
             expect(res.send).toHaveBeenCalledWith(
@@ -118,6 +139,7 @@ describe("Category Controller Tests", () => {
     describe("updateCategoryController", () => {
 
         test("should update category successfully", async () => {
+            // ARRANGE
             req.body.name = "Updated Electronics";
             req.params.id = "123abc";
 
@@ -126,11 +148,14 @@ describe("Category Controller Tests", () => {
                 name: "Updated Electronics",
                 slug: "updated-electronics",
             };
+            slugify.mockReturnValue("Updated-Electronics");
 
             categoryModel.findByIdAndUpdate.mockResolvedValue(updatedCategory);
 
+            // ACT
             await updateCategoryController(req, res);
 
+            // ASSERT
             expect(categoryModel.findByIdAndUpdate).toHaveBeenCalledWith(
                 "123abc",
                 { name: "Updated Electronics", slug: "Updated-Electronics" },
@@ -146,14 +171,17 @@ describe("Category Controller Tests", () => {
 
         // Alek Kwek, A0273471A
         test("should return 500 on database error during update", async () => {
+            // ARRANGE
             req.body.name = "Updated Category";
             req.params.id = "123abc";
             const logSpy = jest.spyOn(console, "log").mockImplementation(() => { });
             const mockError = new Error("Update failed");
             categoryModel.findByIdAndUpdate.mockRejectedValue(mockError);
 
+            // ACT
             await updateCategoryController(req, res);
 
+            // ASSERT
             expect(logSpy).toHaveBeenCalledWith(mockError);
             expect(res.status).toHaveBeenCalledWith(500);
             expect(res.send).toHaveBeenCalledWith(
@@ -171,6 +199,7 @@ describe("Category Controller Tests", () => {
     // Alek Kwek, A0273471A
     describe("deleteCategoryController", () => {
         test("should delete category successfully", async () => {
+            // ARRANGE
             req.params.id = "123abc";
 
             categoryModel.findByIdAndDelete.mockResolvedValue({
@@ -178,8 +207,10 @@ describe("Category Controller Tests", () => {
                 name: "Electronics",
             });
 
+            // ACT
             await deleteCategoryController(req, res);
 
+            // ASSERT
             expect(categoryModel.findByIdAndDelete).toHaveBeenCalledWith("123abc");
             expect(res.status).toHaveBeenCalledWith(200);
             expect(res.send).toHaveBeenCalledWith({
@@ -189,13 +220,16 @@ describe("Category Controller Tests", () => {
         });
 
         test("should return 500 on database error during deletion", async () => {
+            // ARRANGE
             req.params.id = "123abc";
             const logSpy = jest.spyOn(console, "log").mockImplementation(() => { });
             const mockError = new Error("Delete failed");
             categoryModel.findByIdAndDelete.mockRejectedValue(mockError);
 
+            // ACT
             await deleteCategoryController(req, res);
 
+            // ASSERT
             expect(logSpy).toHaveBeenCalledWith(mockError);
             expect(res.status).toHaveBeenCalledWith(500);
             expect(res.send).toHaveBeenCalledWith(
@@ -208,3 +242,4 @@ describe("Category Controller Tests", () => {
         });
     });
 });
+
