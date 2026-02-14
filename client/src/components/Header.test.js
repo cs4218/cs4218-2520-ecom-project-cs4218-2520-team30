@@ -1,5 +1,5 @@
 import React from "react";
-import { render, screen } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import "@testing-library/jest-dom";
 
@@ -20,9 +20,15 @@ jest.mock("./Form/SearchInput", () => () => (
   <div data-testid="search-input">Search</div>
 ));
 
+jest.mock("react-hot-toast", () => ({
+  __esModule: true,
+  default: { success: jest.fn() },
+}));
+
 import { useAuth } from "../context/auth";
 import { useCart } from "../context/cart";
 import useCategory from "../hooks/useCategory";
+import toast from "react-hot-toast";
 import Header from "./Header";
 
 describe("Header Component", () => {
@@ -74,5 +80,76 @@ describe("Header Component", () => {
     expect(screen.getByText(/Dashboard/i)).toBeInTheDocument();
     // Ensure Login is NOT present
     expect(screen.queryByText(/Login/i)).not.toBeInTheDocument();
+  });
+
+  it("calls handleLogout when Logout is clicked", () => {
+    // Lum Yi Ren Johannsen, A0273503L
+    // ARRANGE
+    const mockSetAuth = jest.fn();
+    useAuth.mockReturnValue([
+      { user: { name: "John", role: 0 }, token: "tk" },
+      mockSetAuth,
+    ]);
+    useCart.mockReturnValue([[]]);
+    const removeItemSpy = jest.spyOn(Storage.prototype, "removeItem").mockImplementation(() => {});
+
+    // ACT
+    render(
+      <MemoryRouter>
+        <Header />
+      </MemoryRouter>
+    );
+    fireEvent.click(screen.getByText(/Logout/i));
+
+    // ASSERT
+    expect(mockSetAuth).toHaveBeenCalledWith(expect.objectContaining({ user: null, token: "" }));
+    expect(removeItemSpy).toHaveBeenCalledWith("auth");
+    expect(toast.success).toHaveBeenCalledWith("Logout Successfully");
+    removeItemSpy.mockRestore();
+  });
+
+  it("renders category links when categories are provided", () => {
+    // Lum Yi Ren Johannsen, A0273503L
+    // ARRANGE
+    useAuth.mockReturnValue([{ user: null, token: "" }, jest.fn()]);
+    useCart.mockReturnValue([[]]);
+    useCategory.mockReturnValue([{ slug: "tech", name: "Tech" }]);
+
+    // ACT
+    render(
+      <MemoryRouter>
+        <Header />
+      </MemoryRouter>
+    );
+
+    // ASSERT
+    expect(screen.getByText("Tech")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Tech/i })).toHaveAttribute(
+      "href",
+      expect.stringContaining("/category/tech")
+    );
+  });
+
+  it("renders dashboard link to /dashboard/admin for admin role", () => {
+    // Lum Yi Ren Johannsen, A0273503L
+    // ARRANGE
+    useAuth.mockReturnValue([
+      { user: { name: "Admin", role: 1 }, token: "tk" },
+      jest.fn(),
+    ]);
+    useCart.mockReturnValue([[]]);
+
+    // ACT
+    render(
+      <MemoryRouter>
+        <Header />
+      </MemoryRouter>
+    );
+
+    // ASSERT
+    expect(screen.getByRole("link", { name: /Dashboard/i })).toHaveAttribute(
+      "href",
+      expect.stringContaining("/dashboard/admin")
+    );
   });
 });

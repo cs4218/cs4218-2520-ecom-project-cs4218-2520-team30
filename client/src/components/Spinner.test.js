@@ -1,5 +1,5 @@
 import React from "react";
-import { render, screen } from "@testing-library/react";
+import { render, screen, act } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import "@testing-library/jest-dom";
 
@@ -15,6 +15,10 @@ jest.mock("react-router-dom", () => ({
 import Spinner from "./Spinner";
 
 describe("Spinner Component", () => {
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
   it("renders the spinner element correctly", () => {
     // Lum Yi Ren Johannsen, A0273503L
     // ARRANGE
@@ -31,5 +35,33 @@ describe("Spinner Component", () => {
     expect(screen.getByText(/redirecting/i)).toBeInTheDocument();
     expect(screen.getByText(/redirecting to you in 3 second/i)).toBeInTheDocument();
     expect(screen.getByRole("status")).toBeInTheDocument();
+  });
+
+  it("countdown reaches zero and navigates to path with state", () => {
+    // Lum Yi Ren Johannsen, A0273503L
+    // ARRANGE
+    jest.useFakeTimers();
+
+    // ACT
+    render(
+      <MemoryRouter>
+        <Spinner path="login" />
+      </MemoryRouter>
+    );
+    act(() => {
+      jest.advanceTimersByTime(1000);
+    });
+    act(() => {
+      jest.advanceTimersByTime(1000);
+    });
+    act(() => {
+      jest.advanceTimersByTime(1000);
+    });
+
+    // ASSERT
+    expect(mockedNavigate).toHaveBeenCalledWith(
+      "/login",
+      expect.objectContaining({ state: "/" })
+    );
   });
 });
