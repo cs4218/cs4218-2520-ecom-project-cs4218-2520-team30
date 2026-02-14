@@ -113,7 +113,7 @@ describe("Auth Controller - Login", () => {
       await loginController(fakeReq, fakeRes);
 
       // Assert
-      expect(fakeRes.status).toHaveBeenCalledWith(404);
+      expect(fakeRes.status).toHaveBeenCalledWith(400);
       expect(fakeRes.send).toHaveBeenCalledWith({
         success: false,
         message: "Email and password are required",
@@ -131,7 +131,7 @@ describe("Auth Controller - Login", () => {
       await loginController(fakeReq, fakeRes);
 
       // Assert
-      expect(fakeRes.status).toHaveBeenCalledWith(404);
+      expect(fakeRes.status).toHaveBeenCalledWith(400);
       expect(fakeRes.send).toHaveBeenCalledWith({
         success: false,
         message: "Email is required",
@@ -149,7 +149,7 @@ describe("Auth Controller - Login", () => {
       await loginController(fakeReq, fakeRes);
 
       // Assert
-      expect(fakeRes.status).toHaveBeenCalledWith(404);
+      expect(fakeRes.status).toHaveBeenCalledWith(400);
       expect(fakeRes.send).toHaveBeenCalledWith({
         success: false,
         message: "Password is required",
@@ -168,7 +168,7 @@ describe("Auth Controller - Login", () => {
       await loginController(fakeReq, fakeRes);
 
       // Assert
-      expect(fakeRes.status).toHaveBeenCalledWith(404);
+      expect(fakeRes.status).toHaveBeenCalledWith(400);
       expect(fakeRes.send).toHaveBeenCalledWith({
         success: false,
         message: "Email is required",
@@ -186,7 +186,7 @@ describe("Auth Controller - Login", () => {
       await loginController(fakeReq, fakeRes);
 
       // Assert
-      expect(fakeRes.status).toHaveBeenCalledWith(404);
+      expect(fakeRes.status).toHaveBeenCalledWith(400);
       expect(fakeRes.send).toHaveBeenCalledWith({
         success: false,
         message: "Password is required",
