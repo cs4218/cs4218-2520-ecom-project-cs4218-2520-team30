@@ -223,6 +223,71 @@ describe('createProductController', () => {
         expect(mockSave).toHaveBeenCalledTimes(1);
         expect(fs.readFileSync).not.toHaveBeenCalled();
     });
+
+    // BVA Tests for createProductController
+    test('should return 500 if price is negative', async () => {
+        // 1. Arrange
+        req.fields.price = -1;
+
+        // 2. Act
+        await createProductController(req, res);
+
+        // 3. Assert
+        expect(res.status).toHaveBeenCalledWith(500);
+        expect(res.send).toHaveBeenCalledWith({ error: "Price must be non-negative" });
+    });
+
+    test('should return 500 if quantity is negative', async () => {
+        // 1. Arrange
+        req.fields.quantity = -1;
+
+        // 2. Act
+        await createProductController(req, res);
+
+        // 3. Assert
+        expect(res.status).toHaveBeenCalledWith(500);
+        expect(res.send).toHaveBeenCalledWith({ error: "Quantity must be non-negative" });
+    });
+
+    test('should allow quantity 0', async () => {
+        // 1. Arrange
+        req.fields.quantity = 0;
+        const mockSave = jest.fn().mockResolvedValue(true);
+        productModel.mockImplementation(() => ({ save: mockSave, photo: {} }));
+
+        // 2. Act
+        await createProductController(req, res);
+
+        // 3. Assert
+        expect(res.status).toHaveBeenCalledWith(201);
+    });
+
+    test('should return 500 if photo size is greater than 1MB (Boundary + 1)', async () => {
+        // 1. Arrange
+        req.files.photo.size = 1000001; // 1MB + 1 byte
+
+        // 2. Act
+        await createProductController(req, res);
+
+        // 3. Assert
+        expect(res.status).toHaveBeenCalledWith(500);
+        expect(res.send).toHaveBeenCalledWith({
+            error: "Photo is Required to be less than 1mb"
+        });
+    });
+
+    test('should allow photo size equal to 1MB (Boundary)', async () => {
+        // 1. Arrange
+        req.files.photo.size = 1000000; // 1MB exact
+        const mockSave = jest.fn().mockResolvedValue(true);
+        productModel.mockImplementation(() => ({ save: mockSave, photo: {} }));
+
+        // 2. Act
+        await createProductController(req, res);
+
+        // 3. Assert
+        expect(res.status).toHaveBeenCalledWith(201);
+    });
 });
 
 // Alek Kwek, A0273471A
@@ -493,5 +558,62 @@ describe('updateProductController', () => {
                 error: mockError
             })
         );
+    });
+
+    // BVA Tests for updateProductController
+    test('should return 500 if price is negative', async () => {
+        // 1. Arrange
+        req.fields.price = -10;
+
+        // 2. Act
+        await updateProductController(req, res);
+
+        // 3. Assert
+        expect(res.status).toHaveBeenCalledWith(500);
+        expect(res.send).toHaveBeenCalledWith({ error: "Price must be non-negative" });
+    });
+
+    test('should return 500 if quantity is negative', async () => {
+        // 1. Arrange
+        req.fields.quantity = -5;
+
+        // 2. Act
+        await updateProductController(req, res);
+
+        // 3. Assert
+        expect(res.status).toHaveBeenCalledWith(500);
+        expect(res.send).toHaveBeenCalledWith({ error: "Quantity must be non-negative" });
+    });
+
+    test('should allow quantity 0', async () => {
+        // 1. Arrange
+        req.fields.quantity = 0;
+        const mockProduct = {
+            _id: 'product123',
+            name: 'Updated Laptop',
+            photo: {}, // Added photo object for the test
+            save: jest.fn().mockResolvedValue(true)
+        };
+        productModel.findByIdAndUpdate.mockResolvedValue(mockProduct);
+
+        // 2. Act
+        await updateProductController(req, res);
+
+        // 3. Assert
+        expect(res.status).toHaveBeenCalledWith(201);
+    });
+
+    test('should return 500 if photo size is greater than 1MB', async () => {
+        // 1. Arrange
+        req.files.photo.size = 1000001;
+
+        // 2. Act
+        await updateProductController(req, res);
+
+        // 3. Assert
+        expect(res.status).toHaveBeenCalledWith(500);
+        expect(res.send).toHaveBeenCalledWith({
+            error: "Photo is Required and should be less than 1mb"
+        });
     });
 });
