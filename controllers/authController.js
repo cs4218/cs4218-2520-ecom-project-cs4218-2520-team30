@@ -290,7 +290,7 @@ export const orderStatusController = async (req, res) => {
     console.log(error);
     res.status(500).send({
       success: false,
-      message: "Error While Updateing Order",
+      message: "Error While Updating Order", // Leong Soon Mun Stephane, A0273409B
       error,
     });
   }

@@ -1,4 +1,4 @@
-import { jest, describe, beforeEach, beforeAll, it, expect } from "@jest/globals";
+import { jest, describe, beforeEach, beforeAll, it, expect, afterEach } from "@jest/globals";
 
 jest.mock("../helpers/authHelper.js");
 
@@ -6,14 +6,18 @@ jest.mock("jsonwebtoken");
 
 // Import everything
 import userModel from "../models/userModel.js";
+import orderModel from "../models/orderModel.js";
 import { hashPassword, comparePassword } from "../helpers/authHelper.js";
 import JWT from "jsonwebtoken";
 import {
   registerController,
   loginController,
   forgotPasswordController,
-  testController
+  testController,
+  orderStatusController
 } from "./authController.js";
+
+jest.mock("../models/orderModel.js");
 
 jest.spyOn(userModel, 'findOne');
 jest.spyOn(userModel, 'findById');
@@ -690,5 +694,65 @@ describe("Auth Controller - Database Error Handling", () => {
 
       consoleSpy.mockRestore();
     });
+  });
+});
+
+describe('Auth Controller - Order', () => {
+  let consoleLogSpy;
+  let req, res;
+
+  describe('orderStatusController', () => {
+    
+    beforeEach(() => {
+      req = {
+        body: {},
+        params: {},
+      };
+      res = {
+        status: jest.fn().mockReturnThis(),
+        send: jest.fn(),
+        json: jest.fn(),
+      };
+      consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => { });
+      jest.clearAllMocks();
+    });
+
+    afterEach(() => {
+      consoleLogSpy.mockRestore();
+    });
+
+    it('should respond with orders in json', async () => { // Leong Soon Mun Stephane, A0273409B
+      // Arrange
+      req.params.orderId = 1;
+      req.body.status = 200;
+      orderModel.findByIdAndUpdate.mockResolvedValueOnce(null);
+
+      // Act
+      await orderStatusController(req, res)
+
+      // Assert
+      expect(orderModel.findByIdAndUpdate).toHaveBeenCalledWith(1, { status: 200 }, { new: true },);
+      expect(res.json).toHaveBeenCalled();
+    });
+
+    it('should respond with 500 and error message', async () => { // Leong Soon Mun Stephane, A0273409B
+      // Arrange
+      req.params.orderId = 1;
+      req.body.status = 200;
+      let mockError = new Error('findByIdAndUpdate error')
+      orderModel.findByIdAndUpdate.mockRejectedValueOnce(mockError);
+
+      // Act
+      await orderStatusController(req, res)
+
+      // Assert
+      expect(consoleLogSpy).toHaveBeenCalledWith(mockError);
+      expect(res.status).toHaveBeenCalledWith(500);
+      expect(res.send).toHaveBeenCalledWith({
+        success: false,
+        message: "Error While Updating Order",
+        error: mockError,
+       });
+    })
   });
 });
