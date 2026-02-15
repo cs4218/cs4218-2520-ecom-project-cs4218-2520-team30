@@ -68,11 +68,16 @@ describe('createProductController', () => {
 
     test('should successfully create a product', async () => {
         // Mock the product instance and .save() method
+
         const mockSave = jest.fn().mockResolvedValue(true);
-        productModel.mockImplementation(() => ({
+        const mockProduct = {
             save: mockSave,
-            photo: {}
-        }));
+            photo: {},
+            name: "Test Product", // Added for clarity
+            _id: "12345"          // Added for clarity
+        };
+
+        productModel.mockImplementation(() => mockProduct);
 
         fs.readFileSync.mockReturnValue(Buffer.from('fake-image-data'));
 
@@ -82,7 +87,8 @@ describe('createProductController', () => {
         expect(res.send).toHaveBeenCalledWith(
             expect.objectContaining({
                 success: true,
-                message: "Product Created Successfully"
+                message: "Product Created Successfully",
+                products: mockProduct // Validate that the product object is returned
             })
         );
         expect(mockSave).toHaveBeenCalledTimes(1);
@@ -140,13 +146,16 @@ describe('createProductController', () => {
 
         expect(res.status).toHaveBeenCalledWith(500);
         expect(res.send).toHaveBeenCalledWith({
-            error: "Photo is Required and should be less than 1mb"
+            error: "Photo is Required to be less than 1mb"
         });
     });
 
     test('should handle internal errors and return 500', async () => {
+        // Create the specific error we expect to see returned
+        const mockError = new Error('Database Error');
+
         productModel.mockImplementation(() => {
-            throw new Error('Database Error');
+            throw mockError;
         });
 
         await createProductController(req, res);
@@ -155,21 +164,27 @@ describe('createProductController', () => {
         expect(res.send).toHaveBeenCalledWith(
             expect.objectContaining({
                 success: false,
-                message: "Error in creating product"
+                message: "Error in creating product",
+                error: mockError // <--- Added this line to satisfy the "expect for error" comment
             })
         );
     });
 
     test('should successfully create a product without a photo', async () => {
-        // Remove photo from request to test the else branch of line 44
-        req.files = {}; // No photo provided
+        // Remove photo from request to test the else branch
+        req.files = {};
 
-        // Mock the product instance and .save() method
         const mockSave = jest.fn().mockResolvedValue(true);
-        productModel.mockImplementation(() => ({
+
+        // Define specific mock object to verify it is returned
+        const mockProduct = {
             save: mockSave,
-            photo: {}
-        }));
+            photo: {},
+            name: "Product No Photo",
+            _id: "no-photo-id"
+        };
+
+        productModel.mockImplementation(() => mockProduct);
 
         await createProductController(req, res);
 
@@ -177,12 +192,85 @@ describe('createProductController', () => {
         expect(res.send).toHaveBeenCalledWith(
             expect.objectContaining({
                 success: true,
-                message: "Product Created Successfully"
+                message: "Product Created Successfully",
+                products: mockProduct
             })
         );
         expect(mockSave).toHaveBeenCalledTimes(1);
-        // Verify that fs.readFileSync was NOT called since there's no photo
         expect(fs.readFileSync).not.toHaveBeenCalled();
+    });
+});
+
+// Alek Kwek, A0273471A
+describe('deleteProductController', () => {
+    let req, res;
+
+    beforeEach(() => {
+        jest.clearAllMocks();
+
+        // Mock Request with a product ID
+        req = {
+            params: { pid: '12345abc' }
+        };
+
+        // Mock Response
+        res = {
+            status: jest.fn().mockReturnThis(),
+            send: jest.fn(),
+        };
+    });
+
+    test('should delete a product successfully', async () => {
+        // 1. Arrange: Mock the Mongoose chain
+        const mockQueryChain = {
+            select: jest.fn()
+        };
+
+        productModel.findByIdAndDelete.mockReturnValue(mockQueryChain);
+
+        // 2. Act
+        await deleteProductController(req, res);
+
+        // 3. Assert
+        expect(productModel.findByIdAndDelete).toHaveBeenCalledWith('12345abc');
+        expect(mockQueryChain.select).toHaveBeenCalledWith("-photo");
+        expect(res.status).toHaveBeenCalledWith(200);
+        expect(res.send).toHaveBeenCalledWith({
+            success: true,
+            message: "Product Deleted successfully",
+        });
+    });
+
+    test('should handle database errors and return 500', async () => {
+        // 1. Arrange: Spy on console.log to suppress output & verify call
+        const consoleSpy = jest.spyOn(console, 'log').mockImplementation(() => { });
+
+        // Force an error
+        const errorMessage = "Database error during deletion";
+        const errorObject = new Error(errorMessage);
+
+        productModel.findByIdAndDelete.mockImplementation(() => {
+            throw errorObject;
+        });
+
+        // 2. Act
+        await deleteProductController(req, res);
+
+        // 3. Assert
+        expect(res.status).toHaveBeenCalledWith(500);
+        expect(res.send).toHaveBeenCalledWith(
+            expect.objectContaining({
+                success: false,
+                message: "Error while deleting product",
+                error: expect.any(Error)
+            })
+        );
+
+        // Verify that the error was actually logged to the console
+        expect(consoleSpy).toHaveBeenCalledWith(errorObject);
+
+        // Cleanup: Restore console.log to its original state
+        consoleSpy.mockRestore();
     });
 });
 
@@ -249,10 +337,12 @@ describe('updateProductController', () => {
         expect(fs.readFileSync).toHaveBeenCalledWith("/tmp/photo.jpg");
         expect(mockProduct.save).toHaveBeenCalled();
         expect(res.status).toHaveBeenCalledWith(201);
+
         expect(res.send).toHaveBeenCalledWith(
             expect.objectContaining({
                 success: true,
-                message: "Product Updated Successfully"
+                message: "Product Updated Successfully",
+                products: mockProduct
             })
         );
     });
@@ -273,6 +363,14 @@ describe('updateProductController', () => {
         expect(fs.readFileSync).not.toHaveBeenCalled();
         expect(mockProduct.save).toHaveBeenCalled();
         expect(res.status).toHaveBeenCalledWith(201);
+
+        expect(res.send).toHaveBeenCalledWith(
+            expect.objectContaining({
+                success: true,
+                message: "Product Updated Successfully",
+                products: mockProduct
+            })
+        );
     });
 
     test('should return 500 if name is missing', async () => {
@@ -332,7 +430,9 @@ describe('updateProductController', () => {
     });
 
     test('should handle internal errors and return 500', async () => {
-        productModel.findByIdAndUpdate.mockRejectedValue(new Error('Database Error'));
+        // Create a specific error to check consistency
+        const mockError = new Error('Database Error');
+        productModel.findByIdAndUpdate.mockRejectedValue(mockError);
 
         await updateProductController(req, res);
 
@@ -340,69 +440,8 @@ describe('updateProductController', () => {
         expect(res.send).toHaveBeenCalledWith(
             expect.objectContaining({
                 success: false,
-                message: "Error In Updating Product"
-            })
-        );
-    });
-});
-
-// Alek Kwek, A0273471A
-describe('deleteProductController', () => {
-    let req, res;
-
-    beforeEach(() => {
-        jest.clearAllMocks();
-
-        // Mock Request with a product ID
-        req = {
-            params: { pid: '12345abc' }
-        };
-
-        // Mock Response
-        res = {
-            status: jest.fn().mockReturnThis(),
-            send: jest.fn(),
-        };
-    });
-
-    test('should delete a product successfully', async () => {
-        // 1. Arrange: Mock the Mongoose chain
-        const mockQueryChain = {
-            select: jest.fn().mockResolvedValue({ _id: '12345abc', name: 'Deleted Product' })
-        };
-
-        productModel.findByIdAndDelete.mockReturnValue(mockQueryChain);
-
-        // 2. Act
-        await deleteProductController(req, res);
-
-        // 3. Assert
-        expect(productModel.findByIdAndDelete).toHaveBeenCalledWith('12345abc');
-        expect(mockQueryChain.select).toHaveBeenCalledWith("-photo");
-        expect(res.status).toHaveBeenCalledWith(200);
-        expect(res.send).toHaveBeenCalledWith({
-            success: true,
-            message: "Product Deleted successfully",
-        });
-    });
-
-    test('should handle database errors and return 500', async () => {
-        // 1. Arrange: Force an error
-        const errorMessage = "Database error during deletion";
-        productModel.findByIdAndDelete.mockImplementation(() => {
-            throw new Error(errorMessage);
-        });
-
-        // 2. Act
-        await deleteProductController(req, res);
-
-        // 3. Assert
-        expect(res.status).toHaveBeenCalledWith(500);
-        expect(res.send).toHaveBeenCalledWith(
-            expect.objectContaining({
-                success: false,
-                message: "Error while deleting product",
-                error: expect.any(Error)
+                message: "Error in updating product",
+                error: mockError
             })
         );
     });

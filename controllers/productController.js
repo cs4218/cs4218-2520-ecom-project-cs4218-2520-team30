@@ -38,7 +38,7 @@ export const createProductController = async (req, res) => {
         return res
           .status(500)
           // Alek Kwek, A0273471A
-          .send({ error: "Photo is Required and should be less than 1mb" });
+          .send({ error: "Photo is Required to be less than 1mb" });
     }
 
     const products = new productModel({ ...req.fields, slug: slugify(name) });
@@ -195,7 +195,7 @@ export const updateProductController = async (req, res) => {
       success: false,
       error,
       // Alek Kwek, A0273471A
-      message: "Error In Updating Product",
+      message: "Error in updating product",
     });
   }
 };
