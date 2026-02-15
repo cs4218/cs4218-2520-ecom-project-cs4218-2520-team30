@@ -133,6 +133,61 @@ describe('AdminDashboard Component', () => {
     });
 
     // ----------------------------------------------------------
+    // BVA TEST: Auth is Null
+    // ----------------------------------------------------------
+    // Alek Kwek, A0273471A
+    it('should handle null auth state without crashing', () => {
+        // Arrange
+        // BVA: Testing boundary condition where auth state itself is null
+        useAuth.mockReturnValue([null, jest.fn()]);
+
+        // Act
+        renderAdminDashboard();
+
+        // Assert
+        // Should render the static parts but user info will be empty
+        expect(screen.getByText(/admin name :/i)).toBeInTheDocument();
+        expect(screen.getByText(/admin email :/i)).toBeInTheDocument();
+        expect(screen.getByText(/admin contact :/i)).toBeInTheDocument();
+    });
+
+    // ----------------------------------------------------------
+    // BVA TEST: Auth is Undefined
+    // ----------------------------------------------------------
+    // Alek Kwek, A0273471A
+    it('should handle undefined auth state without crashing', () => {
+        // Arrange
+        // BVA: Testing boundary condition where auth state is undefined
+        useAuth.mockReturnValue([undefined, jest.fn()]);
+
+        // Act
+        renderAdminDashboard();
+
+        // Assert
+        expect(screen.getByText(/admin name :/i)).toBeInTheDocument();
+        expect(screen.getByText(/admin email :/i)).toBeInTheDocument();
+        expect(screen.getByText(/admin contact :/i)).toBeInTheDocument();
+    });
+
+    // ----------------------------------------------------------
+    // BVA TEST: Auth is Empty Object
+    // ----------------------------------------------------------
+    // Alek Kwek, A0273471A
+    it('should handle empty auth object without crashing', () => {
+        // Arrange
+        // BVA: Testing boundary condition where auth is an empty object {}
+        useAuth.mockReturnValue([{}, jest.fn()]);
+
+        // Act
+        renderAdminDashboard();
+
+        // Assert
+        expect(screen.getByText(/admin name :/i)).toBeInTheDocument();
+        expect(screen.getByText(/admin email :/i)).toBeInTheDocument();
+        expect(screen.getByText(/admin contact :/i)).toBeInTheDocument();
+    });
+
+    // ----------------------------------------------------------
     // HAPPY PATH: Displays admin panel heading
     // ----------------------------------------------------------
     // Alek Kwek, A0273471A
