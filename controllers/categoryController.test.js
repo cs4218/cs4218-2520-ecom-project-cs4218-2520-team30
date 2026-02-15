@@ -193,6 +193,20 @@ describe("Category Controller Tests", () => {
             );
             logSpy.mockRestore();
         });
+        // Alek Kwek, A0273471A
+        test("should return 400 if name is missing during update", async () => {
+            // ARRANGE
+            req.body = {}; // no name provided
+            req.params.id = "123abc";
+
+            // ACT
+            await updateCategoryController(req, res);
+
+            // ASSERT
+            expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.send).toHaveBeenCalledWith({ message: "Name is required" });
+            expect(categoryModel.findByIdAndUpdate).not.toHaveBeenCalled();
+        });
     });
 
     // deleteCategoryController
