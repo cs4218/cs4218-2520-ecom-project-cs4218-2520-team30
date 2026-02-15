@@ -28,12 +28,16 @@ export const createProductController = async (req, res) => {
         return res.status(500).send({ error: "Name is Required" });
       case !description:
         return res.status(500).send({ error: "Description is Required" });
-      case !price:
+      case !price && price !== 0:
         return res.status(500).send({ error: "Price is Required" });
+      case price < 0:
+        return res.status(500).send({ error: "Price must be non-negative" });
       case !category:
         return res.status(500).send({ error: "Category is Required" });
-      case !quantity:
+      case !quantity && quantity !== 0:
         return res.status(500).send({ error: "Quantity is Required" });
+      case quantity < 0:
+        return res.status(500).send({ error: "Quantity must be non-negative" });
       case photo && photo.size > 1000000:
         return res
           .status(500)
@@ -161,12 +165,16 @@ export const updateProductController = async (req, res) => {
         return res.status(500).send({ error: "Name is Required" });
       case !description:
         return res.status(500).send({ error: "Description is Required" });
-      case !price:
+      case !price && price !== 0:
         return res.status(500).send({ error: "Price is Required" });
+      case price < 0:
+        return res.status(500).send({ error: "Price must be non-negative" });
       case !category:
         return res.status(500).send({ error: "Category is Required" });
-      case !quantity:
+      case !quantity && quantity !== 0:
         return res.status(500).send({ error: "Quantity is Required" });
+      case quantity < 0:
+        return res.status(500).send({ error: "Quantity must be non-negative" });
       case photo && photo.size > 1000000:
         return res
           .status(500)
