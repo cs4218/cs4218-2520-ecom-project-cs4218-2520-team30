@@ -25,7 +25,7 @@ export default {
     "<rootDir>/client/src/pages/Search.test.js",
     "<rootDir>/client/src/pages/HomePage.test.js",
     "<rootDir>/client/src/pages/Categories.test.js",
-    "<rootDir>/client/src/hooks/useCategory.test.js"
+    "<rootDir>/client/src/hooks/useCategory.test.js",
     "<rootDir>/client/src/pages/About.test.js",
     "<rootDir>/client/src/pages/Pagenotfound.test.js",
     "<rootDir>/client/src/components/Form/SearchInput.test.js",
@@ -41,7 +41,7 @@ export default {
     "client/src/pages/Categories.js",
     "client/src/components/Form/SearchInput.js",
     "client/src/context/search.js",
-    "client/src/hooks/useCategory.js"
+    "client/src/hooks/useCategory.js",
     "client/src/pages/HomePage.js",
     "client/src/pages/About.js",
     "client/src/pages/Pagenotfound.js",

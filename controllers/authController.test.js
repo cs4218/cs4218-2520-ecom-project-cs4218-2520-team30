@@ -97,230 +97,79 @@ const createFakeLoginRequest = (overrides = {}) =>
 
 
 /**
+ * Helper to assert login validation errors
+ */
+const expectLoginError = async (body, expectedStatus, expectedMessage) => {
+  const fakeReq = createFakeRequest({ body });
+  const fakeRes = createFakeResponse();
+  await loginController(fakeReq, fakeRes);
+  expect(fakeRes.status).toHaveBeenCalledWith(expectedStatus);
+  expect(fakeRes.send).toHaveBeenCalledWith({
+    success: false,
+    message: expectedMessage,
+  });
+};
+
+
+
+/**
  * Test loginController 
  * Testing Type: Communication-based
  **/
 describe("Auth Controller - Login", () => {
 
-  describe("Input Validation", () => {
+  describe("Input Validation - Equivalence Partitions", () => {
     //Tay Kai Jun, A0283343E
-    test("expected to return error when both email and password are missing", async () => {      
-      // Arrange
-      const fakeReq = createFakeRequest({ body: {} });
-      const fakeRes = createFakeResponse();
-
-      // Act
-      await loginController(fakeReq, fakeRes);
-
-      // Assert
-      expect(fakeRes.status).toHaveBeenCalledWith(404);
-      expect(fakeRes.send).toHaveBeenCalledWith({
-        success: false,
-        message: "Email and password are required",
-      });
-    });
-
-    //Tay Kai Jun, A0283343E
-    test("expected to return error when email is missing", async () => {
-      
-      // Arrange
-      const fakeReq = createFakeRequest({ body: { password: "password123" } });
-      const fakeRes = createFakeResponse();
-
-      // Act
-      await loginController(fakeReq, fakeRes);
-
-      // Assert
-      expect(fakeRes.status).toHaveBeenCalledWith(404);
-      expect(fakeRes.send).toHaveBeenCalledWith({
-        success: false,
-        message: "Email is required",
-      });
-    });
-
-    //Tay Kai Jun, A0283343E
-    test("expected to return error when password is missing", async () => {
-      
-      // Arrange
-      const fakeReq = createFakeRequest({ body: { email: "test@test.com" } });
-      const fakeRes = createFakeResponse();
-
-      // Act
-      await loginController(fakeReq, fakeRes);
-
-      // Assert
-      expect(fakeRes.status).toHaveBeenCalledWith(404);
-      expect(fakeRes.send).toHaveBeenCalledWith({
-        success: false,
-        message: "Password is required",
-      });
-    });
-
-
-    //Tay Kai Jun, A0283343E
-    test("expected to return error when email is empty string", async () => {
-      
-      // Arrange
-      const fakeReq = createFakeRequest({ body: { email: "", password: "password123" } });
-      const fakeRes = createFakeResponse();
-
-      // Act
-      await loginController(fakeReq, fakeRes);
-
-      // Assert
-      expect(fakeRes.status).toHaveBeenCalledWith(404);
-      expect(fakeRes.send).toHaveBeenCalledWith({
-        success: false,
-        message: "Email is required",
-      });
-    });
-
-    //Tay Kai Jun, A0283343E
-    test("expected to return error when password is empty string", async () => {
-      
-      // Arrange
-      const fakeReq = createFakeRequest({ body: { email: "test@test.com", password: "" } });
-      const fakeRes = createFakeResponse();
-
-      // Act
-      await loginController(fakeReq, fakeRes);
-
-      // Assert
-      expect(fakeRes.status).toHaveBeenCalledWith(404);
-      expect(fakeRes.send).toHaveBeenCalledWith({
-        success: false,
-        message: "Password is required",
-      });
+    test.each([
+      // Partition: both fields missing
+      [{}, 400, "Email and password are required", "both email and password are missing"],
+      // Partition: email missing, password present
+      [{ password: "password123" }, 400, "Email is required", "email is missing"],
+      // Partition: password missing, email present
+      [{ email: "test@test.com" }, 400, "Password is required", "password is missing"],
+    ])("expected to return error when %s", async (body, status, message, _desc) => {
+      await expectLoginError(body, status, message);
     });
   });
 
-  describe("Email Format Validation", () => {
+  describe("Input Validation - Boundary Values (empty strings)", () => {
     //Tay Kai Jun, A0283343E
-    test("expected to return error when email format is invalid", async () => {
-      
-      // Arrange
-      const fakeReq = createFakeRequest({ body: { email: "invalidemail", password: "password123" } });
-      const fakeRes = createFakeResponse();
-
-      // Act
-      await loginController(fakeReq, fakeRes);
-
-      // Assert
-      expect(fakeRes.status).toHaveBeenCalledWith(400);
-      expect(fakeRes.send).toHaveBeenCalledWith({
-        success: false,
-        message: "Email must be a valid format",
-      });
-    });
-
-    //Tay Kai Jun, A0283343E
-    test("expected to return error when email is missing @ symbol", async () => {
-      
-      // Arrange
-      const fakeReq = createFakeRequest({ body: { email: "invalidemail.com", password: "password123" } });
-      const fakeRes = createFakeResponse();
-
-      // Act
-      await loginController(fakeReq, fakeRes);
-
-      // Assert
-      expect(fakeRes.status).toHaveBeenCalledWith(400);
-      expect(fakeRes.send).toHaveBeenCalledWith({
-        success: false,
-        message: "Email must be a valid format",
-      });
-    });
-
-    //Tay Kai Jun, A0283343E
-    test("expected to return error when email has multiple @ symbols", async () => {
-      
-      // Arrange
-      const fakeReq = createFakeRequest({ body: { email: "test@@example.com", password: "password123" } });
-      const fakeRes = createFakeResponse();
-
-      // Act
-      await loginController(fakeReq, fakeRes);
-
-      // Assert
-      expect(fakeRes.status).toHaveBeenCalledWith(400);
-      expect(fakeRes.send).toHaveBeenCalledWith({
-        success: false,
-        message: "Email must be a valid format",
-      });
-    });
-
-    //Tay Kai Jun, A0283343E
-    test("expected to return error when email is missing domain", async () => {
-      
-      // Arrange
-      const fakeReq = createFakeRequest({ body: { email: "test@", password: "password123" } });
-      const fakeRes = createFakeResponse();
-
-      // Act
-      await loginController(fakeReq, fakeRes);
-
-      // Assert
-      expect(fakeRes.status).toHaveBeenCalledWith(400);
-      expect(fakeRes.send).toHaveBeenCalledWith({
-        success: false,
-        message: "Email must be a valid format",
-      });
+    test.each([
+      // Boundary: email at empty string (length = 0)
+      [{ email: "", password: "password123" }, 400, "Email is required", "email is empty string"],
+      // Boundary: password at empty string (length = 0)
+      [{ email: "test@test.com", password: "" }, 400, "Password is required", "password is empty string"],
+    ])("expected to return error when %s", async (body, status, message, _desc) => {
+      await expectLoginError(body, status, message);
     });
   });
 
-  describe("Password Length Validation", () => {
+  describe("Email Format Validation - Equivalence Partitions (invalid formats)", () => {
     //Tay Kai Jun, A0283343E
-    test("expected to return error when password is less than 6 characters", async () => {
-      
-      // Arrange
-      const fakeReq = createFakeRequest({ body: { email: "test@test.com", password: "12345" } });
-      const fakeRes = createFakeResponse();
-
-      // Act
-      await loginController(fakeReq, fakeRes);
-
-      // Assert
-      expect(fakeRes.status).toHaveBeenCalledWith(400);
-      expect(fakeRes.send).toHaveBeenCalledWith({
-        success: false,
-        message: "Password must be at least 6 characters long",
-      });
+    test.each([
+      // Partition: no @ and no domain
+      ["invalidemail",      "no @ or domain"],
+      // Partition: dot but no @
+      ["invalidemail.com",  "missing @ symbol"],
+      // Partition: multiple @ symbols
+      ["test@@example.com", "multiple @ symbols"],
+      // Partition: @ present but no domain
+      ["test@",             "missing domain"],
+    ])("expected to return error when email is '%s' (%s)", async (email) => {
+      await expectLoginError({ email, password: "password123" }, 400, "Email must be a valid format");
     });
+  });
 
+  describe("Password Length Validation - Boundary Values", () => {
     //Tay Kai Jun, A0283343E
-    test("expected to return error when password is exactly 5 characters", async () => {
-      
-      // Arrange
-      const fakeReq = createFakeRequest({ body: { email: "test@test.com", password: "Pass1" } });
-      const fakeRes = createFakeResponse();
-
-      // Act
-      await loginController(fakeReq, fakeRes);
-
-      // Assert
-      expect(fakeRes.status).toHaveBeenCalledWith(400);
-      expect(fakeRes.send).toHaveBeenCalledWith({
-        success: false,
-        message: "Password must be at least 6 characters long",
-      });
-    });
-
-    //Tay Kai Jun, A0283343E
-    test("expected to return error when password is 1 character", async () => {
-      
-      // Arrange
-      const fakeReq = createFakeRequest({ body: { email: "test@test.com", password: "1" } });
-      const fakeRes = createFakeResponse();
-
-      // Act
-      await loginController(fakeReq, fakeRes);
-
-      // Assert
-      expect(fakeRes.status).toHaveBeenCalledWith(400);
-      expect(fakeRes.send).toHaveBeenCalledWith({
-        success: false,
-        message: "Password must be at least 6 characters long",
-      });
+    test.each([
+      // Boundary: length = 1 (well below minimum)
+      ["1",     "1 character - far below boundary"],
+      // Boundary: length = 5 (just below minimum of 6)
+      ["Pass1", "5 characters - just below boundary"],
+      ["12345", "5 characters - numeric"],
+    ])("expected to return error when password is '%s' (%s)", async (password) => {
+      await expectLoginError({ email: "test@test.com", password }, 400, "Password must be at least 6 characters long");
     });
   });
 
