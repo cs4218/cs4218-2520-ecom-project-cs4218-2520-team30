@@ -67,7 +67,7 @@ describe('createProductController', () => {
     });
 
     test('should successfully create a product', async () => {
-        // Mock the product instance and .save() method
+        // 1. Arrange: Mock the product instance and .save() method
 
         const mockSave = jest.fn().mockResolvedValue(true);
         const mockProduct = {
@@ -81,8 +81,10 @@ describe('createProductController', () => {
 
         fs.readFileSync.mockReturnValue(Buffer.from('fake-image-data'));
 
+        // 2. Act
         await createProductController(req, res);
 
+        // 3. Assert
         expect(res.status).toHaveBeenCalledWith(201);
         expect(res.send).toHaveBeenCalledWith(
             expect.objectContaining({
@@ -95,55 +97,73 @@ describe('createProductController', () => {
     });
 
     test('should return 500 if name is missing', async () => {
+        // 1. Arrange
         req.fields.name = ""; // Trigger validation error
 
+        // 2. Act
         await createProductController(req, res);
 
+        // 3. Assert
         expect(res.status).toHaveBeenCalledWith(500);
         expect(res.send).toHaveBeenCalledWith({ error: "Name is Required" });
     });
 
     test('should return 500 if description is missing', async () => {
+        // 1. Arrange
         req.fields.description = ""; // Trigger validation error
 
+        // 2. Act
         await createProductController(req, res);
 
+        // 3. Assert
         expect(res.status).toHaveBeenCalledWith(500);
         expect(res.send).toHaveBeenCalledWith({ error: "Description is Required" });
     });
 
     test('should return 500 if price is missing', async () => {
+        // 1. Arrange
         req.fields.price = ""; // Trigger validation error
 
+        // 2. Act
         await createProductController(req, res);
 
+        // 3. Assert
         expect(res.status).toHaveBeenCalledWith(500);
         expect(res.send).toHaveBeenCalledWith({ error: "Price is Required" });
     });
 
     test('should return 500 if category is missing', async () => {
+        // 1. Arrange
         req.fields.category = ""; // Trigger validation error
 
+        // 2. Act
         await createProductController(req, res);
 
+        // 3. Assert
         expect(res.status).toHaveBeenCalledWith(500);
         expect(res.send).toHaveBeenCalledWith({ error: "Category is Required" });
     });
 
     test('should return 500 if quantity is missing', async () => {
+        // 1. Arrange
         req.fields.quantity = ""; // Trigger validation error
 
+        // 2. Act
         await createProductController(req, res);
 
+        // 3. Assert
         expect(res.status).toHaveBeenCalledWith(500);
         expect(res.send).toHaveBeenCalledWith({ error: "Quantity is Required" });
     });
 
     test('should return 500 if photo size is greater than 1MB', async () => {
+        // 1. Arrange
         req.files.photo.size = 2000000; // 2MB
 
+        // 2. Act
         await createProductController(req, res);
 
+        // 3. Assert
         expect(res.status).toHaveBeenCalledWith(500);
         expect(res.send).toHaveBeenCalledWith({
             error: "Photo is Required to be less than 1mb"
@@ -151,15 +171,17 @@ describe('createProductController', () => {
     });
 
     test('should handle internal errors and return 500', async () => {
-        // Create the specific error we expect to see returned
+        // 1. Arrange: Create the specific error we expect to see returned
         const mockError = new Error('Database Error');
 
         productModel.mockImplementation(() => {
             throw mockError;
         });
 
+        // 2. Act
         await createProductController(req, res);
 
+        // 3. Assert
         expect(res.status).toHaveBeenCalledWith(500);
         expect(res.send).toHaveBeenCalledWith(
             expect.objectContaining({
@@ -171,7 +193,7 @@ describe('createProductController', () => {
     });
 
     test('should successfully create a product without a photo', async () => {
-        // Remove photo from request to test the else branch
+        // 1. Arrange: Remove photo from request to test the else branch
         req.files = {};
 
         const mockSave = jest.fn().mockResolvedValue(true);
@@ -186,8 +208,10 @@ describe('createProductController', () => {
 
         productModel.mockImplementation(() => mockProduct);
 
+        // 2. Act
         await createProductController(req, res);
 
+        // 3. Assert
         expect(res.status).toHaveBeenCalledWith(201);
         expect(res.send).toHaveBeenCalledWith(
             expect.objectContaining({
@@ -314,7 +338,7 @@ describe('updateProductController', () => {
     });
 
     test('should successfully update a product with photo', async () => {
-        // Mock the product object with save method
+        // 1. Arrange: Mock the product object with save method
         const mockProduct = {
             _id: 'product123',
             name: 'Updated Laptop',
@@ -324,8 +348,10 @@ describe('updateProductController', () => {
 
         productModel.findByIdAndUpdate.mockResolvedValue(mockProduct);
 
+        // 2. Act
         await updateProductController(req, res);
 
+        // 3. Assert
         expect(productModel.findByIdAndUpdate).toHaveBeenCalledWith(
             'product123',
             expect.objectContaining({
@@ -348,6 +374,7 @@ describe('updateProductController', () => {
     });
 
     test('should successfully update a product without photo', async () => {
+        // 1. Arrange
         req.files.photo = null; // No photo provided
 
         const mockProduct = {
@@ -358,8 +385,10 @@ describe('updateProductController', () => {
 
         productModel.findByIdAndUpdate.mockResolvedValue(mockProduct);
 
+        // 2. Act
         await updateProductController(req, res);
 
+        // 3. Assert
         expect(fs.readFileSync).not.toHaveBeenCalled();
         expect(mockProduct.save).toHaveBeenCalled();
         expect(res.status).toHaveBeenCalledWith(201);
@@ -374,55 +403,73 @@ describe('updateProductController', () => {
     });
 
     test('should return 500 if name is missing', async () => {
+        // 1. Arrange
         req.fields.name = "";
 
+        // 2. Act
         await updateProductController(req, res);
 
+        // 3. Assert
         expect(res.status).toHaveBeenCalledWith(500);
         expect(res.send).toHaveBeenCalledWith({ error: "Name is Required" });
     });
 
     test('should return 500 if description is missing', async () => {
+        // 1. Arrange
         req.fields.description = "";
 
+        // 2. Act
         await updateProductController(req, res);
 
+        // 3. Assert
         expect(res.status).toHaveBeenCalledWith(500);
         expect(res.send).toHaveBeenCalledWith({ error: "Description is Required" });
     });
 
     test('should return 500 if price is missing', async () => {
+        // 1. Arrange
         req.fields.price = "";
 
+        // 2. Act
         await updateProductController(req, res);
 
+        // 3. Assert
         expect(res.status).toHaveBeenCalledWith(500);
         expect(res.send).toHaveBeenCalledWith({ error: "Price is Required" });
     });
 
     test('should return 500 if category is missing', async () => {
+        // 1. Arrange
         req.fields.category = "";
 
+        // 2. Act
         await updateProductController(req, res);
 
+        // 3. Assert
         expect(res.status).toHaveBeenCalledWith(500);
         expect(res.send).toHaveBeenCalledWith({ error: "Category is Required" });
     });
 
     test('should return 500 if quantity is missing', async () => {
+        // 1. Arrange
         req.fields.quantity = "";
 
+        // 2. Act
         await updateProductController(req, res);
 
+        // 3. Assert
         expect(res.status).toHaveBeenCalledWith(500);
         expect(res.send).toHaveBeenCalledWith({ error: "Quantity is Required" });
     });
 
     test('should return 500 if photo size is greater than 1MB', async () => {
+        // 1. Arrange
         req.files.photo.size = 2000000; // 2MB
 
+        // 2. Act
         await updateProductController(req, res);
 
+        // 3. Assert
         expect(res.status).toHaveBeenCalledWith(500);
         expect(res.send).toHaveBeenCalledWith({
             error: "Photo is Required and should be less than 1mb"
@@ -430,12 +477,14 @@ describe('updateProductController', () => {
     });
 
     test('should handle internal errors and return 500', async () => {
-        // Create a specific error to check consistency
+        // 1. Arrange: Create a specific error to check consistency
         const mockError = new Error('Database Error');
         productModel.findByIdAndUpdate.mockRejectedValue(mockError);
 
+        // 2. Act
         await updateProductController(req, res);
 
+        // 3. Assert
         expect(res.status).toHaveBeenCalledWith(500);
         expect(res.send).toHaveBeenCalledWith(
             expect.objectContaining({
