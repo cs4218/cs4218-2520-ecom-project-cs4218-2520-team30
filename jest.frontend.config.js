@@ -23,10 +23,17 @@ export default {
   testMatch: [
     "<rootDir>/client/src/pages/Auth/*.test.js",
     "<rootDir>/client/src/pages/Search.test.js",
+    "<rootDir>/client/src/pages/HomePage.test.js",
+    "<rootDir>/client/src/pages/Categories.test.js",
+    "<rootDir>/client/src/hooks/useCategory.test.js",
+    "<rootDir>/client/src/pages/About.test.js",
+    "<rootDir>/client/src/pages/Pagenotfound.test.js",
     "<rootDir>/client/src/components/Form/SearchInput.test.js",
     "<rootDir>/client/src/context/search.test.js",
     "<rootDir>/client/src/pages/admin/*.test.js",
     "<rootDir>/client/src/components/*.test.js",
+    "<rootDir>/client/src/components/*.test.js",
+    "<rootDir>/client/src/context/search.test.js"
   ],
 
   // jest code coverage
@@ -36,10 +43,19 @@ export default {
   collectCoverageFrom: [
     "client/src/pages/Auth/**",
     "client/src/pages/Search.js",
+    "client/src/pages/Categories.js",
     "client/src/components/Form/SearchInput.js",
     "client/src/context/search.js",
     "client/src/pages/admin/**",
-    "client/src/components/**"
+    "client/src/components/**",
+    "client/src/hooks/useCategory.js",
+    "client/src/pages/HomePage.js",
+    "client/src/pages/About.js",
+    "client/src/pages/Pagenotfound.js",
+    "client/src/components/Header.js",
+    "client/src/components/Footer.js",
+    "client/src/components/Layout.js",
+    "client/src/components/Spinner.js"
   ],
   coverageThreshold: {
     global: {

@@ -64,7 +64,7 @@ describe('Register Component', () => {
     fireEvent.change(getByPlaceholderText('Enter Your Password'), { target: { value: 'password123' } });
     fireEvent.change(getByPlaceholderText('Enter Your Phone'), { target: { value: '1234567890' } });
     fireEvent.change(getByPlaceholderText('Enter Your Address'), { target: { value: '123 Street' } });
-    fireEvent.change(getByPlaceholderText('What is Your Favorite sports'), { target: { value: 'Football' } });
+    fireEvent.change(getByPlaceholderText('What is Your Favorite Sport'), { target: { value: 'Football' } });
 
     fireEvent.click(getByText('REGISTER'));
 
@@ -89,7 +89,7 @@ describe('Register Component', () => {
     fireEvent.change(getByPlaceholderText('Enter Your Password'), { target: { value: 'password123' } });
     fireEvent.change(getByPlaceholderText('Enter Your Phone'), { target: { value: '1234567890' } });
     fireEvent.change(getByPlaceholderText('Enter Your Address'), { target: { value: '123 Street' } });
-    fireEvent.change(getByPlaceholderText('What is Your Favorite sports'), { target: { value: 'Football' } });
+    fireEvent.change(getByPlaceholderText('What is Your Favorite Sport'), { target: { value: 'Football' } });
 
     fireEvent.click(getByText('REGISTER'));
 
@@ -114,7 +114,7 @@ describe('Register Component', () => {
     fireEvent.change(getByPlaceholderText('Enter Your Password'), { target: { value: '12345' } });
     fireEvent.change(getByPlaceholderText('Enter Your Phone'), { target: { value: '1234567890' } });
     fireEvent.change(getByPlaceholderText('Enter Your Address'), { target: { value: '123 Street' } });
-    fireEvent.change(getByPlaceholderText('What is Your Favorite sports'), { target: { value: 'Football' } });
+    fireEvent.change(getByPlaceholderText('What is Your Favorite Sport'), { target: { value: 'Football' } });
 
     fireEvent.click(getByText('REGISTER'));
 
@@ -139,7 +139,7 @@ describe('Register Component', () => {
     fireEvent.change(getByPlaceholderText('Enter Your Password'), { target: { value: 'password123' } });
     fireEvent.change(getByPlaceholderText('Enter Your Phone'), { target: { value: '123-456-7890' } });
     fireEvent.change(getByPlaceholderText('Enter Your Address'), { target: { value: '123 Street' } });
-    fireEvent.change(getByPlaceholderText('What is Your Favorite sports'), { target: { value: 'Football' } });
+    fireEvent.change(getByPlaceholderText('What is Your Favorite Sport'), { target: { value: 'Football' } });
 
     fireEvent.click(getByText('REGISTER'));
 
@@ -165,7 +165,7 @@ describe('Register Component', () => {
     fireEvent.change(getByPlaceholderText('Enter Your Password'), { target: { value: 'pass12' } });
     fireEvent.change(getByPlaceholderText('Enter Your Phone'), { target: { value: '1234567890' } });
     fireEvent.change(getByPlaceholderText('Enter Your Address'), { target: { value: '123 Street' } });
-    fireEvent.change(getByPlaceholderText('What is Your Favorite sports'), { target: { value: 'Football' } });
+    fireEvent.change(getByPlaceholderText('What is Your Favorite Sport'), { target: { value: 'Football' } });
 
     fireEvent.click(getByText('REGISTER'));
 
@@ -190,11 +190,42 @@ describe('Register Component', () => {
     fireEvent.change(getByPlaceholderText('Enter Your Password'), { target: { value: 'password123' } });
     fireEvent.change(getByPlaceholderText('Enter Your Phone'), { target: { value: '123abc7890' } });
     fireEvent.change(getByPlaceholderText('Enter Your Address'), { target: { value: '123 Street' } });
-    fireEvent.change(getByPlaceholderText('What is Your Favorite sports'), { target: { value: 'Football' } });
+    fireEvent.change(getByPlaceholderText('What is Your Favorite Sport'), { target: { value: 'Football' } });
 
     fireEvent.click(getByText('REGISTER'));
 
     await waitFor(() => expect(toast.error).toHaveBeenCalledWith('Phone number must contain only numbers'));
     expect(axios.post).not.toHaveBeenCalled();
+  });
+
+  //Tay Kai Jun, A0283343E
+  it('should display error when success is false in response', async () => {
+    axios.post.mockResolvedValueOnce({ 
+      data: { 
+        success: false, 
+        message: 'Already registered please login' 
+      } 
+    });
+    axios.get.mockResolvedValueOnce({ data: [] });
+    
+    const { getByText, getByPlaceholderText } = render(
+      <MemoryRouter initialEntries={['/register']}>
+        <Routes>
+          <Route path="/register" element={<Register />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    fireEvent.change(getByPlaceholderText('Enter Your Name'), { target: { value: 'John Doe' } });
+    fireEvent.change(getByPlaceholderText('Enter Your Email'), { target: { value: 'existing@example.com' } });
+    fireEvent.change(getByPlaceholderText('Enter Your Password'), { target: { value: 'password123' } });
+    fireEvent.change(getByPlaceholderText('Enter Your Phone'), { target: { value: '1234567890' } });
+    fireEvent.change(getByPlaceholderText('Enter Your Address'), { target: { value: '123 Street' } });
+    fireEvent.change(getByPlaceholderText('What is Your Favorite Sport'), { target: { value: 'Football' } });
+
+    fireEvent.click(getByText('REGISTER'));
+
+    await waitFor(() => expect(axios.post).toHaveBeenCalled());
+    expect(toast.error).toHaveBeenCalledWith('Already registered please login');
   });
 });
