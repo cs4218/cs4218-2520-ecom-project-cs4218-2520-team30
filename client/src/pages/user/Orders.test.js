@@ -1,12 +1,13 @@
+// Leong Soon Mun Stephane, A0273409B
 import React from 'react';
-import { render, fireEvent, waitFor, screen } from '@testing-library/react';
+import { jest, describe, beforeEach, it, expect } from "@jest/globals";
+import { render, waitFor, screen } from '@testing-library/react';
 import axios from 'axios';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import '@testing-library/jest-dom/extend-expect';
 import Orders from './Orders';
 import { useAuth } from '../../context/auth';
 
-// Mocking axios.post
 jest.mock('axios');
 jest.mock('react-hot-toast');
 
@@ -45,12 +46,12 @@ window.matchMedia = window.matchMedia || function () {
     };
 };
 
-describe('Order Component', () => {
+describe('Order Component', () => { // Leong Soon Mun Stephane, A0273409B
     beforeEach(() => {
         jest.clearAllMocks();
     });
 
-    it('renders orders table with headers', async () => {
+    it('renders orders table with headers', async () => { // Leong Soon Mun Stephane, A0273409B
         // Arrange
         useAuth.mockReturnValue([{ token: 'token' }, jest.fn()]);
         axios.get.mockResolvedValueOnce({
@@ -112,7 +113,7 @@ describe('Order Component', () => {
         });
     });
 
-    it('should throw error message if get fails', async () => {
+    it('should throw error message if get fails', async () => { // Leong Soon Mun Stephane, A0273409B
         // Arrange
         useAuth.mockReturnValue([{ token: 'token' }, jest.fn()]);
         axios.get.mockRejectedValueOnce('axios get error');
@@ -134,7 +135,7 @@ describe('Order Component', () => {
         logSpy.mockRestore()
     });
 
-    it('renders orders table with correct rows and Failed payment', async () => {
+    it('renders orders table with Failed payment if payment success if false', async () => { // Leong Soon Mun Stephane, A0273409B
         // Arrange
         useAuth.mockReturnValue([{ token: 'token' }, jest.fn()]);
         axios.get.mockResolvedValueOnce({
@@ -195,7 +196,7 @@ describe('Order Component', () => {
         });
     });
 
-    it('renders orders table with correct rows and success payment', async () => {
+    it('renders orders table with Success payment if payment success if true', async () => { // Leong Soon Mun Stephane, A0273409B
         // Arrange
         useAuth.mockReturnValue([{ token: 'token' }, jest.fn()]);
         axios.get.mockResolvedValueOnce({
@@ -245,7 +246,7 @@ describe('Order Component', () => {
         });
     });
 
-    it('should not call get if token is invalid', async () => {
+    it('should not call get if token is invalid', async () => { // Leong Soon Mun Stephane, A0273409B
         // Arrange
         useAuth.mockReturnValue([{}, jest.fn()]);
 
