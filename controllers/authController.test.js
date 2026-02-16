@@ -828,7 +828,7 @@ describe('Auth Controller - Order', () => { // Leong Soon Mun Stephane, A0273409
       });
     });
 
-    it('should respond with 400 if error occurs', async () => { // Leong Soon Mun Stephane, A0273409B
+    it('should respond with 400 and message if error occurs', async () => { // Leong Soon Mun Stephane, A0273409B
       // Arrange
       req.user._id = 1
       req.body = {
@@ -875,7 +875,7 @@ describe('Auth Controller - Order', () => { // Leong Soon Mun Stephane, A0273409
       consoleLogSpy.mockRestore();
     });
 
-    it('should respond successfully with orders in json', async () => { // Leong Soon Mun Stephane, A0273409B
+    it('should respond with orders in json if successful', async () => { // Leong Soon Mun Stephane, A0273409B
       // Arrange
       req.user._id = 1;
       let orderObject = {
@@ -893,7 +893,7 @@ describe('Auth Controller - Order', () => { // Leong Soon Mun Stephane, A0273409
       expect(res.json).toHaveBeenCalled();
     });
 
-    it('should respond with 500 and error message', async () => { // Leong Soon Mun Stephane, A0273409B
+    it('should respond with 500 and message if error occurs', async () => { // Leong Soon Mun Stephane, A0273409B
       // Arrange
       req.user._id = 1;
       let mockError = new Error('find orders error');
@@ -935,7 +935,7 @@ describe('Auth Controller - Order', () => { // Leong Soon Mun Stephane, A0273409
       consoleLogSpy.mockRestore();
     });
 
-    it('should respond with orders in json', async () => { // Leong Soon Mun Stephane, A0273409B
+    it('should respond with orders in json if successful', async () => { // Leong Soon Mun Stephane, A0273409B
       // Arrange
       let orderObject = {
         populate: jest.fn().mockReturnThis(),
@@ -954,7 +954,7 @@ describe('Auth Controller - Order', () => { // Leong Soon Mun Stephane, A0273409
       expect(res.json).toHaveBeenCalled();
     });
 
-    it('should respond with 500 and error message', async () => { // Leong Soon Mun Stephane, A0273409B
+    it('should respond with 500 and message if error occurs', async () => { // Leong Soon Mun Stephane, A0273409B
       // Arrange
       let mockError = new Error('find orders error');
       let orderObject = {
@@ -998,7 +998,7 @@ describe('Auth Controller - Order', () => { // Leong Soon Mun Stephane, A0273409
       consoleLogSpy.mockRestore();
     });
 
-    it('should respond with orders in json', async () => { // Leong Soon Mun Stephane, A0273409B
+    it('should respond with orders in json if successful', async () => { // Leong Soon Mun Stephane, A0273409B
       // Arrange
       req.params.orderId = 1;
       req.body.status = 200;
@@ -1012,7 +1012,7 @@ describe('Auth Controller - Order', () => { // Leong Soon Mun Stephane, A0273409
       expect(res.json).toHaveBeenCalled();
     });
 
-    it('should respond with 500 and error message', async () => { // Leong Soon Mun Stephane, A0273409B
+    it('should respond with 500 and message if error occurs', async () => { // Leong Soon Mun Stephane, A0273409B
       // Arrange
       req.params.orderId = 1;
       req.body.status = 200;
