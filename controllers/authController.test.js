@@ -14,7 +14,8 @@ import {
   loginController,
   forgotPasswordController,
   testController,
-  orderStatusController
+  orderStatusController,
+  getAllOrdersController
 } from "./authController.js";
 
 jest.mock("../models/orderModel.js");
@@ -697,9 +698,68 @@ describe("Auth Controller - Database Error Handling", () => {
   });
 });
 
-describe('Auth Controller - Order', () => {
+describe('Auth Controller - Order', () => { // Leong Soon Mun Stephane, A0273409B
   let consoleLogSpy;
   let req, res;
+
+  describe('getAllOrdersController', () => { // Leong Soon Mun Stephane, A0273409B
+    beforeEach(() => {
+      req = {};
+      res = {
+        status: jest.fn().mockReturnThis(),
+        send: jest.fn(),
+        json: jest.fn(),
+      };
+      consoleLogSpy = jest.spyOn(console, 'log');
+      jest.clearAllMocks();
+    });
+
+    afterEach(() => {
+      consoleLogSpy.mockRestore();
+    });
+
+    it('should respond with orders in json', async () => { // Leong Soon Mun Stephane, A0273409B
+      // Arrange
+      let orderObject = {
+        populate: jest.fn().mockReturnThis(),
+        sort: jest.fn().mockResolvedValueOnce([]),
+      };
+      orderModel.find.mockReturnValue(orderObject);
+
+      // Act
+      await getAllOrdersController(req, res);
+
+      // Assert
+      expect(orderModel.find).toHaveBeenCalledWith({});
+      expect(orderObject.populate).toHaveBeenCalledWith('products', '-photo');
+      expect(orderObject.populate).toHaveBeenCalledWith('buyer', 'name');
+      expect(orderObject.sort).toHaveBeenCalledWith({createdAt: '-1'});
+      expect(res.json).toHaveBeenCalled();
+    });
+
+    it('should respond with 500 and error message', async () => { // Leong Soon Mun Stephane, A0273409B
+      // Arrange
+      let mockError = new Error('find orders error');
+      let orderObject = {
+        populate: jest.fn().mockReturnThis(),
+        sort: jest.fn().mockRejectedValueOnce(mockError),
+      };
+      orderModel.find.mockReturnValue(orderObject);
+      consoleLogSpy.mockImplementation(() => { })
+
+      // Act
+      await getAllOrdersController(req, res)
+
+      // Assert
+      expect(consoleLogSpy).toHaveBeenCalledWith(mockError);
+      expect(res.status).toHaveBeenCalledWith(500);
+      expect(res.send).toHaveBeenCalledWith({
+        success: false,
+        message: "Error While Getting Orders",
+        error: mockError,
+      });
+    });
+  });
 
   describe('orderStatusController', () => {
     
