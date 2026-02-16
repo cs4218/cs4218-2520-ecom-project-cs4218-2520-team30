@@ -23,6 +23,10 @@ jest.mock('../../context/search', () => ({
     useSearch: jest.fn(() => [{ keyword: '' }, jest.fn()])
 }));
 
+// Mock Layout and AdminMenu to prevent deep rendering and side effects (like useCategory in Header)
+jest.mock('../../components/Layout', () => ({ children }) => <div data-testid="mock-layout">{children}</div>);
+jest.mock('../../components/AdminMenu', () => () => <div data-testid="mock-admin-menu">AdminMenu</div>);
+
 // Mock localStorage
 Object.defineProperty(window, 'localStorage', {
     value: {
@@ -207,6 +211,8 @@ describe('AdminDashboard Component', () => {
         renderAdminDashboard();
 
         // Assert
-        expect(screen.getByText('Admin Panel')).toBeInTheDocument();
+        expect(screen.getByTestId('mock-admin-menu')).toBeInTheDocument();
+        expect(screen.getByTestId('mock-layout')).toBeInTheDocument();
+        expect(screen.getByText('AdminMenu')).toBeInTheDocument();
     });
 });
