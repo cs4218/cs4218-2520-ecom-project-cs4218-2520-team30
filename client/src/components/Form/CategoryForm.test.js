@@ -148,6 +148,27 @@ describe('CategoryForm Component', () => {
             expect(mockHandleSubmit).toHaveBeenCalledTimes(1);
         });
 
+        it('should call handleSubmit even if value is empty (validation handled by parent)', () => {
+            // Arrange
+            const mockHandleSubmit = jest.fn((e) => e.preventDefault());
+            const mockSetValue = jest.fn();
+
+            render(
+                <CategoryForm
+                    handleSubmit={mockHandleSubmit}
+                    value=""
+                    setValue={mockSetValue}
+                />
+            );
+
+            // Act
+            const submitButton = screen.getByRole('button', { name: /submit/i });
+            fireEvent.click(submitButton);
+
+            // Assert
+            expect(mockHandleSubmit).toHaveBeenCalledTimes(1);
+        });
+
         it('should call handleSubmit with event object when submitted', () => {
             // Arrange
             const mockHandleSubmit = jest.fn((e) => e.preventDefault());

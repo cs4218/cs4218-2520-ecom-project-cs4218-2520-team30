@@ -122,6 +122,38 @@ describe('UpdateProduct Component', () => {
     });
 
     // ----------------------------------------------------------
+    // VALIDATION BVA: Empty Fields Submission
+    // ----------------------------------------------------------
+    it('should display error toast when updating with empty fields (Simulated Server Validation)', async () => {
+        // Arrange
+        axios.get
+            .mockResolvedValueOnce({ data: { product: mockProduct } })
+            .mockResolvedValueOnce({ data: { success: true, category: mockCategories } });
+        axios.put.mockResolvedValueOnce({
+            data: { success: false, message: 'Name is required' }
+        });
+
+        // Act
+        renderUpdateProduct();
+
+        await waitFor(() => {
+            expect(screen.getByPlaceholderText(/write a name/i).value).toBe('Test Product');
+        });
+
+        // Clear name field
+        fireEvent.change(screen.getByPlaceholderText(/write a name/i), { target: { value: '' } });
+
+        // Submit
+        fireEvent.click(screen.getByRole('button', { name: /update product/i }));
+
+        // Assert
+        await waitFor(() => {
+            expect(axios.put).toHaveBeenCalled();
+            expect(toast.error).toHaveBeenCalledWith('Name is required');
+        });
+    });
+
+    // ----------------------------------------------------------
     // HAPPY PATH: Renders update product form with loaded data
     // ----------------------------------------------------------
     it('should render update product form with product data', async () => {

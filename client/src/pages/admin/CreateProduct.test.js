@@ -104,6 +104,36 @@ describe('CreateProduct Component', () => {
     });
 
     // ----------------------------------------------------------
+    // VALIDATION BVA: Empty Fields Submission
+    // ----------------------------------------------------------
+    it('should display error toast when submitting empty fields (Simulated Server Validation)', async () => {
+        // Arrange
+        axios.get.mockResolvedValueOnce({
+            data: { success: true, category: [] }
+        });
+        // Mock server error for validation failure
+        axios.post.mockResolvedValueOnce({
+            data: { success: false, message: 'All fields are required' }
+        });
+
+        // Act
+        renderCreateProduct();
+
+        await waitFor(() => {
+            expect(screen.getByRole('heading', { name: /create product/i })).toBeInTheDocument();
+        });
+
+        // Submit without filling fields
+        fireEvent.click(screen.getByRole('button', { name: /create product/i }));
+
+        // Assert
+        await waitFor(() => {
+            expect(axios.post).toHaveBeenCalled();
+            expect(toast.error).toHaveBeenCalledWith('All fields are required');
+        });
+    });
+
+    // ----------------------------------------------------------
     // HAPPY PATH: Renders create product form
     // ----------------------------------------------------------
     it('should render create product form with all fields', async () => {

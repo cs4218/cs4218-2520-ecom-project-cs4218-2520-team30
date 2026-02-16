@@ -120,6 +120,36 @@ describe('CreateCategory Component', () => {
     });
 
     // ----------------------------------------------------------
+    // VALIDATION BVA: Empty Name Submission
+    // ----------------------------------------------------------
+    it('should display error toast when submitting empty name (Simulated Server Validation)', async () => {
+        // Arrange
+        axios.get.mockResolvedValueOnce({
+            data: { success: true, category: [] }
+        });
+        // Mocking server response for empty value if validation was server-side
+        axios.post.mockResolvedValueOnce({
+            data: { success: false, message: 'Name is required' }
+        });
+
+        // Act
+        renderCreateCategory();
+
+        await waitFor(() => {
+            expect(screen.getByRole('heading', { name: /manage category/i })).toBeInTheDocument();
+        });
+
+        // Leave input empty and submit
+        fireEvent.click(screen.getByRole('button', { name: /submit/i }));
+
+        // Assert
+        await waitFor(() => {
+            expect(axios.post).toHaveBeenCalled(); // Expect call because no client-validation
+            expect(toast.error).toHaveBeenCalledWith('Name is required');
+        });
+    });
+
+    // ----------------------------------------------------------
     // HAPPY PATH: Creates category successfully
     // ----------------------------------------------------------
     it('should create category successfully and show success toast', async () => {
