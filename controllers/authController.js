@@ -204,7 +204,7 @@ export const testController = (req, res) => {
   }
 };
 
-//update prfole
+//update profile // Leong Soon Mun Stephane, A0273409B
 export const updateProfileController = async (req, res) => {
   try {
     const { name, email, password, address, phone } = req.body;

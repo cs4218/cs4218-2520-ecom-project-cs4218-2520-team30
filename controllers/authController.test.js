@@ -17,6 +17,7 @@ import {
   orderStatusController,
   getAllOrdersController,
   getOrdersController,
+  updateProfileController,
 } from "./authController.js";
 
 jest.mock("../models/orderModel.js");
@@ -702,6 +703,159 @@ describe("Auth Controller - Database Error Handling", () => {
 describe('Auth Controller - Order', () => { // Leong Soon Mun Stephane, A0273409B
   let consoleLogSpy;
   let req, res;
+
+  describe('updateProfileController', () => { // Leong Soon Mun Stephane, A0273409B
+    let existingUser;
+
+    beforeEach(() => {
+      req = {
+        user: {},
+        body: {},
+      }
+      res = {
+        status: jest.fn().mockReturnThis(),
+        send: jest.fn(),
+        json: jest.fn(),
+      }
+      existingUser = {
+        name: "old tester",
+        email: "oldtest@gmail.com",
+        password: "oldpassword",
+        address: "old address",
+        phone: "12345678",
+      }
+      consoleLogSpy = jest.spyOn(console, 'log');
+      jest.clearAllMocks();
+    });
+
+    afterEach(() => {
+      consoleLogSpy.mockRestore();
+    });
+
+    it('should respond with 200 if update with password is successful', async () => { // Leong Soon Mun Stephane, A0273409B
+      // Arrange
+      req.user._id = 1
+      req.body = {
+        name: "new tester",
+        email: "newtest@gmail.com",
+        password: "newpassword",
+        address: "new address",
+        phone: "87654321",
+      }
+      let updatedUser = {flag: "new user"}
+      userModel.findById.mockResolvedValueOnce(existingUser);
+      hashPassword.mockResolvedValueOnce("hashnewpassword");
+      userModel.findByIdAndUpdate.mockResolvedValueOnce(updatedUser);
+
+
+      // Act
+      await updateProfileController(req, res);
+
+      // Assert
+      expect(userModel.findById).toHaveBeenCalledWith(1);
+      expect(hashPassword).toHaveBeenCalledWith("newpassword");
+      expect(userModel.findByIdAndUpdate).toHaveBeenCalledWith(
+        1,
+        {
+          name: "new tester",
+          password: "hashnewpassword",
+          address: "new address",
+          phone: "87654321",
+        }, {
+        new: true
+      });
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.send).toHaveBeenCalledWith({
+        success: true,
+        message: "Profile updated successfully",
+        updatedUser: updatedUser,
+      });
+    });
+
+    it('should respond with 200 if there are no updates', async () => { // Leong Soon Mun Stephane, A0273409B
+      // Arrange
+      req.user._id = 1
+      let updatedUser = { flag: "old user" }
+      userModel.findById.mockResolvedValueOnce(existingUser);
+      userModel.findByIdAndUpdate.mockResolvedValueOnce(updatedUser);
+
+
+      // Act
+      await updateProfileController(req, res);
+
+      // Assert
+      expect(userModel.findById).toHaveBeenCalledWith(1);
+      expect(hashPassword).not.toHaveBeenCalled();
+      expect(userModel.findByIdAndUpdate).toHaveBeenCalledWith(
+        1,
+        {
+          name: "old tester",
+          password: "oldpassword",
+          address: "old address",
+          phone: "12345678",
+        }, {
+        new: true
+      });
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.send).toHaveBeenCalledWith({
+        success: true,
+        message: "Profile updated successfully",
+        updatedUser: updatedUser,
+      });
+    });
+
+    it('should return response json with error if password is shorter than 6 characters', async () => { // Leong Soon Mun Stephane, A0273409B
+      // Arrange
+      req.user._id = 1
+      req.body = {
+        name: "new tester",
+        email: "newtest@gmail.com",
+        password: "short",
+        address: "new address",
+        phone: "87654321",
+      }
+      userModel.findById.mockResolvedValueOnce(existingUser);
+
+      // Act
+      await updateProfileController(req, res);
+
+      // Assert
+      expect(userModel.findById).toHaveBeenCalledWith(1);
+      expect(hashPassword).not.toHaveBeenCalled();
+      expect(userModel.findByIdAndUpdate).not.toHaveBeenCalled();
+      expect(res.json).toHaveBeenCalledWith({
+        error: "Password is required and 6 character long",
+      });
+    });
+
+    it('should respond with 400 if error occurs', async () => { // Leong Soon Mun Stephane, A0273409B
+      // Arrange
+      req.user._id = 1
+      req.body = {
+        name: "new tester",
+        email: "newtest@gmail.com",
+        password: "short",
+        address: "new address",
+        phone: "87654321",
+      }
+      let mockError = new Error('findById updateProfileController error');
+      userModel.findById.mockRejectedValueOnce(mockError);
+      consoleLogSpy.mockImplementation(() => { });
+
+      // Act
+      await updateProfileController(req, res);
+
+      // Assert
+      expect(consoleLogSpy).toHaveBeenCalledWith(mockError);
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.send).toHaveBeenCalledWith({
+        success: false,
+        message: "Error while updating profile",
+        error: mockError,
+      });
+    });
+
+  });
 
   describe('getOrdersController', () => { // Leong Soon Mun Stephane, A0273409B
     beforeEach(() => {
