@@ -15,7 +15,8 @@ import {
   forgotPasswordController,
   testController,
   orderStatusController,
-  getAllOrdersController
+  getAllOrdersController,
+  getOrdersController,
 } from "./authController.js";
 
 jest.mock("../models/orderModel.js");
@@ -701,6 +702,68 @@ describe("Auth Controller - Database Error Handling", () => {
 describe('Auth Controller - Order', () => { // Leong Soon Mun Stephane, A0273409B
   let consoleLogSpy;
   let req, res;
+
+  describe('getOrdersController', () => { // Leong Soon Mun Stephane, A0273409B
+    beforeEach(() => {
+      req = {
+        user: {}
+      };
+      res = {
+        status: jest.fn().mockReturnThis(),
+        send: jest.fn(),
+        json: jest.fn(),
+      };
+      consoleLogSpy = jest.spyOn(console, 'log');
+      jest.clearAllMocks();
+    });
+
+    afterEach(() => {
+      consoleLogSpy.mockRestore();
+    });
+
+    it('should respond successfully with orders in json', async () => { // Leong Soon Mun Stephane, A0273409B
+      // Arrange
+      req.user._id = 1;
+      let orderObject = {
+        populate: jest.fn().mockReturnThis(),
+      };
+      orderModel.find.mockReturnValue(orderObject);
+
+      // Act
+      await getOrdersController(req, res);
+
+      // Assert
+      expect(orderModel.find).toHaveBeenCalledWith({buyer: 1});
+      expect(orderObject.populate).toHaveBeenCalledWith('products', '-photo');
+      expect(orderObject.populate).toHaveBeenCalledWith('buyer', 'name');
+      expect(res.json).toHaveBeenCalled();
+    });
+
+    it('should respond with 500 and error message', async () => { // Leong Soon Mun Stephane, A0273409B
+      // Arrange
+      req.user._id = 1;
+      let mockError = new Error('find orders error');
+      let rejectedValue = jest.fn().mockRejectedValueOnce(mockError)
+      let orderObject = {
+        populate: jest.fn().mockReturnValueOnce({ populate: rejectedValue }),
+      };
+      orderModel.find.mockReturnValueOnce(orderObject);
+      consoleLogSpy.mockImplementation(() => { })
+
+      // Act
+      await getOrdersController(req, res);
+
+      // Assert
+      expect(consoleLogSpy).toHaveBeenCalledWith(mockError);
+      expect(res.status).toHaveBeenCalledWith(500);
+      expect(res.send).toHaveBeenCalledWith({
+        success: false,
+        message: "Error While Getting Orders",
+        error: mockError,
+      });
+    });
+
+  }); 
 
   describe('getAllOrdersController', () => { // Leong Soon Mun Stephane, A0273409B
     beforeEach(() => {
