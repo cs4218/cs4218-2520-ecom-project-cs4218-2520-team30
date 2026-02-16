@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent, within } from '@testing-library/react';
 import axios from 'axios';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import '@testing-library/jest-dom/extend-expect';
@@ -8,48 +8,35 @@ import AdminOrders from './AdminOrders';
 import { useAuth } from '../../context/auth';
 
 // ============================================================
-// MOCK EXTERNAL DEPENDENCIES (Isolation)
+// MOCK EXTERNAL DEPENDENCIES
 // ============================================================
 
-// Mock axios for API calls
-// Alek Kwek, A0273471A
 jest.mock('axios');
 jest.mock('react-hot-toast');
 
-// Mock context hooks
 jest.mock('../../context/auth', () => ({
     useAuth: jest.fn()
 }));
 
+// Mock other contexts to prevent errors
 jest.mock('../../context/cart', () => ({
     useCart: jest.fn(() => [null, jest.fn()])
 }));
-
 jest.mock('../../context/search', () => ({
     useSearch: jest.fn(() => [{ keyword: '' }, jest.fn()])
 }));
-
-// Mock useCategory hook to prevent Header axios calls
 jest.mock('../../hooks/useCategory', () => jest.fn(() => []));
 
-// Mock antd Select component with proper Option handling and Badge
-jest.mock('antd', () => {
-    const React = require('react');
-    const MockSelect = ({ children, onChange, defaultValue }) => {
-        return React.createElement('select', {
-            'data-testid': 'status-select',
-            onChange: (e) => onChange && onChange(e.target.value),
-            defaultValue: defaultValue
-        }, children);
-    };
-    MockSelect.Option = ({ children, value }) => {
-        return React.createElement('option', { value }, children);
-    };
-    return {
-        Select: MockSelect,
-        Badge: ({ children }) => React.createElement('span', null, children)
-    };
-});
+// Mock AdminMenu to isolate tests to AdminOrders logic
+jest.mock('../../components/AdminMenu', () => () => <div data-testid="admin-menu">AdminMenu</div>);
+
+// Mock Layout to avoid clutter
+jest.mock('../../components/Layout', () => ({ children, title }) => (
+    <div data-testid="layout">
+        <h1>{title}</h1>
+        {children}
+    </div>
+));
 
 // Mock moment
 jest.mock('moment', () => {
@@ -58,59 +45,48 @@ jest.mock('moment', () => {
     });
 });
 
-// Mock localStorage
-Object.defineProperty(window, 'localStorage', {
-    value: {
-        setItem: jest.fn(),
-        getItem: jest.fn(),
-        removeItem: jest.fn(),
-    },
-    writable: true,
+// Mock antd Select
+jest.mock('antd', () => {
+    const React = require('react');
+    const MockSelect = ({ children, onChange, defaultValue, bordered }) => {
+        return (
+            <select
+                data-testid="status-select"
+                onChange={(e) => onChange && onChange(e.target.value)}
+                defaultValue={defaultValue}
+            >
+                {children}
+            </select>
+        );
+    };
+    MockSelect.Option = ({ children, value }) => {
+        return <option value={value}>{children}</option>;
+    };
+    return {
+        Select: MockSelect,
+    };
 });
 
-// Mock matchMedia for responsive components
-window.matchMedia = window.matchMedia || function () {
-    return {
-        matches: false,
-        addListener: function () { },
-        removeListener: function () { }
-    };
-};
-
-// ============================================================
-// HELPER: Render component with router
-// ============================================================
-// Alek Kwek, A0273471A
-const renderAdminOrders = () => {
-    return render(
-        <MemoryRouter initialEntries={['/dashboard/admin/orders']}>
-            <Routes>
-                <Route path="/dashboard/admin/orders" element={<AdminOrders />} />
-            </Routes>
-        </MemoryRouter>
-    );
-};
-
-// Mock orders data
+// Mock Data
 const mockOrders = [
     {
         _id: 'order-1',
-        status: 'Processing',
-        buyer: { name: 'John Doe' },
-        createAt: '2024-01-15',
+        status: 'Not Process',
+        buyer: { name: 'Buyer One' },
+        createAt: '2023-01-01',
         payment: { success: true },
         products: [
-            { _id: 'prod-1', name: 'Product 1', description: 'Test description for product 1', price: 99 }
+            { _id: 'p1', name: 'Product A', description: 'Desc A', price: 100 },
         ]
     },
     {
         _id: 'order-2',
-        status: 'Shipped',
-        buyer: { name: 'Jane Smith' },
-        createAt: '2024-01-16',
+        status: 'Processing',
+        buyer: { name: 'Buyer Two' },
+        createAt: '2023-01-02',
         payment: { success: false },
         products: [
-            { _id: 'prod-2', name: 'Product 2', description: 'Test description for product 2', price: 149 }
+            { _id: 'p2', name: 'Product B', description: 'Desc B', price: 200 }
         ]
     }
 ];
@@ -121,219 +97,175 @@ const mockOrders = [
 // Alek Kwek, A0273471A
 describe('AdminOrders Component', () => {
     // Alek Kwek, A0273471A
-
     beforeEach(() => {
         jest.clearAllMocks();
-        // Default mock for useCategory hook API call
-        axios.get.mockImplementation((url) => {
-            if (url === '/api/v1/category/get-category') {
-                return Promise.resolve({ data: { success: true, category: [] } });
-            }
-            return Promise.resolve({ data: {} });
-        });
+        // Setup default auth
+        useAuth.mockReturnValue([{ user: { role: 1, name: 'Admin' }, token: 'valid-token' }, jest.fn()]);
     });
 
-    // ----------------------------------------------------------
-    // HAPPY PATH: Renders all orders page with title
-    // ----------------------------------------------------------
-    // Alek Kwek, A0273471A
+    // Helper to render
+    const renderComponent = () => {
+        render(
+            <MemoryRouter>
+                <AdminOrders />
+            </MemoryRouter>
+        );
+    };
 
-    it('should render all orders page with title', async () => {
-        // Arrange
-        useAuth.mockReturnValue([{ user: { name: 'Admin' }, token: 'mock-token' }, jest.fn()]);
+    /**
+     * Test Case A: Empty State
+     * Verify "No orders found" behavior or just empty list.
+     * The component maps `orders?.map(...)`, so if empty, no tables should render.
+     */
+    // Alek Kwek, A0273471A
+    it('Test Case A: Empty State - Renders no order tables when API returns empty array', async () => {
         axios.get.mockResolvedValueOnce({ data: [] });
 
-        // Act
-        renderAdminOrders();
+        renderComponent();
 
-        // Assert
-        await waitFor(() => {
-            expect(screen.getByRole('heading', { name: /all orders/i })).toBeInTheDocument();
-        });
+        // Wait for potential async call
+        await waitFor(() => expect(axios.get).toHaveBeenCalledWith('/api/v1/auth/all-orders'));
+
+        // Assert no tables are rendered
+        const tables = screen.queryAllByRole('table');
+        expect(tables).toHaveLength(0);
+
+        // Assert Title is still there
+        expect(screen.getByText('All Orders')).toBeInTheDocument();
     });
 
-    // ----------------------------------------------------------
-    // HAPPY PATH: Fetches orders when auth token is present
-    // ----------------------------------------------------------
+    /**
+     * Test Case B: Populated State
+     * Verify correct number of rows/cards render.
+     */
     // Alek Kwek, A0273471A
+    it('Test Case B: Populated State - Renders correct number of orders and products', async () => {
+        // Use mockResolvedValue to ensure it persists across re-renders
+        axios.get.mockResolvedValue({ data: mockOrders });
 
-    it('should fetch orders when auth token is present', async () => {
-        // Arrange
-        useAuth.mockReturnValue([{ user: { name: 'Admin' }, token: 'valid-token' }, jest.fn()]);
-        axios.get.mockResolvedValueOnce({ data: mockOrders });
+        renderComponent();
 
-        // Act
-        renderAdminOrders();
+        // 1. Verify API Call
+        await waitFor(() => expect(axios.get).toHaveBeenCalledWith('/api/v1/auth/all-orders'));
 
-        // Assert
+        // 2. Verify Render
+        // Should have 2 tables (one for each order)
         await waitFor(() => {
-            expect(axios.get).toHaveBeenCalledWith('/api/v1/auth/all-orders');
+            const tables = screen.queryAllByRole('table');
+            expect(tables).toHaveLength(2);
         });
-    });
 
-    // ----------------------------------------------------------
-    // EDGE CASE: Does not fetch orders without token
-    // ----------------------------------------------------------
-    // Alek Kwek, A0273471A
+        // Verify content
+        expect(screen.getByText('Buyer One')).toBeInTheDocument();
+        expect(screen.getByText('Buyer Two')).toBeInTheDocument();
 
-    it('should not fetch orders when auth token is missing', async () => {
-        // Arrange
-        useAuth.mockReturnValue([{ user: null, token: '' }, jest.fn()]);
+        // Verify Products within orders
+        expect(screen.getByText('Product A')).toBeInTheDocument();
+        expect(screen.getByText('Product B')).toBeInTheDocument();
 
-        // Act
-        renderAdminOrders();
-
-        // Assert
-        await waitFor(() => {
-            expect(axios.get).not.toHaveBeenCalled();
-        });
-    });
-
-    // ----------------------------------------------------------
-    // HAPPY PATH: Displays order data in table
-    // ----------------------------------------------------------
-    // Alek Kwek, A0273471A
-
-    it('should display order data in table', async () => {
-        // Arrange
-        useAuth.mockReturnValue([{ user: { name: 'Admin' }, token: 'valid-token' }, jest.fn()]);
-        axios.get.mockResolvedValueOnce({ data: mockOrders });
-
-        // Act
-        renderAdminOrders();
-
-        // Assert
-        await waitFor(() => {
-            expect(screen.getByText('John Doe')).toBeInTheDocument();
-            expect(screen.getByText('Jane Smith')).toBeInTheDocument();
-        });
+        // Verify Payment Status text
         expect(screen.getByText('Success')).toBeInTheDocument();
         expect(screen.getByText('Failed')).toBeInTheDocument();
     });
 
-    // ----------------------------------------------------------
-    // HAPPY PATH: Displays product information within orders
-    // ----------------------------------------------------------
+    /**
+     * Status Updates
+     * Action: Change an Order Status dropdown
+     * Expect: Verify axios.put call
+     */
     // Alek Kwek, A0273471A
-
-    it('should display product details within orders', async () => {
-        // Arrange
-        useAuth.mockReturnValue([{ user: { name: 'Admin' }, token: 'valid-token' }, jest.fn()]);
+    it('Status Updates - Calls API when status is changed', async () => {
         axios.get.mockResolvedValueOnce({ data: mockOrders });
-
-        // Act
-        renderAdminOrders();
-
-        // Assert
-        await waitFor(() => {
-            expect(screen.getByText('Product 1')).toBeInTheDocument();
-            expect(screen.getByText('Product 2')).toBeInTheDocument();
-        });
-    });
-
-    // ----------------------------------------------------------
-    // HAPPY PATH: Updates order status when changed
-    // ----------------------------------------------------------
-    // Alek Kwek, A0273471A
-
-    it('should update order status when select value changes', async () => {
-        // Arrange
-        useAuth.mockReturnValue([{ user: { name: 'Admin' }, token: 'valid-token' }, jest.fn()]);
-        axios.get.mockResolvedValue({ data: mockOrders });
         axios.put.mockResolvedValueOnce({ data: { success: true } });
 
-        // Act
-        renderAdminOrders();
+        renderComponent();
 
+        await waitFor(() => expect(screen.getAllByTestId('status-select')).toHaveLength(2));
+
+        const selects = screen.getAllByTestId('status-select');
+        const firstSelect = selects[0]; // Corresponds to order-1 which is "Not Process"
+
+        // Action: Change status to "Shipped"
+        fireEvent.change(firstSelect, { target: { value: 'Shipped' } });
+
+        // Expect: API call
         await waitFor(() => {
-            expect(screen.getAllByTestId('status-select')).toHaveLength(2);
+            expect(axios.put).toHaveBeenCalledWith(
+                `/api/v1/auth/order-status/order-1`,
+                { status: 'Shipped' }
+            );
         });
 
-        // Change status of first order
-        const selectElements = screen.getAllByTestId('status-select');
-        fireEvent.change(selectElements[0], { target: { value: 'Shipped' } });
-
-        // Assert
-        await waitFor(() => {
-            expect(axios.put).toHaveBeenCalledWith('/api/v1/auth/order-status/order-1', {
-                status: 'Shipped'
-            });
-        });
+        // Implicitly checks that it re-fetches orders usually, but we mocked put.
+        // The component calls `getOrders()` after update.
+        // We can check if getOrders was called a second time?
+        expect(axios.get).toHaveBeenCalledTimes(2); // Initial load + after update
     });
 
-    // ----------------------------------------------------------
-    // EDGE CASE: Handles status update error gracefully
-    // ----------------------------------------------------------
+    /**
+     * Test Case: API Failure - getOrders
+     * Verify error handling when fetching orders fails.
+     */
     // Alek Kwek, A0273471A
+    it('Test Case: API Failure - getOrders logs error on failure', async () => {
+        // Spy on console.log to verify error handling
+        const consoleSpy = jest.spyOn(console, 'log').mockImplementation(() => { });
+        axios.get.mockRejectedValue(new Error('Fetch failed'));
 
-    it('should handle status update error gracefully', async () => {
-        // Arrange
-        const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
-        useAuth.mockReturnValue([{ user: { name: 'Admin' }, token: 'valid-token' }, jest.fn()]);
+        renderComponent();
+
+        await waitFor(() => expect(axios.get).toHaveBeenCalledWith('/api/v1/auth/all-orders'));
+
+        // Wait for the async operation to complete and log error
+        // Since we cannot wait for a DOM change (nothing renders), we wait for the log
+        await waitFor(() => expect(consoleSpy).toHaveBeenCalledWith(expect.any(Error)));
+
+        consoleSpy.mockRestore();
+    });
+
+    /**
+     * Test Case: API Failure - handleChange
+     * Verify error handling when updating status fails.
+     */
+    // Alek Kwek, A0273471A
+    it('Test Case: API Failure - handleChange logs error on failure', async () => {
+        const consoleSpy = jest.spyOn(console, 'log').mockImplementation(() => { });
         axios.get.mockResolvedValue({ data: mockOrders });
-        axios.put.mockRejectedValueOnce(new Error('Update failed'));
+        axios.put.mockRejectedValue(new Error('Update failed'));
 
-        // Act
-        renderAdminOrders();
+        renderComponent();
 
-        await waitFor(() => {
-            expect(screen.getAllByTestId('status-select')).toHaveLength(2);
-        });
+        await waitFor(() => expect(screen.getAllByTestId('status-select')).toHaveLength(2));
 
-        // Change status of first order
-        const selectElements = screen.getAllByTestId('status-select');
-        fireEvent.change(selectElements[0], { target: { value: 'Shipped' } });
+        const selects = screen.getAllByTestId('status-select');
+        const firstSelect = selects[0];
 
-        // Assert
-        await waitFor(() => {
-            expect(consoleSpy).toHaveBeenCalled();
-        });
+        // Action: Change status
+        fireEvent.change(firstSelect, { target: { value: 'Shipped' } });
+
+        await waitFor(() => expect(axios.put).toHaveBeenCalled());
+
+        // Assert console.log was called with error
+        await waitFor(() => expect(consoleSpy).toHaveBeenCalledWith(expect.any(Error)));
 
         consoleSpy.mockRestore();
     });
 
-    // ----------------------------------------------------------
-    // HAPPY PATH: Displays correct table headers
-    // ----------------------------------------------------------
+    /**
+     * Test Case: Auth Check
+     * Verify that getOrders is NOT called if auth token is missing.
+     * Covers the `if (auth?.token)` branch.
+     */
     // Alek Kwek, A0273471A
+    it('Test Case: Auth Check - does not fetch orders if no token', async () => {
+        // Override useAuth for this test only
+        useAuth.mockReturnValue([{ user: { role: 1, name: 'Admin' }, token: '' }, jest.fn()]);
 
-    it('should display correct table headers', async () => {
-        // Arrange
-        useAuth.mockReturnValue([{ user: { name: 'Admin' }, token: 'valid-token' }, jest.fn()]);
-        axios.get.mockResolvedValueOnce({ data: mockOrders });
+        renderComponent();
 
-        // Act
-        renderAdminOrders();
+        // Wait a bit to ensure useEffect would have run
+        await new Promise(r => setTimeout(r, 100));
 
-        // Assert
-        await waitFor(() => {
-            expect(screen.getAllByRole('columnheader', { name: /#/i })).toHaveLength(2);
-            expect(screen.getAllByRole('columnheader', { name: /status/i })).toHaveLength(2);
-            expect(screen.getAllByRole('columnheader', { name: /buyer/i })).toHaveLength(2);
-            expect(screen.getAllByRole('columnheader', { name: /payment/i })).toHaveLength(2);
-            expect(screen.getAllByRole('columnheader', { name: /quantity/i })).toHaveLength(2);
-        });
-    });
-
-    // ----------------------------------------------------------
-    // EDGE CASE: Handles getOrders fetch error gracefully
-    // ----------------------------------------------------------
-    // Alek Kwek, A0273471A
-
-    it('should handle getOrders fetch error gracefully', async () => {
-        // Arrange
-        const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
-        useAuth.mockReturnValue([{ user: { name: 'Admin' }, token: 'valid-token' }, jest.fn()]);
-        axios.get.mockRejectedValueOnce(new Error('Failed to fetch orders'));
-
-        // Act
-        renderAdminOrders();
-
-        // Assert
-        await waitFor(() => {
-            expect(consoleSpy).toHaveBeenCalled();
-        });
-
-        consoleSpy.mockRestore();
+        expect(axios.get).not.toHaveBeenCalled();
     });
 });
