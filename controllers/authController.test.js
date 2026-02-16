@@ -824,7 +824,7 @@ describe('Auth Controller - Order', () => { // Leong Soon Mun Stephane, A0273409
     });
   });
 
-  describe('orderStatusController', () => {
+  describe('orderStatusController', () => { // Leong Soon Mun Stephane, A0273409B
     
     beforeEach(() => {
       req = {
@@ -836,7 +836,7 @@ describe('Auth Controller - Order', () => { // Leong Soon Mun Stephane, A0273409
         send: jest.fn(),
         json: jest.fn(),
       };
-      consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => { });
+      consoleLogSpy = jest.spyOn(console, 'log');
       jest.clearAllMocks();
     });
 
@@ -864,6 +864,7 @@ describe('Auth Controller - Order', () => { // Leong Soon Mun Stephane, A0273409
       req.body.status = 200;
       let mockError = new Error('findByIdAndUpdate error')
       orderModel.findByIdAndUpdate.mockRejectedValueOnce(mockError);
+      consoleLogSpy.mockImplementation(() => { })
 
       // Act
       await orderStatusController(req, res)
