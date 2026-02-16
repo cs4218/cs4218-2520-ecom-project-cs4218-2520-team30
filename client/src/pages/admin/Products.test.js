@@ -108,17 +108,6 @@ describe('Products Component', () => {
     // Constraint: If the app uses window.confirm, you must mock the browser confirmation to return true.
     // Expect: Verify the axios.delete endpoint was called with the correct ID.
     // ============================================================
-
-    /* 
-       NOTE: The `Products.js` component currently ONLY renders a list of links to UpdateProduct. 
-       Use case requires testing a "Delete" action. 
-       Since the button is missing in the provided source code for Products.js, 
-       this test is expected to FAIL finding the button, highlighting the missing feature 
-       requested by the Prompt vs Codebase state. 
-       
-       However, to satisfy the prompt, I will write the test as if the functionality existed (or was expected).
-       If it fails, it documents the discrepancy.
-    */
     // Alek Kwek, A0273471A
     it('Destructive User Flow: Delete a product', async () => {
         // Mock API
