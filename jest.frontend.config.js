@@ -40,6 +40,7 @@ export default {
   collectCoverageFrom: [
     "client/src/pages/Auth/**",
     "client/src/pages/CartPage.js",
+    "client/src/pages/Contact.js",
     "client/src/pages/Search.js",
     "client/src/pages/Categories.js",
     "client/src/components/Form/SearchInput.js",
