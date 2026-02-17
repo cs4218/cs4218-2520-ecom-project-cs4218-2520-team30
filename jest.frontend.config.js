@@ -49,7 +49,8 @@ export default {
     "client/src/components/Header.js",
     "client/src/components/Footer.js",
     "client/src/components/Layout.js",
-    "client/src/components/Spinner.js"
+    "client/src/components/Spinner.js",
+    "client/src/pages/Auth/forgotPassword.js"
   ],
   coverageThreshold: {
     global: {
