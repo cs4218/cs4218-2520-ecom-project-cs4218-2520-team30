@@ -15,6 +15,10 @@ const CreateCategory = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      if (!name) {
+        toast.error("Name is required");
+        return;
+      }
       const { data } = await axios.post("/api/v1/category/create-category", {
         name,
       });

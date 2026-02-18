@@ -122,15 +122,12 @@ describe('CreateCategory Component', () => {
     // ----------------------------------------------------------
     // VALIDATION BVA: Empty Name Submission
     // ----------------------------------------------------------
-    it('should display error toast when submitting empty name (Simulated Server Validation)', async () => {
+    it('should display error toast when submitting empty name (Client-Side Validation)', async () => {
         // Arrange
         axios.get.mockResolvedValueOnce({
             data: { success: true, category: [] }
         });
-        // Mocking server response for empty value if validation was server-side
-        axios.post.mockResolvedValueOnce({
-            data: { success: false, message: 'Name is required' }
-        });
+        // No mock needed for axios.post as it shouldn't be called
 
         // Act
         renderCreateCategory();
@@ -144,7 +141,7 @@ describe('CreateCategory Component', () => {
 
         // Assert
         await waitFor(() => {
-            expect(axios.post).toHaveBeenCalled(); // Expect call because no client-validation
+            expect(axios.post).not.toHaveBeenCalled(); // Expect NO call because of client-validation
             expect(toast.error).toHaveBeenCalledWith('Name is required');
         });
     });
