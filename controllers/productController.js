@@ -25,22 +25,22 @@ export const createProductController = async (req, res) => {
     //validation
     switch (true) {
       case !name:
-        return res.status(500).send({ error: "Name is Required" });
+        return res.status(400).send({ error: "Name is Required" });
       case !description:
-        return res.status(500).send({ error: "Description is Required" });
+        return res.status(400).send({ error: "Description is Required" });
       case !price && price !== 0:
-        return res.status(500).send({ error: "Price is Required" });
+        return res.status(400).send({ error: "Price is Required" });
       case price < 0:
-        return res.status(500).send({ error: "Price must be non-negative" });
+        return res.status(400).send({ error: "Price must be non-negative" });
       case !category:
-        return res.status(500).send({ error: "Category is Required" });
+        return res.status(400).send({ error: "Category is Required" });
       case !quantity && quantity !== 0:
-        return res.status(500).send({ error: "Quantity is Required" });
+        return res.status(400).send({ error: "Quantity is Required" });
       case quantity < 0:
-        return res.status(500).send({ error: "Quantity must be non-negative" });
+        return res.status(400).send({ error: "Quantity must be non-negative" });
       case photo && photo.size > 1000000:
         return res
-          .status(500)
+          .status(400)
           // Alek Kwek, A0273471A
           .send({ error: "Photo is Required to be less than 1mb" });
     }

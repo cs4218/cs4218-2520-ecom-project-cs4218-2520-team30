@@ -113,7 +113,7 @@ describe('createProductController', () => {
         expect(mockSave).toHaveBeenCalledTimes(1);
     });
 
-    test('should return 500 if name is missing', async () => {
+    test('should return 400 if name is missing', async () => {
         // 1. Arrange
         req.fields.name = ""; // Trigger validation error
 
@@ -121,11 +121,11 @@ describe('createProductController', () => {
         await createProductController(req, res);
 
         // 3. Assert
-        expect(res.status).toHaveBeenCalledWith(500);
+        expect(res.status).toHaveBeenCalledWith(400);
         expect(res.send).toHaveBeenCalledWith({ error: "Name is Required" });
     });
 
-    test('should return 500 if description is missing', async () => {
+    test('should return 400 if description is missing', async () => {
         // 1. Arrange
         req.fields.description = ""; // Trigger validation error
 
@@ -133,11 +133,11 @@ describe('createProductController', () => {
         await createProductController(req, res);
 
         // 3. Assert
-        expect(res.status).toHaveBeenCalledWith(500);
+        expect(res.status).toHaveBeenCalledWith(400);
         expect(res.send).toHaveBeenCalledWith({ error: "Description is Required" });
     });
 
-    test('should return 500 if price is missing', async () => {
+    test('should return 400 if price is missing', async () => {
         // 1. Arrange
         req.fields.price = ""; // Trigger validation error
 
@@ -145,11 +145,11 @@ describe('createProductController', () => {
         await createProductController(req, res);
 
         // 3. Assert
-        expect(res.status).toHaveBeenCalledWith(500);
+        expect(res.status).toHaveBeenCalledWith(400);
         expect(res.send).toHaveBeenCalledWith({ error: "Price is Required" });
     });
 
-    test('should return 500 if category is missing', async () => {
+    test('should return 400 if category is missing', async () => {
         // 1. Arrange
         req.fields.category = ""; // Trigger validation error
 
@@ -157,11 +157,11 @@ describe('createProductController', () => {
         await createProductController(req, res);
 
         // 3. Assert
-        expect(res.status).toHaveBeenCalledWith(500);
+        expect(res.status).toHaveBeenCalledWith(400);
         expect(res.send).toHaveBeenCalledWith({ error: "Category is Required" });
     });
 
-    test('should return 500 if quantity is missing', async () => {
+    test('should return 400 if quantity is missing', async () => {
         // 1. Arrange
         req.fields.quantity = ""; // Trigger validation error
 
@@ -169,11 +169,11 @@ describe('createProductController', () => {
         await createProductController(req, res);
 
         // 3. Assert
-        expect(res.status).toHaveBeenCalledWith(500);
+        expect(res.status).toHaveBeenCalledWith(400);
         expect(res.send).toHaveBeenCalledWith({ error: "Quantity is Required" });
     });
 
-    test('should return 500 if photo size is greater than 1MB', async () => {
+    test('should return 400 if photo size is greater than 1MB', async () => {
         // 1. Arrange
         req.files.photo.size = 2000000; // 2MB
 
@@ -181,7 +181,7 @@ describe('createProductController', () => {
         await createProductController(req, res);
 
         // 3. Assert
-        expect(res.status).toHaveBeenCalledWith(500);
+        expect(res.status).toHaveBeenCalledWith(400);
         expect(res.send).toHaveBeenCalledWith({
             error: "Photo is Required to be less than 1mb"
         });
