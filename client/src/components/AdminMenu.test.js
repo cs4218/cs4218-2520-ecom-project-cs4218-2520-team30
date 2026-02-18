@@ -102,8 +102,9 @@ describe("AdminMenu Component", () => {
     });
 
     // Alek Kwek, A0273471A
-    test("does not display the Users link (commented out code)", () => {
+    test("contains a navigation link to Users", () => {
         // Arrange
+        const expectedPath = "/dashboard/admin/users";
         const linkName = /users/i;
 
         // Act
@@ -114,7 +115,8 @@ describe("AdminMenu Component", () => {
         );
 
         // Assert
-        const link = screen.queryByRole("link", { name: linkName });
-        expect(link).not.toBeInTheDocument();
+        const link = screen.getByRole("link", { name: linkName });
+        expect(link).toBeInTheDocument();
+        expect(link).toHaveAttribute("href", expectedPath);
     });
 });

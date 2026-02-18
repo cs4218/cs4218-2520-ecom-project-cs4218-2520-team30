@@ -30,7 +30,9 @@ export default {
     "<rootDir>/client/src/pages/Pagenotfound.test.js",
     "<rootDir>/client/src/components/Form/SearchInput.test.js",
     "<rootDir>/client/src/components/*.test.js",
-    "<rootDir>/client/src/context/search.test.js"
+    "<rootDir>/client/src/context/search.test.js",
+    "<rootDir>/client/src/components/AdminMenu.test.js",
+    "<rootDir>/client/src/pages/admin/Users.test.js"
   ],
 
   // jest code coverage
@@ -48,7 +50,8 @@ export default {
     "client/src/components/Header.js",
     "client/src/components/Footer.js",
     "client/src/components/Layout.js",
-    "client/src/components/Spinner.js"
+    "client/src/components/Spinner.js",
+    "client/src/components/AdminMenu.js"
   ],
   coverageThreshold: {
     global: {
