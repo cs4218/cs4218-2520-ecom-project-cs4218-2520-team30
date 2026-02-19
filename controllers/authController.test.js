@@ -143,7 +143,7 @@ describe("Auth Controller - Register", () => {
     test.each([
       [{ name: "Test" }, "Email is required", "missing email"],
       [{ name: "Test", email: "test@test.com" }, "Password is required", "missing password"],
-      [{ name: "Test", email: "test@test.com", password: "pass123" }, "Phone no is required", "missing phone"],
+      [{ name: "Test", email: "test@test.com", password: "pass123" }, "Phone number is required", "missing phone"],
       [{ name: "Test", email: "test@test.com", password: "pass123", phone: "1234567890" }, "Address is required", "missing address"],
       [{ name: "Test", email: "test@test.com", password: "pass123", phone: "1234567890", address: "123 St" }, "Answer is required", "missing answer"],
     ])("should return error when %s", async (body, expectedMessage) => {
@@ -393,7 +393,7 @@ describe("Auth Controller - Register", () => {
       expect(fakeRes.send).toHaveBeenCalledWith(
         expect.objectContaining({
           success: false,
-          message: "Error in registration",
+          message: "Error while registering user",
         })
       );
       expect(consoleSpy).toHaveBeenCalled();
@@ -417,7 +417,7 @@ describe("Auth Controller - Register", () => {
       expect(fakeRes.send).toHaveBeenCalledWith(
         expect.objectContaining({
           success: false,
-          message: "Error in registration",
+          message: "Error while registering user",
         })
       );
       consoleSpy.mockRestore();
@@ -503,7 +503,7 @@ describe("Auth Controller - Login", () => {
       expect(fakeRes.status).toHaveBeenCalledWith(404);
       expect(fakeRes.send).toHaveBeenCalledWith({
         success: false,
-        message: "Email is not registered",
+        message: "Invalid email or password",
       });
       expect(comparePassword).not.toHaveBeenCalled();
     });
@@ -524,12 +524,12 @@ describe("Auth Controller - Login", () => {
       expect(fakeRes.status).toHaveBeenCalledWith(404);
       expect(fakeRes.send).toHaveBeenCalledWith({
         success: false,
-        message: "Email is not registered",
+        message: "Invalid email or password",
       });
     });
   });
 
-  describe("Invalid Password", () => {
+  describe("Invalid Email or Password", () => {
     //Tay Kai Jun, A0283343E
     test("expected to return error when password does not match", async () => {
     
@@ -557,7 +557,7 @@ describe("Auth Controller - Login", () => {
       expect(fakeRes.status).toHaveBeenCalledWith(200);
       expect(fakeRes.send).toHaveBeenCalledWith({
         success: false,
-        message: "Invalid password",
+        message: "Invalid email or password",
       });
       expect(JWT.sign).not.toHaveBeenCalled();
     });
@@ -588,7 +588,7 @@ describe("Auth Controller - Login", () => {
       expect(fakeRes.status).toHaveBeenCalledWith(200);
       expect(fakeRes.send).toHaveBeenCalledWith({
         success: false,
-        message: "Invalid password",
+        message: "Invalid email or password",
       });
     });
 
@@ -618,7 +618,7 @@ describe("Auth Controller - Login", () => {
       expect(fakeRes.status).toHaveBeenCalledWith(200);
       expect(fakeRes.send).toHaveBeenCalledWith({
         success: false,
-        message: "Invalid password",
+        message: "Invalid email or password",
       });
       expect(JWT.sign).not.toHaveBeenCalled();
     });
@@ -659,7 +659,7 @@ describe("Auth Controller - Login", () => {
       expect(fakeRes.send).toHaveBeenCalledWith(
         expect.objectContaining({
           success: true,
-          message: "Login successfully",
+          message: "Logged in successfully",
           user: expect.objectContaining({
             _id: "userId123",
             name: "John Doe",
@@ -704,7 +704,7 @@ describe("Auth Controller - Login", () => {
       expect(fakeRes.send).toHaveBeenCalledWith(
         expect.objectContaining({
           success: true,
-          message: "Login successfully",
+          message: "Logged in successfully",
           user: expect.objectContaining({
             _id: "userId999",
             name: "Alice Smith",
@@ -749,7 +749,7 @@ describe("Auth Controller - Login", () => {
       expect(fakeRes.send).toHaveBeenCalledWith(
         expect.objectContaining({
           success: true,
-          message: "Login successfully",
+          message: "Logged in successfully",
           user: expect.objectContaining({
             _id: "adminId001",
             name: "Admin User",

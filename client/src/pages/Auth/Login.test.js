@@ -131,7 +131,7 @@ describe('Login Component', () => {
         axios.post.mockRejectedValueOnce({
             response: {
                 data: {
-                    message: 'Invalid password'
+                    message: 'Invalid email or password'
                 }
             }
         });
@@ -149,15 +149,15 @@ describe('Login Component', () => {
         fireEvent.click(getByText('LOGIN'));
 
         await waitFor(() => expect(axios.post).toHaveBeenCalled());
-        expect(toast.error).toHaveBeenCalledWith('Invalid password');
+        expect(toast.error).toHaveBeenCalledWith('Invalid email or password');
     });
 
     //Tay Kai Jun, A0283343E
-    it('should display error message when email is not registered', async () => {
+    it('should display error message when email or password is invalid', async () => {
         axios.post.mockRejectedValueOnce({
             response: {
                 data: {
-                    message: 'Email is not registered'
+                    message: 'Invalid email or password'
                 }
             }
         });
@@ -175,7 +175,7 @@ describe('Login Component', () => {
         fireEvent.click(getByText('LOGIN'));
 
         await waitFor(() => expect(axios.post).toHaveBeenCalled());
-        expect(toast.error).toHaveBeenCalledWith('Email is not registered');
+        expect(toast.error).toHaveBeenCalledWith('Invalid email or password');
     });
 
     //Tay Kai Jun, A0283343E
