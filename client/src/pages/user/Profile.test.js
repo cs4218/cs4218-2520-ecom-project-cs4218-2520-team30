@@ -1,5 +1,6 @@
 import React from 'react';
-import { render, fireEvent, waitFor } from '@testing-library/react';
+import { jest, describe, beforeEach, it, expect } from "@jest/globals";
+import { render, fireEvent, waitFor, screen } from '@testing-library/react';
 import axios from 'axios';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import '@testing-library/jest-dom/extend-expect';
@@ -11,13 +12,14 @@ jest.mock('axios');
 jest.mock('react-hot-toast');
 
 jest.mock('../../context/auth', () => ({
-    useAuth: jest.fn(() => [{ user: {
-        email: 'test@example.com.sg',
-        name: 'test',
-        phone: '12345678',
-        address: 'test address',
-    }
-}, jest.fn()]) // Mock useAuth hook to return null state and a mock function for setAuth
+    useAuth: jest.fn(() => [{
+        user: {
+            email: 'test@example.com.sg',
+            name: 'test',
+            phone: '12345678',
+            address: 'test address',
+        }
+    }, jest.fn()]) // Mock useAuth hook to return null state and a mock function for setAuth
 }));
 
 jest.mock('../../hooks/useCategory', () => ({
@@ -51,16 +53,16 @@ window.matchMedia = window.matchMedia || function () {
     };
 };
 
-describe('Profile Component', () => {
+describe('Profile Component', () => { // Leong Soon Mun Stephane, A0273409B
     beforeEach(() => {
         jest.clearAllMocks();
     });
 
-    it('renders update profile form', () => {
+    it('should render update profile form', () => { // Leong Soon Mun Stephane, A0273409B
         // Arrange
 
         // Act
-        const { getByText, getByPlaceholderText } = render(
+        render(
             <MemoryRouter initialEntries={['/profile']}>
                 <Routes>
                     <Route path="/profile" element={<Profile />} />
@@ -69,20 +71,20 @@ describe('Profile Component', () => {
         );
 
         // Assert
-        expect(getByText('USER PROFILE')).toBeInTheDocument();
-        expect(getByPlaceholderText('Enter Your Email')).toBeInTheDocument();
-        expect(getByPlaceholderText('Enter Your Password')).toBeInTheDocument();
-        expect(getByPlaceholderText('Enter Your Name')).toBeInTheDocument();
-        expect(getByPlaceholderText('Enter Your Phone')).toBeInTheDocument();
-        expect(getByPlaceholderText('Enter Your Address')).toBeInTheDocument();
-        expect(getByText('UPDATE')).toBeInTheDocument();
+        expect(screen.getByText('USER PROFILE')).toBeInTheDocument();
+        expect(screen.getByPlaceholderText('Enter Your Email')).toBeInTheDocument();
+        expect(screen.getByPlaceholderText('Enter Your Password')).toBeInTheDocument();
+        expect(screen.getByPlaceholderText('Enter Your Name')).toBeInTheDocument();
+        expect(screen.getByPlaceholderText('Enter Your Phone')).toBeInTheDocument();
+        expect(screen.getByPlaceholderText('Enter Your Address')).toBeInTheDocument();
+        expect(screen.getByText('UPDATE')).toBeInTheDocument();
     });
 
-    it('initial inputs should set user data except password', () => {
+    it('should have initial inputs of user data except password', () => { // Leong Soon Mun Stephane, A0273409B
         // Arrange
 
         // Act
-        const { getByPlaceholderText } = render(
+        render(
             <MemoryRouter initialEntries={['/profile']}>
                 <Routes>
                     <Route path="/profile" element={<Profile />} />
@@ -91,21 +93,20 @@ describe('Profile Component', () => {
         );
 
         // Assert
-        expect(getByPlaceholderText('Enter Your Email').value).toBe('test@example.com.sg');
-        expect(getByPlaceholderText('Enter Your Password').value).toBe('');
-        expect(getByPlaceholderText('Enter Your Name').value).toBe('test');
-        expect(getByPlaceholderText('Enter Your Phone').value).toBe('12345678');
-        expect(getByPlaceholderText('Enter Your Address').value).toBe('test address');
-        
+        expect(screen.getByPlaceholderText('Enter Your Email').value).toBe('test@example.com.sg');
+        expect(screen.getByPlaceholderText('Enter Your Password').value).toBe('');
+        expect(screen.getByPlaceholderText('Enter Your Name').value).toBe('test');
+        expect(screen.getByPlaceholderText('Enter Your Phone').value).toBe('12345678');
+        expect(screen.getByPlaceholderText('Enter Your Address').value).toBe('test address');
+
     });
 
-    it('should update user detail successfully', async () => {
+    it('should update user detail if put is successful', async () => { // Leong Soon Mun Stephane, A0273409B
         // Arrange
-        axios.put.mockResolvedValueOnce({ data: { } });
-        
+        axios.put.mockResolvedValueOnce({ data: {} });
 
         // Act
-        const { getByText, getByPlaceholderText } = render(
+        render(
             <MemoryRouter initialEntries={['/profile']}>
                 <Routes>
                     <Route path="/profile" element={<Profile />} />
@@ -113,25 +114,24 @@ describe('Profile Component', () => {
             </MemoryRouter>
         );
 
-        fireEvent.change(getByPlaceholderText('Enter Your Name'), { target: { value: 'John Doe' } });
-        fireEvent.change(getByPlaceholderText('Enter Your Email'), { target: { value: 'test@example.com' } });
-        fireEvent.change(getByPlaceholderText('Enter Your Password'), { target: { value: 'password123' } });
-        fireEvent.change(getByPlaceholderText('Enter Your Phone'), { target: { value: '1234567890' } });
-        fireEvent.change(getByPlaceholderText('Enter Your Address'), { target: { value: '123 Street' } });
-        fireEvent.click(getByText('UPDATE'));
+        fireEvent.change(screen.getByPlaceholderText('Enter Your Name'), { target: { value: 'John Doe' } });
+        fireEvent.change(screen.getByPlaceholderText('Enter Your Email'), { target: { value: 'test@example.com' } });
+        fireEvent.change(screen.getByPlaceholderText('Enter Your Password'), { target: { value: 'password123' } });
+        fireEvent.change(screen.getByPlaceholderText('Enter Your Phone'), { target: { value: '1234567890' } });
+        fireEvent.change(screen.getByPlaceholderText('Enter Your Address'), { target: { value: '123 Street' } });
+        fireEvent.click(screen.getByText('UPDATE'));
 
         // Assert
         await waitFor(() => expect(axios.put).toHaveBeenCalled());
         expect(toast.success).toHaveBeenCalledWith('Profile Updated Successfully');
     });
 
-    it('should display error message on failed put', async () => {
+    it('should display error message if put returns an error', async () => { // Leong Soon Mun Stephane, A0273409B
         // Arrange
-        axios.put.mockResolvedValueOnce({ data: { error: 'error message'} });
-
+        axios.put.mockResolvedValueOnce({ data: { error: 'error message' } });
 
         // Act
-        const { getByText, getByPlaceholderText } = render(
+        render(
             <MemoryRouter initialEntries={['/profile']}>
                 <Routes>
                     <Route path="/profile" element={<Profile />} />
@@ -139,25 +139,24 @@ describe('Profile Component', () => {
             </MemoryRouter>
         );
 
-        fireEvent.change(getByPlaceholderText('Enter Your Name'), { target: { value: 'John Doe' } });
-        fireEvent.change(getByPlaceholderText('Enter Your Email'), { target: { value: 'test@example.com' } });
-        fireEvent.change(getByPlaceholderText('Enter Your Password'), { target: { value: 'password123' } });
-        fireEvent.change(getByPlaceholderText('Enter Your Phone'), { target: { value: '1234567890' } });
-        fireEvent.change(getByPlaceholderText('Enter Your Address'), { target: { value: '123 Street' } });
-        fireEvent.click(getByText('UPDATE'));
+        fireEvent.change(screen.getByPlaceholderText('Enter Your Name'), { target: { value: 'John Doe' } });
+        fireEvent.change(screen.getByPlaceholderText('Enter Your Email'), { target: { value: 'test@example.com' } });
+        fireEvent.change(screen.getByPlaceholderText('Enter Your Password'), { target: { value: 'password123' } });
+        fireEvent.change(screen.getByPlaceholderText('Enter Your Phone'), { target: { value: '1234567890' } });
+        fireEvent.change(screen.getByPlaceholderText('Enter Your Address'), { target: { value: '123 Street' } });
+        fireEvent.click(screen.getByText('UPDATE'));
 
         // Assert
         await waitFor(() => expect(axios.put).toHaveBeenCalled());
         expect(toast.error).toHaveBeenCalledWith('error message');
     });
 
-    it('should display error message on put error', async () => {
+    it('should display error message if put call has an error', async () => { // Leong Soon Mun Stephane, A0273409B
         // Arrange
         axios.put.mockRejectedValueOnce({ message: 'network connection error' });
 
-
         // Act
-        const { getByText, getByPlaceholderText } = render(
+        render(
             <MemoryRouter initialEntries={['/profile']}>
                 <Routes>
                     <Route path="/profile" element={<Profile />} />
@@ -165,16 +164,16 @@ describe('Profile Component', () => {
             </MemoryRouter>
         );
 
-        fireEvent.change(getByPlaceholderText('Enter Your Name'), { target: { value: 'John Doe' } });
-        fireEvent.change(getByPlaceholderText('Enter Your Email'), { target: { value: 'test@example.com' } });
-        fireEvent.change(getByPlaceholderText('Enter Your Password'), { target: { value: 'password123' } });
-        fireEvent.change(getByPlaceholderText('Enter Your Phone'), { target: { value: '1234567890' } });
-        fireEvent.change(getByPlaceholderText('Enter Your Address'), { target: { value: '123 Street' } });
-        fireEvent.click(getByText('UPDATE'));
+        fireEvent.change(screen.getByPlaceholderText('Enter Your Name'), { target: { value: 'John Doe' } });
+        fireEvent.change(screen.getByPlaceholderText('Enter Your Email'), { target: { value: 'test@example.com' } });
+        fireEvent.change(screen.getByPlaceholderText('Enter Your Password'), { target: { value: 'password123' } });
+        fireEvent.change(screen.getByPlaceholderText('Enter Your Phone'), { target: { value: '1234567890' } });
+        fireEvent.change(screen.getByPlaceholderText('Enter Your Address'), { target: { value: '123 Street' } });
+        fireEvent.click(screen.getByText('UPDATE'));
 
         // Assert
         await waitFor(() => expect(axios.put).toHaveBeenCalled());
         expect(toast.error).toHaveBeenCalledWith('Something went wrong');
     });
-    
+
 });
