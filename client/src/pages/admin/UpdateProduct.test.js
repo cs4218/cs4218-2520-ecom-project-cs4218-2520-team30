@@ -547,6 +547,40 @@ describe('UpdateProduct Component', () => {
     });
 
     // ----------------------------------------------------------
+    // EDGE CASE: Handles specific backend validation error
+    // ----------------------------------------------------------
+    it('should display specific error toast when backend returns validation error', async () => {
+        // Arrange
+        axios.get.mockImplementation((url) => {
+            if (url.includes('/get-product/')) {
+                return Promise.resolve({ data: { product: mockProduct } });
+            }
+            if (url.includes('/get-category')) {
+                return Promise.resolve({ data: { success: true, category: mockCategories } });
+            }
+            return Promise.resolve({ data: {} });
+        });
+        const error = new Error('Bad Request');
+        error.response = { data: { error: 'Specific error message' } };
+        axios.put.mockRejectedValueOnce(error);
+
+        // Act
+        renderUpdateProduct();
+
+        await waitFor(() => {
+            expect(screen.getByPlaceholderText(/write a name/i).value).toBe('Test Product');
+        });
+
+        // Click update button
+        fireEvent.click(screen.getByRole('button', { name: /update product/i }));
+
+        // Assert
+        await waitFor(() => {
+            expect(toast.error).toHaveBeenCalledWith('Specific error message');
+        });
+    });
+
+    // ----------------------------------------------------------
     // EDGE CASE: Handles update failure (success:false)
     // ----------------------------------------------------------
     it('should display error toast when update returns success false', async () => {
