@@ -111,10 +111,10 @@ describe('CreateProduct Component', () => {
         axios.get.mockResolvedValueOnce({
             data: { success: true, category: [] }
         });
-        // Mock server error for validation failure
-        axios.post.mockResolvedValueOnce({
-            data: { success: false, message: 'All fields are required' }
-        });
+        // Mock server error for validation failure (400 Bad Request)
+        const error = new Error('Bad Request');
+        error.response = { data: { error: 'Name is Required' } };
+        axios.post.mockRejectedValueOnce(error);
 
         // Act
         renderCreateProduct();
@@ -129,7 +129,7 @@ describe('CreateProduct Component', () => {
         // Assert
         await waitFor(() => {
             expect(axios.post).toHaveBeenCalled();
-            expect(toast.error).toHaveBeenCalledWith('All fields are required');
+            expect(toast.error).toHaveBeenCalledWith('Name is Required');
         });
     });
 
@@ -211,6 +211,9 @@ describe('CreateProduct Component', () => {
         fireEvent.change(screen.getByPlaceholderText(/write a quantity/i), {
             target: { value: '10' }
         });
+        fireEvent.change(screen.getByTestId('select-shipping-'), {
+            target: { value: '1' }
+        });
 
         // Click create button
         fireEvent.click(screen.getByRole('button', { name: /create product/i }));
@@ -264,6 +267,7 @@ describe('CreateProduct Component', () => {
         fireEvent.change(descInput, { target: { value: 'Product Description' } });
         fireEvent.change(priceInput, { target: { value: '199' } });
         fireEvent.change(quantityInput, { target: { value: '50' } });
+        fireEvent.change(screen.getByTestId('select-shipping-'), { target: { value: '1' } });
 
         // Assert
         expect(nameInput.value).toBe('New Product');

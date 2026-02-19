@@ -217,6 +217,9 @@ describe('UpdateProduct Component', () => {
         fireEvent.change(screen.getByPlaceholderText(/write a name/i), {
             target: { value: 'Updated Product Name' }
         });
+        fireEvent.change(screen.getByTestId('select-shipping-'), {
+            target: { value: '1' }
+        });
 
         // Click update button
         fireEvent.click(screen.getByRole('button', { name: /update product/i }));
@@ -631,6 +634,9 @@ describe('UpdateProduct Component', () => {
         fireEvent.change(screen.getByPlaceholderText(/write a name/i), {
             target: { value: 'Updated Name' }
         });
+        fireEvent.change(screen.getByTestId('select-shipping-'), {
+            target: { value: '1' }
+        });
 
         // Click update button (no photo uploaded)
         fireEvent.click(screen.getByRole('button', { name: /update product/i }));
@@ -672,6 +678,9 @@ describe('UpdateProduct Component', () => {
         const file = new File(['test'], 'newphoto.png', { type: 'image/png' });
         const input = document.querySelector('input[type="file"]');
         fireEvent.change(input, { target: { files: [file] } });
+        fireEvent.change(screen.getByTestId('select-shipping-'), {
+            target: { value: '1' }
+        });
 
         // Wait for photo to be set
         await waitFor(() => {

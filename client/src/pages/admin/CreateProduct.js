@@ -46,6 +46,7 @@ const CreateProduct = () => {
       productData.append("quantity", quantity);
       productData.append("photo", photo);
       productData.append("category", category);
+      productData.append("shipping", shipping);
       // Alek Kwek, A0273471A
       const { data } = await axios.post(
         "/api/v1/product/create-product",
@@ -60,7 +61,11 @@ const CreateProduct = () => {
       }
     } catch (error) {
       console.log(error);
-      toast.error("something went wrong");
+      if (error.response && error.response.data && error.response.data.error) {
+        toast.error(error.response.data.error);
+      } else {
+        toast.error("something went wrong");
+      }
     }
   };
 

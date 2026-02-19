@@ -17,7 +17,7 @@ export default {
   },
 
   // ignore all node_modules except styleMock (needed for css imports)
-  transformIgnorePatterns: ["/node_modules/(?!(styleMock\\.js)$)"],
+  transformIgnorePatterns: ["/node_modules/(?!(axios|styleMock\\.js)$)"],
 
   // only run these tests
   testMatch: [
