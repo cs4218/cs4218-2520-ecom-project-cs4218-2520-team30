@@ -153,7 +153,9 @@ describe('Profile Component', () => { // Leong Soon Mun Stephane, A0273409B
 
     it('should display error message if put call has an error', async () => { // Leong Soon Mun Stephane, A0273409B
         // Arrange
-        axios.put.mockRejectedValueOnce({ message: 'network connection error' });
+        let mockError = new Error('network connection error');
+        let consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => { });
+        axios.put.mockRejectedValueOnce(mockError);
 
         // Act
         render(
@@ -173,7 +175,9 @@ describe('Profile Component', () => { // Leong Soon Mun Stephane, A0273409B
 
         // Assert
         await waitFor(() => expect(axios.put).toHaveBeenCalled());
+        expect(consoleLogSpy).toHaveBeenCalledWith(mockError);
         expect(toast.error).toHaveBeenCalledWith('Something went wrong');
+        consoleLogSpy.mockRestore();
     });
 
 });
