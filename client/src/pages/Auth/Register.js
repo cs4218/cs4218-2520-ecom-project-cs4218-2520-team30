@@ -10,13 +10,24 @@ const Register = () => {
   const [password, setPassword] = useState("");
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
-  const [DOB, setDOB] = useState("");
   const [answer, setAnswer] = useState("");
   const navigate = useNavigate();
 
   // form function
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Frontend validation
+    if (password.length < 6) {
+      toast.error("Password must be at least 6 characters long");
+      return;
+    }
+    
+    if (!/^\d+$/.test(phone)) {
+      toast.error("Phone number must contain only numbers");
+      return;
+    }
+    
     try {
       const res = await axios.post("/api/v1/auth/register", {
         name,
@@ -24,7 +35,6 @@ const Register = () => {
         password,
         phone,
         address,
-        DOB,
         answer,
       });
       if (res && res.data.success) {
@@ -102,23 +112,12 @@ const Register = () => {
           </div>
           <div className="mb-3">
             <input
-              type="Date"
-              value={DOB}
-              onChange={(e) => setDOB(e.target.value)}
-              className="form-control"
-              id="exampleInputDOB1"
-              placeholder="Enter Your DOB"
-              required
-            />
-          </div>
-          <div className="mb-3">
-            <input
               type="text"
               value={answer}
               onChange={(e) => setAnswer(e.target.value)}
               className="form-control"
               id="exampleInputanswer1"
-              placeholder="What is Your Favorite sports"
+              placeholder="What is Your Favorite Sport"
               required
             />
           </div>

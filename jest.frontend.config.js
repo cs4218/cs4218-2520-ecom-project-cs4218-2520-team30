@@ -20,15 +20,41 @@ export default {
   transformIgnorePatterns: ["/node_modules/(?!(styleMock\\.js)$)"],
 
   // only run these tests
-  testMatch: ["<rootDir>/client/src/pages/Auth/*.test.js"],
+  testMatch: [
+    "<rootDir>/client/src/pages/Auth/*.test.js",
+    "<rootDir>/client/src/pages/Search.test.js",
+    "<rootDir>/client/src/pages/HomePage.test.js",
+    "<rootDir>/client/src/pages/Categories.test.js",
+    "<rootDir>/client/src/hooks/useCategory.test.js"
+    "<rootDir>/client/src/pages/About.test.js",
+    "<rootDir>/client/src/pages/Pagenotfound.test.js",
+    "<rootDir>/client/src/components/Form/SearchInput.test.js",
+    "<rootDir>/client/src/components/*.test.js",
+    "<rootDir>/client/src/context/search.test.js"
+  ],
 
   // jest code coverage
   collectCoverage: true,
-  collectCoverageFrom: ["client/src/pages/Auth/**"],
+  collectCoverageFrom: [
+    "client/src/pages/Auth/**",
+    "client/src/pages/Search.js",
+    "client/src/pages/Categories.js",
+    "client/src/components/Form/SearchInput.js",
+    "client/src/context/search.js",
+    "client/src/hooks/useCategory.js"
+    "client/src/pages/HomePage.js",
+    "client/src/pages/About.js",
+    "client/src/pages/Pagenotfound.js",
+    "client/src/components/Header.js",
+    "client/src/components/Footer.js",
+    "client/src/components/Layout.js",
+    "client/src/components/Spinner.js"
+  ],
   coverageThreshold: {
     global: {
       lines: 100,
       functions: 100,
+      branches: 100,
     },
   },
   setupFilesAfterEnv: ["<rootDir>/client/src/setupTests.js"],
