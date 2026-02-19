@@ -81,19 +81,19 @@ export const loginController = async (req, res) => {
     const { email, password } = req.body;
     //validation
     if (!email && !password) {
-      return res.status(404).send({
+      return res.status(400).send({
         success: false,
         message: "Email and password are required",
       });
     }
     if (!email) {
-      return res.status(404).send({
+      return res.status(400).send({
         success: false,
         message: "Email is required",
       });
     }
     if (!password) {
-      return res.status(404).send({
+      return res.status(400).send({
         success: false,
         message: "Password is required",
       });
