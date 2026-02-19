@@ -117,7 +117,7 @@ describe('Order Component', () => { // Leong Soon Mun Stephane, A0273409B
         // Arrange
         useAuth.mockReturnValue([{ token: 'token' }, jest.fn()]);
         axios.get.mockRejectedValueOnce('axios get error');
-        const logSpy = jest.spyOn(console, 'log');
+        const logSpy = jest.spyOn(console, 'log').mockImplementation(() => { });
 
 
         // Act
