@@ -1,5 +1,5 @@
 import React from "react";
-import { render, screen, waitFor, fireEvent } from "@testing-library/react";
+import { render, screen, waitFor, fireEvent, act } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import axios from "axios";
 import HomePage from "./HomePage";
@@ -39,9 +39,18 @@ jest.mock("react-hot-toast", () => ({
 }));
 import toast from "react-hot-toast";
 
+const flushPromises = () => act(async () => { await new Promise((r) => setTimeout(r, 0)); });
+
 describe("HomePage Component", () => {
+  let logSpy;
+
   beforeEach(() => {
     jest.clearAllMocks();
+    logSpy = jest.spyOn(console, "log").mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    logSpy?.mockRestore();
   });
 
   it("renders the banner and static assets correctly", async () => {
@@ -67,6 +76,7 @@ describe("HomePage Component", () => {
     expect(screen.getByRole("img", { name: /bannerimage/i })).toBeInTheDocument();
     expect(screen.getAllByText(/All Products/i).length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText(/Filter By Category/i)).toBeInTheDocument();
+    await flushPromises();
   });
 
   it("fetches and displays a list of products", async () => {
@@ -108,12 +118,12 @@ describe("HomePage Component", () => {
     });
     expect(screen.getByText("$999.00")).toBeInTheDocument();
     expect(screen.getByText("$150.00")).toBeInTheDocument();
+    await flushPromises();
   });
 
   it("handles API errors gracefully", async () => {
     // Lum Yi Ren Johannsen, A0273503L
     // ARRANGE
-    const consoleSpy = jest.spyOn(console, "log").mockImplementation(() => {});
     axios.get.mockRejectedValue(new Error("Network Error"));
 
     // ACT
@@ -125,9 +135,9 @@ describe("HomePage Component", () => {
 
     // ASSERT
     await waitFor(() => {
-      expect(consoleSpy).toHaveBeenCalled();
+      expect(logSpy).toHaveBeenCalled();
     });
-    consoleSpy.mockRestore();
+    await flushPromises();
   });
 
   it("renders categories and handleFilter updates checked state", async () => {
@@ -156,6 +166,7 @@ describe("HomePage Component", () => {
     expect(checkbox).toBeChecked();
     fireEvent.click(checkbox);
     expect(checkbox).not.toBeChecked();
+    await flushPromises();
   });
 
   it("filters products by category when checkbox is checked", async () => {
@@ -186,6 +197,7 @@ describe("HomePage Component", () => {
       expect(screen.getByText("Filtered Laptop")).toBeInTheDocument();
     });
     expect(axios.post).toHaveBeenCalledWith("/api/v1/product/product-filters", expect.any(Object));
+    await flushPromises();
   });
 
   it("filters products by price when radio is selected", async () => {
@@ -215,6 +227,7 @@ describe("HomePage Component", () => {
         expect.objectContaining({ checked: [] })
       );
     });
+    await flushPromises();
   });
 
   it("shows Loadmore button and loads more products on click", async () => {
@@ -248,6 +261,7 @@ describe("HomePage Component", () => {
       expect(screen.getByText("Product Two")).toBeInTheDocument();
     });
     expect(axios.get).toHaveBeenCalledWith("/api/v1/product/product-list/2");
+    await flushPromises();
   });
 
   it("navigates to product detail when More Details is clicked", async () => {
@@ -273,6 +287,7 @@ describe("HomePage Component", () => {
 
     // ASSERT
     expect(mockNavigate).toHaveBeenCalledWith("/product/gaming-laptop");
+    await flushPromises();
   });
 
   it("adds product to cart and shows toast when ADD TO CART is clicked", async () => {
@@ -305,9 +320,10 @@ describe("HomePage Component", () => {
     expect(setItemSpy).toHaveBeenCalledWith("cart", JSON.stringify([mockProducts[0]]));
     expect(toast.success).toHaveBeenCalledWith("Item Added to cart");
     setItemSpy.mockRestore();
+    await flushPromises();
   });
 
-  it("calls window.location.reload when RESET FILTERS is clicked", () => {
+  it("calls window.location.reload when RESET FILTERS is clicked", async () => {
     // Lum Yi Ren Johannsen, A0273503L
     // ARRANGE
     const reloadMock = jest.fn();
@@ -328,16 +344,17 @@ describe("HomePage Component", () => {
       </MemoryRouter>
     );
 
+    await waitFor(() => expect(screen.getByTestId("mock-layout")).toBeInTheDocument());
     fireEvent.click(screen.getByRole("button", { name: /RESET FILTERS/i }));
 
     // ASSERT
     expect(reloadMock).toHaveBeenCalled();
+    await flushPromises();
   });
 
   it("handles filterProduct API error", async () => {
     // Lum Yi Ren Johannsen, A0273503L
     // ARRANGE
-    const consoleSpy = jest.spyOn(console, "log").mockImplementation(() => {});
     const mockCategories = [{ _id: "cat1", name: "Electronics" }];
     axios.get
       .mockResolvedValueOnce({ data: { success: true, category: mockCategories } })
@@ -357,9 +374,9 @@ describe("HomePage Component", () => {
 
     // ASSERT
     await waitFor(() => {
-      expect(consoleSpy).toHaveBeenCalled();
+      expect(logSpy).toHaveBeenCalled();
     });
-    consoleSpy.mockRestore();
+    await flushPromises();
   });
 
   it("does not call getAllProducts when both category and price filters are set", async () => {
@@ -391,6 +408,7 @@ describe("HomePage Component", () => {
     // ASSERT
     await waitFor(() => expect(screen.getByText("Filtered Product")).toBeInTheDocument());
     expect(axios.get.mock.calls.length).toBe(getCallCount);
+    await flushPromises();
   });
 
   it("does not set categories when get-category returns success false", async () => {
@@ -413,12 +431,12 @@ describe("HomePage Component", () => {
       expect(screen.getByText(/Filter By Category/i)).toBeInTheDocument();
     });
     expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
+    await flushPromises();
   });
 
   it("handles loadMore API error", async () => {
     // Lum Yi Ren Johannsen, A0273503L
     // ARRANGE
-    const consoleSpy = jest.spyOn(console, "log").mockImplementation(() => {});
     const initialProducts = [
       { _id: "1", name: "Product One", price: 100, slug: "one", description: "Desc one" },
     ];
@@ -440,8 +458,8 @@ describe("HomePage Component", () => {
 
     // ASSERT
     await waitFor(() => {
-      expect(consoleSpy).toHaveBeenCalled();
+      expect(logSpy).toHaveBeenCalled();
     });
-    consoleSpy.mockRestore();
+    await flushPromises();
   });
 });
