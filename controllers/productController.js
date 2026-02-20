@@ -10,6 +10,7 @@ import dotenv from "dotenv";
 dotenv.config();
 
 //payment gateway
+// Alek Kwek, A0273471A
 var gateway = new braintree.BraintreeGateway({
   environment: braintree.Environment.Sandbox,
   merchantId: process.env.BRAINTREE_MERCHANT_ID,
@@ -17,6 +18,7 @@ var gateway = new braintree.BraintreeGateway({
   privateKey: process.env.BRAINTREE_PRIVATE_KEY,
 });
 
+// Alek Kwek, A0273471A
 export const createProductController = async (req, res) => {
   try {
     const { name, description, price, category, quantity, shipping } =
@@ -61,6 +63,7 @@ export const createProductController = async (req, res) => {
     res.status(500).send({
       success: false,
       error,
+      // Alek Kwek, A0273471A
       message: "Error in creating product",
     });
   }
@@ -127,6 +130,7 @@ export const productPhotoController = async (req, res) => {
     console.log(error);
     res.status(500).send({
       success: false,
+      // Alek Kwek, A0273471A
       message: "Error while getting photo",
       error,
     });
@@ -134,6 +138,7 @@ export const productPhotoController = async (req, res) => {
 };
 
 //delete controller
+// Alek Kwek, A0273471A
 export const deleteProductController = async (req, res) => {
   try {
     await productModel.findByIdAndDelete(req.params.pid).select("-photo");
@@ -279,6 +284,7 @@ export const productListController = async (req, res) => {
 export const searchProductController = async (req, res) => {
   try {
     const { keyword } = req.params;
+    // Alek Kwek, A0273471Aß
     const results = await productModel
       .find({
         $or: [
@@ -319,7 +325,7 @@ export const relatedProductController = async (req, res) => {
     console.log(error);
     res.status(400).send({
       success: false,
-      message: "error while getting related product",
+      message: "error while getting related product", // Alek Kwek, A0273471A
       error,
     });
   }
@@ -366,8 +372,7 @@ export const brainTreePaymentController = async (req, res) => {
   try {
     const { nonce, cart } = req.body;
     let total = 0;
-    // Alek Kwek, A0273471A
-    cart.forEach((i) => {
+    cart.map((i) => {
       total += i.price;
     });
     let newTransaction = gateway.transaction.sale(
