@@ -242,7 +242,7 @@ describe('createProductController', () => {
     });
 
     // BVA Tests for createProductController
-    test('should return 500 if price is negative', async () => {
+    test('should return 400 if price is negative', async () => {
         // 1. Arrange
         req.fields.price = -1;
 
@@ -250,11 +250,11 @@ describe('createProductController', () => {
         await createProductController(req, res);
 
         // 3. Assert
-        expect(res.status).toHaveBeenCalledWith(500);
+        expect(res.status).toHaveBeenCalledWith(400);
         expect(res.send).toHaveBeenCalledWith({ error: "Price must be non-negative" });
     });
 
-    test('should return 500 if quantity is negative', async () => {
+    test('should return 400 if quantity is negative', async () => {
         // 1. Arrange
         req.fields.quantity = -1;
 
@@ -262,7 +262,7 @@ describe('createProductController', () => {
         await createProductController(req, res);
 
         // 3. Assert
-        expect(res.status).toHaveBeenCalledWith(500);
+        expect(res.status).toHaveBeenCalledWith(400);
         expect(res.send).toHaveBeenCalledWith({ error: "Quantity must be non-negative" });
     });
 
@@ -279,7 +279,7 @@ describe('createProductController', () => {
         expect(res.status).toHaveBeenCalledWith(201);
     });
 
-    test('should return 500 if photo size is greater than 1MB (Boundary + 1)', async () => {
+    test('should return 400 if photo size is greater than 1MB (Boundary + 1)', async () => {
         // 1. Arrange
         req.files.photo.size = 1000001; // 1MB + 1 byte
 
@@ -287,7 +287,7 @@ describe('createProductController', () => {
         await createProductController(req, res);
 
         // 3. Assert
-        expect(res.status).toHaveBeenCalledWith(500);
+        expect(res.status).toHaveBeenCalledWith(400);
         expect(res.send).toHaveBeenCalledWith({
             error: "Photo is Required to be less than 1mb"
         });
@@ -791,6 +791,24 @@ describe("Payment Controller Unit Tests", () => {
             expect(res.send).toHaveBeenCalledWith(photoData);
         });
 
+        it("should not send data if photo.data is missing", async () => {
+            // ARRANGE
+            req.params.pid = "pid1";
+            productModel.findById.mockReturnValue({
+                select: jest.fn().mockResolvedValue({
+                    photo: { contentType: "image/png" }, // No data property
+                }),
+            });
+
+            // ACT
+            await productPhotoController(req, res);
+
+            // ASSERT
+            expect(productModel.findById).toHaveBeenCalledWith("pid1");
+            expect(res.set).not.toHaveBeenCalled();
+            expect(res.send).not.toHaveBeenCalled();
+        });
+
         it("should send 500 on error", async () => {
             // Lum Yi Ren Johannsen, A0273503L
             // ARRANGE
@@ -942,6 +960,29 @@ describe("Payment Controller Unit Tests", () => {
             // ARRANGE
             req.params.page = 2;
             const mockProducts = [{ _id: "1", name: "P1" }];
+            productModel.find.mockReturnValue({
+                select: jest.fn().mockReturnThis(),
+                skip: jest.fn().mockReturnThis(),
+                limit: jest.fn().mockReturnThis(),
+                sort: jest.fn().mockResolvedValue(mockProducts),
+            });
+
+            // ACT
+            await productListController(req, res);
+
+            // ASSERT
+            expect(productModel.find).toHaveBeenCalledWith({});
+            expect(res.status).toHaveBeenCalledWith(200);
+            expect(res.send).toHaveBeenCalledWith({
+                success: true,
+                products: mockProducts,
+            });
+        });
+
+        it("should return paginated products on success without page param", async () => {
+            // ARRANGE
+            req.params.page = undefined; // Trigger fallback to page 1
+            const mockProducts = [{ _id: "2", name: "P2" }];
             productModel.find.mockReturnValue({
                 select: jest.fn().mockReturnThis(),
                 skip: jest.fn().mockReturnThis(),
@@ -1162,7 +1203,7 @@ describe("Payment Controller Unit Tests", () => {
             });
         });
 
-        it("should send 500 when name is missing", async () => {
+        it("should send 400 when name is missing", async () => {
             // Lum Yi Ren Johannsen, A0273503L
             // ARRANGE
             req.fields = { description: "D", price: 1, category: "c", quantity: 1, shipping: false };
@@ -1172,7 +1213,7 @@ describe("Payment Controller Unit Tests", () => {
             await createProductController(req, res);
 
             // ASSERT
-            expect(res.status).toHaveBeenCalledWith(500);
+            expect(res.status).toHaveBeenCalledWith(400);
             expect(res.send).toHaveBeenCalledWith({ error: "Name is Required" });
         });
 
@@ -1320,6 +1361,20 @@ describe("Payment Controller Unit Tests", () => {
             expect(res.status).toHaveBeenCalledWith(500);
             expect(res.send).toHaveBeenCalledWith(fakeError);
         });
+
+        it("should trigger catch block if try block throws", async () => {
+            // ARRANGE
+            const fakeError = new Error("Sync Error");
+            mockGenerate.mockImplementation(() => { throw fakeError; });
+            const consoleSpy = jest.spyOn(console, 'log').mockImplementation(() => { });
+
+            // ACT
+            await braintreeTokenController(req, res);
+
+            // ASSERT
+            expect(consoleSpy).toHaveBeenCalledWith(fakeError);
+            consoleSpy.mockRestore();
+        });
     });
 
     describe("brainTreePaymentController", () => {
@@ -1367,6 +1422,19 @@ describe("Payment Controller Unit Tests", () => {
             // ASSERT
             expect(res.status).toHaveBeenCalledWith(500);
             expect(res.send).toHaveBeenCalledWith(fakeError);
+        });
+
+        it("should trigger catch block if try block throws", async () => {
+            // ARRANGE
+            req.body = { nonce: "valid-nonce" }; // cart is undefined
+            const consoleSpy = jest.spyOn(console, 'log').mockImplementation(() => { });
+
+            // ACT
+            await brainTreePaymentController(req, res);
+
+            // ASSERT
+            expect(consoleSpy).toHaveBeenCalled();
+            consoleSpy.mockRestore();
         });
     });
 });
