@@ -102,49 +102,6 @@ describe('Products Component', () => {
         expect(screen.getByText('Description for product 1')).toBeInTheDocument();
     });
 
-    // ============================================================
-    // DESTRUCTIVE ACTIONS (Products)
-    // Action: Click "Delete" on a product.
-    // Constraint: If the app uses window.confirm, you must mock the browser confirmation to return true.
-    // Expect: Verify the axios.delete endpoint was called with the correct ID.
-    // ============================================================
-    // Alek Kwek, A0273471A
-    it('Destructive User Flow: Delete a product', async () => {
-        // Mock API
-        axios.get.mockResolvedValue({ data: { products: mockProducts } });
-        axios.delete.mockResolvedValue({ data: { success: true } });
-
-        // Mock window.confirm
-        window.confirm = jest.fn(() => true);
-        window.prompt = jest.fn(() => true); // In case it uses prompt like UpdateProduct
-
-        renderComponent();
-
-        // Wait for data
-        await waitFor(() => expect(screen.getByText('Test Product 1')).toBeInTheDocument());
-
-        // Attempt to find a delete button. 
-        // Strategy: Look for specific button or link.
-        // If not found, log it.
-        const deleteButton = screen.queryByText(/delete/i);
-
-        if (!deleteButton) {
-            console.log("TEST SKIPPED: 'Delete' button not found in Products.js. This feature is likely in UpdateProduct.js instead.");
-            // Pass the test artificially to avoid blocking CI, assuming manual verification of this discrepancy.
-            expect(true).toBe(true);
-            return;
-        }
-
-        fireEvent.click(deleteButton);
-
-        // Expect confirm
-        expect(window.confirm).toHaveBeenCalled(); // or window.prompt
-
-        // Expect Delete Call
-        await waitFor(() => {
-            expect(axios.delete).toHaveBeenCalledWith(expect.stringContaining('/api/v1/product/delete-product'));
-        });
-    });
 
     /**
      * Test Case: API Failure - getAllProducts
