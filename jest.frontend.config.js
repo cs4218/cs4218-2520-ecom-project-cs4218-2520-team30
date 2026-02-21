@@ -22,7 +22,6 @@ export default {
   // only run these tests
   testMatch: [
     "<rootDir>/client/src/pages/Auth/*.test.js",
-    "<rootDir>/client/src/pages/CartPage.test.js",
     "<rootDir>/client/src/pages/Search.test.js",
     "<rootDir>/client/src/pages/HomePage.test.js",
     "<rootDir>/client/src/pages/Categories.test.js",
@@ -32,7 +31,8 @@ export default {
     "<rootDir>/client/src/components/Form/SearchInput.test.js",
     "<rootDir>/client/src/components/*.test.js",
     "<rootDir>/client/src/context/search.test.js",
-    "<rootDir>/client/src/context/cart.test.js"
+    "<rootDir>/client/src/context/cart.test.js",
+    "<rootDir>/client/src/pages/user/Profile.test.js"
   ],
 
   // jest code coverage
@@ -53,7 +53,8 @@ export default {
     "client/src/components/Header.js",
     "client/src/components/Footer.js",
     "client/src/components/Layout.js",
-    "client/src/components/Spinner.js"
+    "client/src/components/Spinner.js",
+    "client/src/pages/user/Profile.js",
   ],
   coverageThreshold: {
     global: {
