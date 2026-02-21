@@ -32,6 +32,8 @@ export default {
     "<rootDir>/client/src/components/Form/SearchInput.test.js",
     "<rootDir>/client/src/components/*.test.js",
     "<rootDir>/client/src/context/search.test.js",
+    "<rootDir>/client/src/components/AdminMenu.test.js",
+    "<rootDir>/client/src/pages/admin/Users.test.js",
     "<rootDir>/client/src/context/cart.test.js",
     "<rootDir>/client/src/pages/CartPage.test.js",
     "<rootDir>/client/src/pages/Contact.test.js",
@@ -60,8 +62,9 @@ export default {
     "client/src/components/Footer.js",
     "client/src/components/Layout.js",
     "client/src/components/Spinner.js",
+    "client/src/components/AdminMenu.js",
     "client/src/pages/Auth/ForgotPassword.js",
-    "client/src/pages/user/Profile.js"
+    "client/src/pages/user/Profile.js",
   ],
   coverageThreshold: {
     global: {
