@@ -20,6 +20,7 @@ export default {
     "config/**",
     "controllers/categoryController.js",
     "controllers/authController.js",
+    "controllers/productController.js",
     "middlewares/authMiddleware.js",
     "helpers/authHelper.js",
     "models/categoryModel.js"
