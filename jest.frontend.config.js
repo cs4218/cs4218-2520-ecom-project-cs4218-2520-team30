@@ -33,6 +33,9 @@ export default {
     "<rootDir>/client/src/components/*.test.js",
     "<rootDir>/client/src/context/search.test.js",
     "<rootDir>/client/src/pages/user/Profile.test.js",
+    "<rootDir>/client/src/components/Routes/Private.test.js",
+    "<rootDir>/client/src/components/UserMenu.test.js",
+    "<rootDir>/client/src/pages/user/Dashboard.test.js",
   ],
 
   // jest code coverage
@@ -53,6 +56,9 @@ export default {
     "client/src/components/Layout.js",
     "client/src/components/Spinner.js",
     "client/src/pages/user/Profile.js",
+    "client/src/components/Routes/Private.js",
+    "client/src/components/UserMenu.js",
+    "client/src/pages/user/Dashboard.js",
   ],
   coverageThreshold: {
     global: {
