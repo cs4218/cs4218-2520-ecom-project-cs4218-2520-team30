@@ -69,7 +69,7 @@ describe('Register Component', () => {
     fireEvent.click(getByText('REGISTER'));
 
     await waitFor(() => expect(axios.post).toHaveBeenCalled());
-    expect(toast.success).toHaveBeenCalledWith('Register Successfully, please login');
+    expect(toast.success).toHaveBeenCalledWith('Registered successfully, please login');
   });
 
   //Tay Kai Jun, A0283343E
@@ -170,7 +170,7 @@ describe('Register Component', () => {
     fireEvent.click(getByText('REGISTER'));
 
     await waitFor(() => expect(axios.post).toHaveBeenCalled());
-    expect(toast.success).toHaveBeenCalledWith('Register Successfully, please login');
+    expect(toast.success).toHaveBeenCalledWith('Registered successfully, please login');
   });
 
   //Tay Kai Jun, A0283343E
