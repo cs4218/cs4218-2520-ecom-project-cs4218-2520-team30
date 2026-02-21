@@ -25,6 +25,7 @@ export default {
     "<rootDir>/client/src/pages/Search.test.js",
     "<rootDir>/client/src/pages/HomePage.test.js",
     "<rootDir>/client/src/pages/Categories.test.js",
+    "<rootDir>/client/src/pages/Policy.test.js",
     "<rootDir>/client/src/hooks/useCategory.test.js",
     "<rootDir>/client/src/pages/About.test.js",
     "<rootDir>/client/src/pages/Pagenotfound.test.js",
@@ -42,6 +43,7 @@ export default {
   collectCoverage: true,
   collectCoverageFrom: [
     "client/src/pages/Auth/**",
+    "client/src/pages/Policy.js",
     "client/src/pages/CartPage.js",
     "client/src/pages/Contact.js",
     "client/src/pages/Search.js",
@@ -58,7 +60,7 @@ export default {
     "client/src/components/Footer.js",
     "client/src/components/Layout.js",
     "client/src/components/Spinner.js",
-    "client/src/pages/Auth/forgotPassword.js",
+    "client/src/pages/Auth/ForgotPassword.js",
     "client/src/pages/user/Profile.js"
   ],
   coverageThreshold: {
