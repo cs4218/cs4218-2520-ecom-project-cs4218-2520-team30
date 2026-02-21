@@ -55,13 +55,13 @@ const Header = () => {
                   Categories
                 </Link>
                 <ul className="dropdown-menu">
-                  <li>
+                  <li key="all-categories">
                     <Link className="dropdown-item" to={"/categories"}>
                       All Categories
                     </Link>
                   </li>
                   {categories?.map((c) => (
-                    <li>
+                    <li key={c._id ?? c.slug}>
                       <Link
                         className="dropdown-item"
                         to={`/category/${c.slug}`}
@@ -99,7 +99,7 @@ const Header = () => {
                       {auth?.user?.name}
                     </NavLink>
                     <ul className="dropdown-menu">
-                      <li>
+                      <li key="dashboard">
                         <NavLink
                           to={`/dashboard/${
                             auth?.user?.role === 1 ? "admin" : "user"
@@ -109,7 +109,7 @@ const Header = () => {
                           Dashboard
                         </NavLink>
                       </li>
-                      <li>
+                      <li key="logout">
                         <NavLink
                           onClick={handleLogout}
                           to="/login"
