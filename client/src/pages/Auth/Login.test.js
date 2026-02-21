@@ -131,7 +131,7 @@ describe('Login Component', () => {
         axios.post.mockRejectedValueOnce({
             response: {
                 data: {
-                    message: 'Invalid password'
+                    message: 'Invalid email or password'
                 }
             }
         });
@@ -149,15 +149,15 @@ describe('Login Component', () => {
         fireEvent.click(getByText('LOGIN'));
 
         await waitFor(() => expect(axios.post).toHaveBeenCalled());
-        expect(toast.error).toHaveBeenCalledWith('Invalid password');
+        expect(toast.error).toHaveBeenCalledWith('Invalid email or password');
     });
 
     //Tay Kai Jun, A0283343E
-    it('should display error message when email is not registered', async () => {
+    it('should display error message when email or password is invalid', async () => {
         axios.post.mockRejectedValueOnce({
             response: {
                 data: {
-                    message: 'Email is not registered'
+                    message: 'Invalid email or password'
                 }
             }
         });
@@ -175,19 +175,11 @@ describe('Login Component', () => {
         fireEvent.click(getByText('LOGIN'));
 
         await waitFor(() => expect(axios.post).toHaveBeenCalled());
-        expect(toast.error).toHaveBeenCalledWith('Email is not registered');
+        expect(toast.error).toHaveBeenCalledWith('Invalid email or password');
     });
 
     //Tay Kai Jun, A0283343E
-    it('should display error message when password is too short', async () => {
-        axios.post.mockRejectedValueOnce({
-            response: {
-                data: {
-                    message: 'Password must be at least 6 characters long'
-                }
-            }
-        });
-
+    it('should display error message when password is too short (caught by frontend)', async () => {
         const { getByPlaceholderText, getByText } = render(
             <MemoryRouter initialEntries={['/login']}>
                 <Routes>
@@ -200,8 +192,8 @@ describe('Login Component', () => {
         fireEvent.change(getByPlaceholderText('Enter Your Password'), { target: { value: 'short' } });
         fireEvent.click(getByText('LOGIN'));
 
-        await waitFor(() => expect(axios.post).toHaveBeenCalled());
-        expect(toast.error).toHaveBeenCalledWith('Password must be at least 6 characters long');
+        await waitFor(() => expect(toast.error).toHaveBeenCalledWith('Password must be at least 6 characters long'));
+        expect(axios.post).not.toHaveBeenCalled();
     });
 
     //Tay Kai Jun, A0283343E
@@ -223,7 +215,7 @@ describe('Login Component', () => {
         );
 
         fireEvent.change(getByPlaceholderText('Enter Your Email'), { target: { value: 'test@example.com' } });
-        fireEvent.change(getByPlaceholderText('Enter Your Password'), { target: { value: 'validpass123' } });
+        fireEvent.change(getByPlaceholderText('Enter Your Password'), { target: { value: 'validpassword123' } });
         fireEvent.click(getByText('LOGIN'));
 
         await waitFor(() => expect(axios.post).toHaveBeenCalled());
@@ -248,7 +240,7 @@ describe('Login Component', () => {
         );
 
         fireEvent.change(getByPlaceholderText('Enter Your Email'), { target: { value: 'test@example.com' } });
-        fireEvent.change(getByPlaceholderText('Enter Your Password'), { target: { value: 'password123' } });
+        fireEvent.change(getByPlaceholderText('Enter Your Password'), { target: { value: 'validpass123' } });
         fireEvent.click(getByText('LOGIN'));
 
         await waitFor(() => expect(axios.post).toHaveBeenCalled());
@@ -268,5 +260,103 @@ describe('Login Component', () => {
 
         fireEvent.click(getByText('Forgot Password'));
         expect(getByText('Forgot Password Page')).toBeInTheDocument();
+    });
+
+    //Tay Kai Jun, A0283343E
+    it('should display error when email format is invalid', async () => {
+        const { getByPlaceholderText, getByText } = render(
+            <MemoryRouter initialEntries={['/login']}>
+                <Routes>
+                    <Route path="/login" element={<Login />} />
+                </Routes>
+            </MemoryRouter>
+        );
+
+        fireEvent.change(getByPlaceholderText('Enter Your Email'), { target: { value: 'invalidemail' } });
+        fireEvent.change(getByPlaceholderText('Enter Your Password'), { target: { value: 'password123' } });
+        fireEvent.click(getByText('LOGIN'));
+
+        await waitFor(() => expect(toast.error).toHaveBeenCalledWith('Email must be a valid format'));
+        expect(axios.post).not.toHaveBeenCalled();
+    });
+
+    //Tay Kai Jun, A0283343E
+    it('should display error when password is less than 6 characters', async () => {
+        const { getByPlaceholderText, getByText } = render(
+            <MemoryRouter initialEntries={['/login']}>
+                <Routes>
+                    <Route path="/login" element={<Login />} />
+                </Routes>
+            </MemoryRouter>
+        );
+
+        fireEvent.change(getByPlaceholderText('Enter Your Email'), { target: { value: 'test@example.com' } });
+        fireEvent.change(getByPlaceholderText('Enter Your Password'), { target: { value: 'short' } });
+        fireEvent.click(getByText('LOGIN'));
+
+        await waitFor(() => expect(toast.error).toHaveBeenCalledWith('Password must be at least 6 characters long'));
+        expect(axios.post).not.toHaveBeenCalled();
+    });
+
+    //Tay Kai Jun, A0283343E
+    it('should accept valid email and password with exactly 6 characters', async () => {
+        axios.post.mockResolvedValueOnce({
+            data: {
+                success: true,
+                user: { id: 1, name: 'John Doe', email: 'test@example.com' },
+                token: 'mockToken'
+            }
+        });
+
+        const { getByPlaceholderText, getByText } = render(
+            <MemoryRouter initialEntries={['/login']}>
+                <Routes>
+                    <Route path="/login" element={<Login />} />
+                </Routes>
+            </MemoryRouter>
+        );
+
+        fireEvent.change(getByPlaceholderText('Enter Your Email'), { target: { value: 'test@example.com' } });
+        fireEvent.change(getByPlaceholderText('Enter Your Password'), { target: { value: 'pass12' } });
+        fireEvent.click(getByText('LOGIN'));
+
+        await waitFor(() => expect(axios.post).toHaveBeenCalled());
+        expect(toast.error).not.toHaveBeenCalledWith('Password must be at least 6 characters long');
+    });
+
+    //Tay Kai Jun, A0283343E
+    it('should display error for email without domain', async () => {
+        const { getByPlaceholderText, getByText } = render(
+            <MemoryRouter initialEntries={['/login']}>
+                <Routes>
+                    <Route path="/login" element={<Login />} />
+                </Routes>
+            </MemoryRouter>
+        );
+
+        fireEvent.change(getByPlaceholderText('Enter Your Email'), { target: { value: 'test@' } });
+        fireEvent.change(getByPlaceholderText('Enter Your Password'), { target: { value: 'password123' } });
+        fireEvent.click(getByText('LOGIN'));
+
+        await waitFor(() => expect(toast.error).toHaveBeenCalledWith('Email must be a valid format'));
+        expect(axios.post).not.toHaveBeenCalled();
+    });
+
+    //Tay Kai Jun, A0283343E
+    it('should display error for email without @ symbol', async () => {
+        const { getByPlaceholderText, getByText } = render(
+            <MemoryRouter initialEntries={['/login']}>
+                <Routes>
+                    <Route path="/login" element={<Login />} />
+                </Routes>
+            </MemoryRouter>
+        );
+
+        fireEvent.change(getByPlaceholderText('Enter Your Email'), { target: { value: 'testexample.com' } });
+        fireEvent.change(getByPlaceholderText('Enter Your Password'), { target: { value: 'password123' } });
+        fireEvent.click(getByText('LOGIN'));
+
+        await waitFor(() => expect(toast.error).toHaveBeenCalledWith('Email must be a valid format'));
+        expect(axios.post).not.toHaveBeenCalled();
     });
 });

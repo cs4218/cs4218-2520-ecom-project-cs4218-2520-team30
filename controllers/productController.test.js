@@ -2,12 +2,37 @@ jest.mock("../models/productModel.js");
 jest.mock("../models/categoryModel.js");
 jest.mock("fs");
 jest.mock("slugify");
+jest.mock("braintree", () => {
+    const mockGenerate = jest.fn();
+    const mockSale = jest.fn();
+    const Gateway = jest.fn().mockImplementation(() => ({
+        clientToken: { generate: mockGenerate },
+        transaction: { sale: mockSale },
+    }));
+    Gateway._mockGenerate = mockGenerate;
+    Gateway._mockSale = mockSale;
+    return {
+        BraintreeGateway: Gateway,
+        Environment: { Sandbox: "Sandbox" },
+    };
+});
 
-import braintree from "braintree";
-import fs from "fs";
-import slugify from "slugify";
+// Stub order model so brainTreePaymentController does not touch the real DB.
+jest.mock("../models/orderModel.js", () => {
+    const mockSave = jest.fn().mockResolvedValue(undefined);
+    return {
+        __esModule: true,
+        default: jest.fn().mockImplementation(function () {
+            return { save: mockSave };
+        }),
+    };
+});
+
 import productModel from "../models/productModel.js";
 import categoryModel from "../models/categoryModel.js";
+import fs from "fs";
+import slugify from "slugify";
+import braintree from "braintree";
 import {
     braintreeTokenController,
     brainTreePaymentController,
@@ -1377,64 +1402,113 @@ describe("Payment Controller Unit Tests", () => {
         });
     });
 
-    describe("brainTreePaymentController", () => {
-        it("should process payment successfully", async () => {
-            // Lum Yi Ren Johannsen, A0273503L
-            // ARRANGE
-            req.body = {
-                nonce: "fake-nonce",
-                cart: [{ price: 10 }, { price: 20 }],
+    describe("Product Controller - Payment", () => {
+        let req, res;
+
+        beforeEach(() => {
+            jest.clearAllMocks();
+            req = { user: { _id: "123" }, body: {} };
+            res = {
+                status: jest.fn().mockReturnThis(),
+                send: jest.fn(),
+                json: jest.fn(),
             };
-            const fakeResult = { success: true };
-            mockSale.mockImplementation((opts, callback) =>
-                callback(null, fakeResult)
-            );
-
-            // ACT
-            await brainTreePaymentController(req, res);
-            await new Promise(setImmediate);
-
-            // ASSERT
-            expect(mockSale).toHaveBeenCalledWith(
-                expect.objectContaining({
-                    amount: 30,
-                    paymentMethodNonce: "fake-nonce",
-                    options: { submitForSettlement: true },
-                }),
-                expect.any(Function)
-            );
-            expect(res.json).toHaveBeenCalledWith({ ok: true });
         });
 
-        it("should handle payment failure", async () => {
-            // Lum Yi Ren Johannsen, A0273503L
-            // ARRANGE
-            req.body = { nonce: "invalid-nonce", cart: [] };
-            const fakeError = new Error("Payment Failed");
-            mockSale.mockImplementation((opts, callback) =>
-                callback(fakeError, null)
-            );
+        describe("braintreeTokenController", () => {
+            it("should send a client token when gateway generation succeeds", async () => {
+                // Lum Yi Ren Johannsen, A0273503L
+                // ARRANGE
+                const fakeTokenResponse = { clientToken: "fake-token-123" };
+                mockGenerate.mockImplementation((opts, callback) => {
+                    callback(null, fakeTokenResponse);
+                });
 
-            // ACT
-            await brainTreePaymentController(req, res);
-            await new Promise(setImmediate);
+                // ACT
+                await braintreeTokenController(req, res);
 
-            // ASSERT
-            expect(res.status).toHaveBeenCalledWith(500);
-            expect(res.send).toHaveBeenCalledWith(fakeError);
+                // ASSERT
+                expect(mockGenerate).toHaveBeenCalled();
+                expect(res.send).toHaveBeenCalledWith(fakeTokenResponse);
+            });
+
+            it("should return 500 error when gateway generation fails", async () => {
+                // Lum Yi Ren Johannsen, A0273503L
+                // ARRANGE
+                const fakeError = new Error("API Connection Error");
+                mockGenerate.mockImplementation((opts, callback) => {
+                    callback(fakeError, null);
+                });
+
+                // ACT
+                await braintreeTokenController(req, res);
+
+                // ASSERT
+                expect(res.status).toHaveBeenCalledWith(500);
+                expect(res.send).toHaveBeenCalledWith(fakeError);
+            });
         });
 
-        it("should trigger catch block if try block throws", async () => {
-            // ARRANGE
-            req.body = { nonce: "valid-nonce" }; // cart is undefined
-            const consoleSpy = jest.spyOn(console, 'log').mockImplementation(() => { });
+        describe("brainTreePaymentController", () => {
+            it("should process payment successfully", async () => {
+                // Lum Yi Ren Johannsen, A0273503L
+                // ARRANGE
+                req.body = {
+                    nonce: "fake-nonce",
+                    cart: [{ price: 10 }, { price: 20 }],
+                };
+                const fakeResult = { success: true };
+                mockSale.mockImplementation((opts, callback) =>
+                    callback(null, fakeResult)
+                );
 
-            // ACT
-            await brainTreePaymentController(req, res);
+                // ACT
+                await brainTreePaymentController(req, res);
+                await new Promise(setImmediate);
 
-            // ASSERT
-            expect(consoleSpy).toHaveBeenCalled();
-            consoleSpy.mockRestore();
+                // ASSERT
+                expect(mockSale).toHaveBeenCalledWith(
+                    expect.objectContaining({
+                        amount: 30,
+                        paymentMethodNonce: "fake-nonce",
+                        options: { submitForSettlement: true },
+                    }),
+                    expect.any(Function)
+                );
+                expect(res.json).toHaveBeenCalledWith({ ok: true });
+            });
+
+            it("should handle payment failure", async () => {
+                // Lum Yi Ren Johannsen, A0273503L
+                // ARRANGE
+                req.body = { nonce: "invalid-nonce", cart: [] };
+                const fakeError = new Error("Payment Failed");
+                mockSale.mockImplementation((opts, callback) =>
+                    callback(fakeError, null)
+                );
+
+                // ACT
+                await brainTreePaymentController(req, res);
+                await new Promise(setImmediate);
+
+                // ASSERT
+                expect(res.status).toHaveBeenCalledWith(500);
+                expect(res.send).toHaveBeenCalledWith(fakeError);
+            });
+
+            it("should trigger catch block if try block throws", async () => {
+                // ARRANGE
+                req.body = { nonce: "valid-nonce" }; // cart is undefined
+                const consoleSpy = jest.spyOn(console, 'log').mockImplementation(() => { });
+
+                // ACT
+                await brainTreePaymentController(req, res);
+
+                // ASSERT
+                expect(consoleSpy).toHaveBeenCalled();
+                consoleSpy.mockRestore();
+            });
         });
     });
 });
+

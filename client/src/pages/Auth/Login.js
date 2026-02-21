@@ -19,6 +19,19 @@ const Login = () => {
   // form function
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Frontend validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      toast.error("Email must be a valid format");
+      return;
+    }
+    
+    if (password.length < 6) {
+      toast.error("Password must be at least 6 characters long");
+      return;
+    }
+    
     try {
       const res = await axios.post("/api/v1/auth/login", {
         email,
@@ -44,14 +57,13 @@ const Login = () => {
         toast.error(res.data.message);
       }
     } catch (error) {
-      console.log(error);
       toast.error(error.response.data.message);
     }
   };
   return (
     <Layout title="Login - Ecommerce App">
       <div className="form-container " style={{ minHeight: "90vh" }}>
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} noValidate>
           <h4 className="title">LOGIN FORM</h4>
 
           <div className="mb-3">
