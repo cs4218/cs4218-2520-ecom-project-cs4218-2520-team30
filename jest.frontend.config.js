@@ -35,6 +35,9 @@ export default {
     "<rootDir>/client/src/pages/user/Profile.test.js",
     "<rootDir>/client/src/pages/CartPage.test.js",
     "<rootDir>/client/src/pages/Contact.test.js",
+    "<rootDir>/client/src/context/auth.test.js,
+    "<rootDir>/client/src/pages/user/Profile.test.js"
+    
   ],
 
   // jest code coverage
@@ -48,6 +51,7 @@ export default {
     "client/src/components/Form/SearchInput.js",
     "client/src/context/search.js",
     "client/src/context/cart.js",
+    "client/src/context/auth.js",
     "client/src/hooks/useCategory.js",
     "client/src/pages/HomePage.js",
     "client/src/pages/About.js",
