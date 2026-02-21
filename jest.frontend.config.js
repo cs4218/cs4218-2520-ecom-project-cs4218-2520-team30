@@ -32,7 +32,7 @@ export default {
     "<rootDir>/client/src/components/Form/SearchInput.test.js",
     "<rootDir>/client/src/components/*.test.js",
     "<rootDir>/client/src/context/search.test.js",
-    "<rootDir>/client/src/context/auth.test.js,
+    "<rootDir>/client/src/context/auth.test.js",
     "<rootDir>/client/src/pages/user/Profile.test.js"
     
   ],
