@@ -4,7 +4,7 @@ import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import axios from 'axios';
-import '@testing-library/jest-dom/extend-expect';
+import '@testing-library/jest-dom';
 import PrivateRoute from './Private';
 import { useAuth } from '../../context/auth';
 
@@ -100,5 +100,6 @@ describe('Private Route', () => { // Leong Soon Mun Stephane, A0273409B
         await waitFor(() => expect(axios.get).toHaveBeenCalled());
         expect(consoleLogSpy).toHaveBeenCalledWith(mockError);
         expect(await screen.findByTestId('spinner')).toBeInTheDocument();
+        consoleLogSpy.mockRestore()
     });
 })
