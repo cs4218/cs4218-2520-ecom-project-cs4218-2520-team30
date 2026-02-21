@@ -22,7 +22,6 @@ export default {
   // only run these tests
   testMatch: [
     "<rootDir>/client/src/pages/Auth/*.test.js",
-    "<rootDir>/client/src/pages/Contact.test.js",
     "<rootDir>/client/src/pages/Search.test.js",
     "<rootDir>/client/src/pages/HomePage.test.js",
     "<rootDir>/client/src/pages/Categories.test.js",
@@ -32,20 +31,24 @@ export default {
     "<rootDir>/client/src/components/Form/SearchInput.test.js",
     "<rootDir>/client/src/components/*.test.js",
     "<rootDir>/client/src/context/search.test.js",
+    "<rootDir>/client/src/context/cart.test.js",
+    "<rootDir>/client/src/pages/CartPage.test.js",
+    "<rootDir>/client/src/pages/Contact.test.js",
     "<rootDir>/client/src/context/auth.test.js",
-    "<rootDir>/client/src/pages/user/Profile.test.js"
-    
+    "<rootDir>/client/src/pages/user/Profile.test.js",
   ],
 
   // jest code coverage
   collectCoverage: true,
   collectCoverageFrom: [
     "client/src/pages/Auth/**",
+    "client/src/pages/CartPage.js",
     "client/src/pages/Contact.js",
     "client/src/pages/Search.js",
     "client/src/pages/Categories.js",
     "client/src/components/Form/SearchInput.js",
     "client/src/context/search.js",
+    "client/src/context/cart.js",
     "client/src/context/auth.js",
     "client/src/hooks/useCategory.js",
     "client/src/pages/HomePage.js",
