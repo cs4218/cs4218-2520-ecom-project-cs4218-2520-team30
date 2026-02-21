@@ -24,10 +24,31 @@ jest.mock("../models/orderModel.js", () => {
   };
 });
 
+jest.mock("../models/productModel.js");
+jest.mock("../models/categoryModel.js");
+jest.mock("fs");
+jest.mock("slugify");
+
 import braintree from "braintree";
+import fs from "fs";
+import slugify from "slugify";
+import productModel from "../models/productModel.js";
+import categoryModel from "../models/categoryModel.js";
 import {
   braintreeTokenController,
   brainTreePaymentController,
+  getProductController,
+  getSingleProductController,
+  productPhotoController,
+  deleteProductController,
+  productFiltersController,
+  productCountController,
+  productListController,
+  searchProductController,
+  realtedProductController,
+  productCategoryController,
+  createProductController,
+  updateProductController,
 } from "./productController.js";
 
 const mockGenerate = braintree.BraintreeGateway._mockGenerate;
@@ -38,11 +59,18 @@ describe("Product Controller - Payment", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    req = { user: { _id: "123" }, body: {} };
+    req = {
+      user: { _id: "123" },
+      body: {},
+      params: {},
+      fields: {},
+      files: {},
+    };
     res = {
       status: jest.fn().mockReturnThis(),
       send: jest.fn(),
       json: jest.fn(),
+      set: jest.fn(),
     };
   });
 
@@ -946,7 +974,7 @@ describe("Product Controller - Payment", () => {
 
       // ASSERT
       expect(mockGenerate).toHaveBeenCalled();
-      expect(res.send).toHaveBeenCalledWith(fakeTokenResponse);
+      expect(res.send).toHaveBeenCalledWith(fakeResponse);
     });
 
     it("should send 500 error on failure", async () => {
