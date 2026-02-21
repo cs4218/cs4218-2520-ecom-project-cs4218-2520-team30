@@ -5,4 +5,8 @@ node_modules
 /playwright/.cache/
 .env
 .DS_Store
-coverage
+coverage/
+**/clover.xml
+**/coverage-final.json
+**/lcov.info
+**/lcov-report/

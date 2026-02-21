@@ -1,4 +1,4 @@
-import { useState, useContext, createContext, useEffect } from "react";
+import React, { useState, useContext, createContext, useEffect } from "react";
 import axios from "axios";
 
 const AuthContext = createContext();
@@ -15,12 +15,16 @@ const AuthProvider = ({ children }) => {
     useEffect(() => {
        const data = localStorage.getItem("auth");
        if (data) {
-        const parseData = JSON.parse(data);
-        setAuth({
-            ...auth,
-            user: parseData.user,
-            token: parseData.token,
-        });
+        try {
+            const parseData = JSON.parse(data);
+            setAuth({
+                ...auth,
+                user: parseData.user,
+                token: parseData.token,
+            });
+        } catch (error) {
+            console.error("Failed to parse auth data from localStorage:", error);
+        }
        }
        //eslint-disable-next-line
     }, []);
@@ -32,6 +36,12 @@ const AuthProvider = ({ children }) => {
 };
 
 // custom hook
-const useAuth = () => useContext(AuthContext);
+const useAuth = () => {
+    const context = useContext(AuthContext);
+    if (context === undefined) {
+        throw new Error("useAuth must be used within an AuthProvider");
+    }
+    return context;
+};
 
 export {useAuth, AuthProvider};
