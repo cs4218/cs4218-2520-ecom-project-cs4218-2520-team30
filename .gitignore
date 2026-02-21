@@ -3,3 +3,10 @@ node_modules
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+.env
+.DS_Store
+coverage/
+**/clover.xml
+**/coverage-final.json
+**/lcov.info
+**/lcov-report/
