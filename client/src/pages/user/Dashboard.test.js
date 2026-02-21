@@ -21,7 +21,7 @@ jest.mock("../../components/UserMenu", () => ({
     default: () => <div data-testid="user-menu">UserMenu</div>,
 }));
 
-describe('Dashboard Page', () => {
+describe('Dashboard Page', () => { // Leong Soon Mun Stephane, A0273409B
 
     beforeEach(() => {
         jest.clearAllMocks();
@@ -31,7 +31,7 @@ describe('Dashboard Page', () => {
         jest.restoreAllMocks();
     });
 
-    it('should display user information if auth returns user', () => {
+    it('should display user information if auth returns user', () => { // Leong Soon Mun Stephane, A0273409B
         // Arrange
         let mockUser = {
             name: 'tester',
@@ -55,7 +55,7 @@ describe('Dashboard Page', () => {
         expect(screen.getByText('tester-address')).toBeInTheDocument();
     });
 
-    it('should not display user information if auth user has missing data', () => {
+    it('should not display user information if auth user has missing data', () => { // Leong Soon Mun Stephane, A0273409B
         // Arrange
         let mockUser = {}
         useAuth.mockReturnValue([{ user: mockUser }, jest.fn()]);
@@ -79,7 +79,7 @@ describe('Dashboard Page', () => {
         expect(screen.queryByText('tester-address')).not.toBeInTheDocument();
     });
 
-    it('should render Layout and UserMenu', () => {
+    it('should render Layout and UserMenu', () => {  // Leong Soon Mun Stephane, A0273409B
         // Arrange
 
         // Act
@@ -96,7 +96,7 @@ describe('Dashboard Page', () => {
         expect(screen.getByTestId('user-menu')).toBeInTheDocument();
     });
 
-    it('should not display user information if if auth is missing user', () => {
+    it('should not display user information if if auth is missing user', () => { // Leong Soon Mun Stephane, A0273409B
         // Arrange
         useAuth.mockReturnValue([{}, jest.fn()]);
         
