@@ -44,6 +44,14 @@ window.matchMedia = window.matchMedia || function () {
     };
 };
 
+const renderForgotPassword = () => {
+    return render(
+        <MemoryRouter>
+            <ForgotPassword />
+        </MemoryRouter>
+    );
+};
+
 describe('ForgotPassword Component', () => {
     beforeEach(() => {
         jest.clearAllMocks();
@@ -51,11 +59,7 @@ describe('ForgotPassword Component', () => {
 
     //Tay Kai Jun, A0283343E
     test('should render forgot password form with all elements', () => {
-        const { getByPlaceholderText, getByText } = render(
-            <MemoryRouter>
-                <ForgotPassword />
-            </MemoryRouter>
-        );
+        const { getByPlaceholderText, getByText } = renderForgotPassword();
 
         expect(getByPlaceholderText('Enter Your Email')).toBeInTheDocument();
         expect(getByPlaceholderText('What is Your Favorite Sport')).toBeInTheDocument();
@@ -66,11 +70,7 @@ describe('ForgotPassword Component', () => {
 
     //Tay Kai Jun, A0283343E
     test('should update email state on input change', () => {
-        const { getByPlaceholderText } = render(
-            <MemoryRouter>
-                <ForgotPassword />
-            </MemoryRouter>
-        );
+        const { getByPlaceholderText } = renderForgotPassword();
 
         const emailInput = getByPlaceholderText('Enter Your Email');
         fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
@@ -79,11 +79,7 @@ describe('ForgotPassword Component', () => {
 
     //Tay Kai Jun, A0283343E
     test('should update answer state on input change', () => {
-        const { getByPlaceholderText } = render(
-            <MemoryRouter>
-                <ForgotPassword />
-            </MemoryRouter>
-        );
+        const { getByPlaceholderText } = renderForgotPassword();
 
         const answerInput = getByPlaceholderText('What is Your Favorite Sport');
         fireEvent.change(answerInput, { target: { value: 'football' } });
@@ -92,11 +88,7 @@ describe('ForgotPassword Component', () => {
 
     //Tay Kai Jun, A0283343E
     test('should update newPassword state on input change', () => {
-        const { getByPlaceholderText } = render(
-            <MemoryRouter>
-                <ForgotPassword />
-            </MemoryRouter>
-        );
+        const { getByPlaceholderText } = renderForgotPassword();
 
         const passwordInput = getByPlaceholderText('Enter Your New Password');
         fireEvent.change(passwordInput, { target: { value: 'newpass123' } });
@@ -106,11 +98,7 @@ describe('ForgotPassword Component', () => {
     describe('Email Format Validation', () => {
         //Tay Kai Jun, A0283343E
         test('should show error for invalid email format (no @ symbol)', async () => {
-            const { getByPlaceholderText, getByText } = render(
-                <MemoryRouter>
-                    <ForgotPassword />
-                </MemoryRouter>
-            );
+            const { getByPlaceholderText, getByText } = renderForgotPassword();
 
             fireEvent.change(getByPlaceholderText('Enter Your Email'), { target: { value: 'invalidemail.com' } });
             fireEvent.change(getByPlaceholderText('What is Your Favorite Sport'), { target: { value: 'football' } });
@@ -125,11 +113,7 @@ describe('ForgotPassword Component', () => {
 
         //Tay Kai Jun, A0283343E
         test('should show error for invalid email format (no domain)', async () => {
-            const { getByPlaceholderText, getByText } = render(
-                <MemoryRouter>
-                    <ForgotPassword />
-                </MemoryRouter>
-            );
+            const { getByPlaceholderText, getByText } = renderForgotPassword();
 
             fireEvent.change(getByPlaceholderText('Enter Your Email'), { target: { value: 'test@' } });
             fireEvent.change(getByPlaceholderText('What is Your Favorite Sport'), { target: { value: 'football' } });
@@ -144,11 +128,7 @@ describe('ForgotPassword Component', () => {
 
         //Tay Kai Jun, A0283343E
         test('should show error for invalid email format (no local part)', async () => {
-            const { getByPlaceholderText, getByText } = render(
-                <MemoryRouter>
-                    <ForgotPassword />
-                </MemoryRouter>
-            );
+            const { getByPlaceholderText, getByText } = renderForgotPassword();
 
             fireEvent.change(getByPlaceholderText('Enter Your Email'), { target: { value: '@example.com' } });
             fireEvent.change(getByPlaceholderText('What is Your Favorite Sport'), { target: { value: 'football' } });
@@ -165,11 +145,7 @@ describe('ForgotPassword Component', () => {
     describe('Password Length Validation', () => {
         //Tay Kai Jun, A0283343E
         test('should show error when password is less than 6 characters', async () => {
-            const { getByPlaceholderText, getByText } = render(
-                <MemoryRouter>
-                    <ForgotPassword />
-                </MemoryRouter>
-            );
+            const { getByPlaceholderText, getByText } = renderForgotPassword();
 
             fireEvent.change(getByPlaceholderText('Enter Your Email'), { target: { value: 'test@example.com' } });
             fireEvent.change(getByPlaceholderText('What is Your Favorite Sport'), { target: { value: 'football' } });
@@ -188,11 +164,7 @@ describe('ForgotPassword Component', () => {
                 data: { success: true, message: 'Password reset successfully' }
             });
 
-            const { getByPlaceholderText, getByText } = render(
-                <MemoryRouter>
-                    <ForgotPassword />
-                </MemoryRouter>
-            );
+            const { getByPlaceholderText, getByText } = renderForgotPassword();
 
             fireEvent.change(getByPlaceholderText('Enter Your Email'), { target: { value: 'test@example.com' } });
             fireEvent.change(getByPlaceholderText('What is Your Favorite Sport'), { target: { value: 'football' } });
@@ -216,11 +188,7 @@ describe('ForgotPassword Component', () => {
                 data: { success: false, message: 'Wrong email or answer' }
             });
 
-            const { getByPlaceholderText, getByText } = render(
-                <MemoryRouter>
-                    <ForgotPassword />
-                </MemoryRouter>
-            );
+            const { getByPlaceholderText, getByText } = renderForgotPassword();
 
             fireEvent.change(getByPlaceholderText('Enter Your Email'), { target: { value: 'wrong@example.com' } });
             fireEvent.change(getByPlaceholderText('What is Your Favorite Sport'), { target: { value: 'wronganswer' } });
@@ -240,11 +208,7 @@ describe('ForgotPassword Component', () => {
                 data: { success: true, message: 'Password reset successfully' }
             });
 
-            const { getByPlaceholderText, getByText } = render(
-                <MemoryRouter>
-                    <ForgotPassword />
-                </MemoryRouter>
-            );
+            const { getByPlaceholderText, getByText } = renderForgotPassword();
 
             fireEvent.change(getByPlaceholderText('Enter Your Email'), { target: { value: 'test@example.com' } });
             fireEvent.change(getByPlaceholderText('What is Your Favorite Sport'), { target: { value: 'football' } });
@@ -274,11 +238,7 @@ describe('ForgotPassword Component', () => {
                 data: { success: true, message: 'Password reset successfully' }
             });
 
-            const { getByPlaceholderText, getByText } = render(
-                <MemoryRouter>
-                    <ForgotPassword />
-                </MemoryRouter>
-            );
+            const { getByPlaceholderText, getByText } = renderForgotPassword();
 
             fireEvent.change(getByPlaceholderText('Enter Your Email'), { target: { value: 'user@test.com' } });
             fireEvent.change(getByPlaceholderText('What is Your Favorite Sport'), { target: { value: 'basketball' } });
@@ -304,11 +264,7 @@ describe('ForgotPassword Component', () => {
                 }
             });
 
-            const { getByPlaceholderText, getByText } = render(
-                <MemoryRouter>
-                    <ForgotPassword />
-                </MemoryRouter>
-            );
+            const { getByPlaceholderText, getByText } = renderForgotPassword();
 
             fireEvent.change(getByPlaceholderText('Enter Your Email'), { target: { value: 'test@example.com' } });
             fireEvent.change(getByPlaceholderText('What is Your Favorite Sport'), { target: { value: 'football' } });
@@ -326,11 +282,7 @@ describe('ForgotPassword Component', () => {
                 message: 'Network Error'
             });
 
-            const { getByPlaceholderText, getByText } = render(
-                <MemoryRouter>
-                    <ForgotPassword />
-                </MemoryRouter>
-            );
+            const { getByPlaceholderText, getByText } = renderForgotPassword();
 
             fireEvent.change(getByPlaceholderText('Enter Your Email'), { target: { value: 'test@example.com' } });
             fireEvent.change(getByPlaceholderText('What is Your Favorite Sport'), { target: { value: 'football' } });
@@ -346,11 +298,7 @@ describe('ForgotPassword Component', () => {
     describe('Form Validation', () => {
         //Tay Kai Jun, A0283343E
         test('should validate email before password length', async () => {
-            const { getByPlaceholderText, getByText } = render(
-                <MemoryRouter>
-                    <ForgotPassword />
-                </MemoryRouter>
-            );
+            const { getByPlaceholderText, getByText } = renderForgotPassword();
 
             fireEvent.change(getByPlaceholderText('Enter Your Email'), { target: { value: 'invalidemail' } });
             fireEvent.change(getByPlaceholderText('What is Your Favorite Sport'), { target: { value: 'football' } });
@@ -365,11 +313,7 @@ describe('ForgotPassword Component', () => {
 
         //Tay Kai Jun, A0283343E
         test('should prevent form submission when validation fails', async () => {
-            const { getByPlaceholderText, getByText } = render(
-                <MemoryRouter>
-                    <ForgotPassword />
-                </MemoryRouter>
-            );
+            const { getByPlaceholderText, getByText } = renderForgotPassword();
 
             fireEvent.change(getByPlaceholderText('Enter Your Email'), { target: { value: 'test@example.com' } });
             fireEvent.change(getByPlaceholderText('What is Your Favorite Sport'), { target: { value: 'football' } });
