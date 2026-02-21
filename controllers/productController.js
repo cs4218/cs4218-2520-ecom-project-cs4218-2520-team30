@@ -10,6 +10,7 @@ import dotenv from "dotenv";
 dotenv.config();
 
 //payment gateway
+// Alek Kwek, A0273471A
 var gateway = new braintree.BraintreeGateway({
   environment: braintree.Environment.Sandbox,
   merchantId: process.env.BRAINTREE_MERCHANT_ID,
@@ -17,27 +18,33 @@ var gateway = new braintree.BraintreeGateway({
   privateKey: process.env.BRAINTREE_PRIVATE_KEY,
 });
 
+// Alek Kwek, A0273471A
 export const createProductController = async (req, res) => {
   try {
     const { name, description, price, category, quantity, shipping } =
       req.fields;
     const { photo } = req.files;
-    //alidation
+    //validation
     switch (true) {
       case !name:
-        return res.status(500).send({ error: "Name is Required" });
+        return res.status(400).send({ error: "Name is Required" });
       case !description:
-        return res.status(500).send({ error: "Description is Required" });
-      case !price:
-        return res.status(500).send({ error: "Price is Required" });
+        return res.status(400).send({ error: "Description is Required" });
+      case !price && price !== 0:
+        return res.status(400).send({ error: "Price is Required" });
+      case price < 0:
+        return res.status(400).send({ error: "Price must be non-negative" });
       case !category:
-        return res.status(500).send({ error: "Category is Required" });
-      case !quantity:
-        return res.status(500).send({ error: "Quantity is Required" });
+        return res.status(400).send({ error: "Category is Required" });
+      case !quantity && quantity !== 0:
+        return res.status(400).send({ error: "Quantity is Required" });
+      case quantity < 0:
+        return res.status(400).send({ error: "Quantity must be non-negative" });
       case photo && photo.size > 1000000:
         return res
-          .status(500)
-          .send({ error: "photo is Required and should be less then 1mb" });
+          .status(400)
+          // Alek Kwek, A0273471A
+          .send({ error: "Photo is Required to be less than 1mb" });
     }
 
     const products = new productModel({ ...req.fields, slug: slugify(name) });
@@ -56,7 +63,8 @@ export const createProductController = async (req, res) => {
     res.status(500).send({
       success: false,
       error,
-      message: "Error in crearing product",
+      // Alek Kwek, A0273471A
+      message: "Error in creating product",
     });
   }
 };
@@ -72,15 +80,17 @@ export const getProductController = async (req, res) => {
       .sort({ createdAt: -1 });
     res.status(200).send({
       success: true,
-      counTotal: products.length,
-      message: "ALlProducts ",
+      countTotal: products.length,
+      // Alek Kwek, A0273471A
+      message: "All Products",
       products,
     });
   } catch (error) {
     console.log(error);
     res.status(500).send({
       success: false,
-      message: "Erorr in getting products",
+      // Alek Kwek, A0273471A
+      message: "Error in getting products",
       error: error.message,
     });
   }
@@ -101,7 +111,8 @@ export const getSingleProductController = async (req, res) => {
     console.log(error);
     res.status(500).send({
       success: false,
-      message: "Eror while getitng single product",
+      // Alek Kwek, A0273471A
+      message: "Error while getting single product",
       error,
     });
   }
@@ -119,13 +130,15 @@ export const productPhotoController = async (req, res) => {
     console.log(error);
     res.status(500).send({
       success: false,
-      message: "Erorr while getting photo",
+      // Alek Kwek, A0273471A
+      message: "Error while getting photo",
       error,
     });
   }
 };
 
 //delete controller
+// Alek Kwek, A0273471A
 export const deleteProductController = async (req, res) => {
   try {
     await productModel.findByIdAndDelete(req.params.pid).select("-photo");
@@ -137,34 +150,41 @@ export const deleteProductController = async (req, res) => {
     console.log(error);
     res.status(500).send({
       success: false,
+      // Alek Kwek, A0273471A
       message: "Error while deleting product",
       error,
     });
   }
 };
 
-//upate producta
+//update product
+// Alek Kwek, A0273471A
 export const updateProductController = async (req, res) => {
   try {
     const { name, description, price, category, quantity, shipping } =
       req.fields;
     const { photo } = req.files;
-    //alidation
+    //validation
     switch (true) {
       case !name:
         return res.status(500).send({ error: "Name is Required" });
       case !description:
         return res.status(500).send({ error: "Description is Required" });
-      case !price:
+      case !price && price !== 0:
         return res.status(500).send({ error: "Price is Required" });
+      case price < 0:
+        return res.status(500).send({ error: "Price must be non-negative" });
       case !category:
         return res.status(500).send({ error: "Category is Required" });
-      case !quantity:
+      case !quantity && quantity !== 0:
         return res.status(500).send({ error: "Quantity is Required" });
+      case quantity < 0:
+        return res.status(500).send({ error: "Quantity must be non-negative" });
       case photo && photo.size > 1000000:
         return res
           .status(500)
-          .send({ error: "photo is Required and should be less then 1mb" });
+          // Alek Kwek, A0273471A
+          .send({ error: "Photo is Required and should be less than 1mb" });
     }
 
     const products = await productModel.findByIdAndUpdate(
@@ -187,7 +207,8 @@ export const updateProductController = async (req, res) => {
     res.status(500).send({
       success: false,
       error,
-      message: "Error in Updte product",
+      // Alek Kwek, A0273471A
+      message: "Error in updating product",
     });
   }
 };
@@ -208,7 +229,9 @@ export const productFiltersController = async (req, res) => {
     console.log(error);
     res.status(400).send({
       success: false,
-      message: "Error WHile Filtering Products",
+
+      // Alek Kwek, A0273471A
+      message: "Error While Filtering Products",
       error,
     });
   }
@@ -261,7 +284,8 @@ export const productListController = async (req, res) => {
 export const searchProductController = async (req, res) => {
   try {
     const { keyword } = req.params;
-    const resutls = await productModel
+    // Alek Kwek, A0273471Aß
+    const results = await productModel
       .find({
         $or: [
           { name: { $regex: keyword, $options: "i" } },
@@ -269,7 +293,7 @@ export const searchProductController = async (req, res) => {
         ],
       })
       .select("-photo");
-    res.json(resutls);
+    res.json(results);
   } catch (error) {
     console.log(error);
     res.status(400).send({
@@ -281,7 +305,8 @@ export const searchProductController = async (req, res) => {
 };
 
 // similar products
-export const realtedProductController = async (req, res) => {
+// Alek Kwek, A0273471A
+export const relatedProductController = async (req, res) => {
   try {
     const { pid, cid } = req.params;
     const products = await productModel
@@ -300,13 +325,13 @@ export const realtedProductController = async (req, res) => {
     console.log(error);
     res.status(400).send({
       success: false,
-      message: "error while geting related product",
+      message: "error while getting related product", // Alek Kwek, A0273471A
       error,
     });
   }
 };
-
-// get prdocyst by catgory
+// Alek Kwek, A0273471A
+// get products by category
 export const productCategoryController = async (req, res) => {
   try {
     const category = await categoryModel.findOne({ slug: req.params.slug });
