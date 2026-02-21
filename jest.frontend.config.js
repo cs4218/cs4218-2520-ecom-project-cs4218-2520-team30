@@ -35,9 +35,7 @@ export default {
     "<rootDir>/client/src/pages/user/Profile.test.js",
     "<rootDir>/client/src/pages/CartPage.test.js",
     "<rootDir>/client/src/pages/Contact.test.js",
-    "<rootDir>/client/src/context/auth.test.js,
-    "<rootDir>/client/src/pages/user/Profile.test.js"
-    
+    "<rootDir>/client/src/context/auth.test.js"
   ],
 
   // jest code coverage
