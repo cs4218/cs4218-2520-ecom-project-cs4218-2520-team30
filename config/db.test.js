@@ -7,7 +7,7 @@ describe("Database Configuration", () => {
   let consoleLogSpy;
 
   beforeEach(() => {
-    consoleLogSpy = jest.spyOn(console, "log").mockImplementation(() => {});
+    consoleLogSpy = jest.spyOn(console, "log").mockImplementation(() => { });
   });
 
   afterEach(() => {
@@ -31,6 +31,7 @@ describe("Database Configuration", () => {
   });
 
   it("should handle connection errors gracefully", async () => {
+    // Lum Yi Ren Johannsen, A0273503L
     // ARRANGE
     const mockError = new Error("Connection failed");
     mongoose.connect.mockRejectedValueOnce(mockError);
