@@ -1,7 +1,24 @@
-jest.mock("../models/productModel.js");
-jest.mock("../models/categoryModel.js");
-jest.mock("fs");
-jest.mock("slugify");
+import braintree from "braintree";
+import productModel from "../models/productModel.js";
+import categoryModel from "../models/categoryModel.js";
+import fs from "fs";
+import slugify from "slugify";
+import {
+    createProductController,
+    updateProductController,
+    getProductController,
+    getSingleProductController,
+    productPhotoController,
+    deleteProductController,
+    productFiltersController,
+    productCountController,
+    productListController,
+    searchProductController,
+    productCategoryController,
+    relatedProductController,
+    braintreeTokenController,
+    brainTreePaymentController
+} from "./productController.js";
 jest.mock("braintree", () => {
     const mockGenerate = jest.fn();
     const mockSale = jest.fn();
@@ -17,6 +34,46 @@ jest.mock("braintree", () => {
     };
 });
 
+
+
+const mockGenerate = braintree.BraintreeGateway._mockGenerate;
+const mockSale = braintree.BraintreeGateway._mockSale;
+// 1. Mock productModel as a Constructor + Static Methods
+jest.mock("../models/productModel.js", () => {
+    const mockProductInstance = {
+        save: jest.fn().mockResolvedValue(true),
+        photo: { data: null, contentType: null },
+    };
+
+    const mockConstructor = jest.fn(() => mockProductInstance);
+
+    // Attach static methods to the constructor function
+    mockConstructor.find = jest.fn();
+    mockConstructor.findOne = jest.fn();
+    mockConstructor.findById = jest.fn();
+    mockConstructor.findByIdAndDelete = jest.fn();
+    mockConstructor.findByIdAndUpdate = jest.fn();
+    mockConstructor.countDocuments = jest.fn(); // Needed for productCountController
+
+    return {
+        __esModule: true,
+        default: mockConstructor,
+    };
+});
+
+// 2. Mock categoryModel
+jest.mock("../models/categoryModel.js", () => ({
+    __esModule: true,
+    default: {
+        findOne: jest.fn(),
+    },
+}));
+
+// 3. Mock fs (to prevent ReferenceErrors)
+jest.mock("fs", () => ({
+    readFileSync: jest.fn(),
+}));
+
 // Stub order model so brainTreePaymentController does not touch the real DB.
 jest.mock("../models/orderModel.js", () => {
     const mockSave = jest.fn().mockResolvedValue(undefined);
@@ -28,50 +85,9 @@ jest.mock("../models/orderModel.js", () => {
     };
 });
 
-import productModel from "../models/productModel.js";
-import categoryModel from "../models/categoryModel.js";
-import fs from "fs";
-import slugify from "slugify";
-import braintree from "braintree";
-import {
-    braintreeTokenController,
-    brainTreePaymentController,
-    getProductController,
-    getSingleProductController,
-    productPhotoController,
-    deleteProductController,
-    productFiltersController,
-    productCountController,
-    productListController,
-    searchProductController,
-    relatedProductController,
-    productCategoryController,
-    createProductController,
-    updateProductController,
-} from "./productController.js";
-
-const mockGenerate = braintree.BraintreeGateway._mockGenerate;
-const mockSale = braintree.BraintreeGateway._mockSale;
-// Mock all dependencies BEFORE importing the controller
-jest.mock("../models/productModel.js");
-jest.mock("../models/categoryModel.js");
-jest.mock('fs');
+// Removed duplicate mocks
 jest.mock('slugify');
 
-// Alek Kwek, A0273471A
-jest.mock('braintree', () => ({
-    BraintreeGateway: jest.fn().mockImplementation(() => ({
-        clientToken: {
-            generate: jest.fn()
-        },
-        transaction: {
-            sale: jest.fn()
-        }
-    })),
-    Environment: {
-        Sandbox: 'sandbox'
-    }
-}));
 
 // Alek Kwek, A0273471A
 describe('createProductController', () => {
@@ -659,31 +675,6 @@ describe('updateProductController', () => {
         });
     });
 });
-jest.mock("braintree", () => {
-    const mockGenerate = jest.fn();
-    const mockSale = jest.fn();
-    const Gateway = jest.fn().mockImplementation(() => ({
-        clientToken: { generate: mockGenerate },
-        transaction: { sale: mockSale },
-    }));
-    Gateway._mockGenerate = mockGenerate;
-    Gateway._mockSale = mockSale;
-    return {
-        BraintreeGateway: Gateway,
-        Environment: { Sandbox: "Sandbox" },
-    };
-});
-
-jest.mock("../models/orderModel.js", () => {
-    const mockSave = jest.fn().mockResolvedValue(undefined);
-    return {
-        __esModule: true,
-        default: jest.fn().mockImplementation(function () {
-            return { save: mockSave };
-        }),
-    };
-});
-
 
 describe("Payment Controller Unit Tests", () => {
     let req, res;
@@ -1512,3 +1503,365 @@ describe("Payment Controller Unit Tests", () => {
     });
 });
 
+describe("Product Controller - Core Product APIs", () => {
+    // Basil Boh, A0273232M
+    let req, res;
+
+    beforeEach(() => {
+        jest.clearAllMocks();
+        req = {
+            body: {},
+            params: {},
+        };
+        res = {
+            status: jest.fn().mockReturnThis(),
+            send: jest.fn(),
+            json: jest.fn(),
+            set: jest.fn(),
+        };
+    });
+
+    describe("getProductController", () => {
+        it("returns products on success", async () => {
+            // Basil Boh, A0273232M
+            const mockProducts = [{ _id: "1", name: "P1" }];
+            const chain = {
+                populate: jest.fn().mockReturnThis(),
+                select: jest.fn().mockReturnThis(),
+                limit: jest.fn().mockReturnThis(),
+                sort: jest.fn().mockResolvedValue(mockProducts),
+            };
+            productModel.find.mockReturnValue(chain);
+
+            await getProductController(req, res);
+
+            expect(productModel.find).toHaveBeenCalledWith({});
+            expect(chain.populate).toHaveBeenCalledWith("category");
+            expect(chain.select).toHaveBeenCalledWith("-photo");
+            expect(chain.limit).toHaveBeenCalledWith(12);
+            expect(chain.sort).toHaveBeenCalledWith({ createdAt: -1 });
+            expect(res.status).toHaveBeenCalledWith(200);
+        });
+
+        it("returns 500 on query failure", async () => {
+            // Basil Boh, A0273232M
+            const chain = {
+                populate: jest.fn().mockReturnThis(),
+                select: jest.fn().mockReturnThis(),
+                limit: jest.fn().mockReturnThis(),
+                sort: jest.fn().mockRejectedValue(new Error("DB error")),
+            };
+            productModel.find.mockReturnValue(chain);
+
+            await getProductController(req, res);
+
+            expect(res.status).toHaveBeenCalledWith(500);
+            expect(res.send).toHaveBeenCalledWith({
+                success: false,
+                message: "Error in getting products",
+                error: "DB error",
+            });
+        });
+    });
+
+    describe("getSingleProductController", () => {
+        it("returns a single product on success", async () => {
+            // Basil Boh, A0273232M
+            req.params.slug = "test-product";
+            const mockProduct = { _id: "1", slug: "test-product" };
+            const chain = {
+                select: jest.fn().mockReturnThis(),
+                populate: jest.fn().mockResolvedValue(mockProduct),
+            };
+            productModel.findOne.mockReturnValue(chain);
+
+            await getSingleProductController(req, res);
+
+            expect(productModel.findOne).toHaveBeenCalledWith({ slug: "test-product" });
+            expect(chain.select).toHaveBeenCalledWith("-photo");
+            expect(chain.populate).toHaveBeenCalledWith("category");
+            expect(res.status).toHaveBeenCalledWith(200);
+        });
+
+        it("returns 500 when lookup fails", async () => {
+            // Basil Boh, A0273232M
+            req.params.slug = "test-product";
+            const chain = {
+                select: jest.fn().mockReturnThis(),
+                populate: jest.fn().mockRejectedValue(new Error("DB error")),
+            };
+            productModel.findOne.mockReturnValue(chain);
+
+            await getSingleProductController(req, res);
+
+            expect(res.status).toHaveBeenCalledWith(500);
+            expect(res.send).toHaveBeenCalledWith({
+                success: false,
+                message: "Error while getting single product",
+                error: expect.any(Error),
+            });
+        });
+    });
+
+    describe("productPhotoController", () => {
+        it("returns photo bytes when photo exists", async () => {
+            // Basil Boh, A0273232M
+            req.params.pid = "p1";
+            const photoData = Buffer.from("image");
+            productModel.findById.mockReturnValue({
+                select: jest.fn().mockResolvedValue({
+                    photo: { data: photoData, contentType: "image/png" },
+                }),
+            });
+
+            await productPhotoController(req, res);
+
+            expect(res.set).toHaveBeenCalledWith("Content-type", "image/png");
+            expect(res.status).toHaveBeenCalledWith(200);
+            expect(res.send).toHaveBeenCalledWith(photoData);
+        });
+
+        it("returns 500 when reading photo fails", async () => {
+            // Basil Boh, A0273232M
+            req.params.pid = "p1";
+            productModel.findById.mockReturnValue({
+                select: jest.fn().mockRejectedValue(new Error("DB error")),
+            });
+
+            await productPhotoController(req, res);
+
+            expect(res.status).toHaveBeenCalledWith(500);
+            expect(res.send).toHaveBeenCalledWith({
+                success: false,
+                message: "Error while getting photo",
+                error: expect.any(Error),
+            });
+        });
+    });
+
+    describe("productFiltersController", () => {
+        it("applies checked/radio filters and returns products", async () => {
+            // Basil Boh, A0273232M
+            req.body = { checked: ["cat1"], radio: [0, 100] };
+            const mockProducts = [{ _id: "1", name: "P1" }];
+            productModel.find.mockResolvedValue(mockProducts);
+
+            await productFiltersController(req, res);
+
+            expect(productModel.find).toHaveBeenCalledWith({
+                category: ["cat1"],
+                price: { $gte: 0, $lte: 100 },
+            });
+            expect(res.status).toHaveBeenCalledWith(200);
+        });
+
+        it("returns 400 when filter query fails", async () => {
+            // Basil Boh, A0273232M
+            req.body = { checked: [], radio: [] };
+            productModel.find.mockRejectedValue(new Error("Filter error"));
+
+            await productFiltersController(req, res);
+
+            expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.send).toHaveBeenCalledWith({
+                success: false,
+                message: "Error While Filtering Products",
+                error: expect.any(Error),
+            });
+        });
+    });
+
+    describe("productCountController", () => {
+        it("returns total count on success", async () => {
+            // Basil Boh, A0273232M
+            const estimatedDocumentCount = jest.fn().mockResolvedValue(42);
+            productModel.find.mockReturnValue({ estimatedDocumentCount });
+
+            await productCountController(req, res);
+
+            expect(productModel.find).toHaveBeenCalledWith({});
+            expect(estimatedDocumentCount).toHaveBeenCalled();
+            expect(res.status).toHaveBeenCalledWith(200);
+            expect(res.send).toHaveBeenCalledWith({
+                success: true,
+                total: 42,
+            });
+        });
+
+        it("returns 400 when count fails", async () => {
+            // Basil Boh, A0273232M
+            productModel.find.mockReturnValue({
+                estimatedDocumentCount: jest.fn().mockRejectedValue(new Error("Count error")),
+            });
+
+            await productCountController(req, res);
+
+            expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.send).toHaveBeenCalledWith({
+                message: "Error in product count",
+                error: expect.any(Error),
+                success: false,
+            });
+        });
+    });
+
+    describe("productListController", () => {
+        it("returns paginated products", async () => {
+            // Basil Boh, A0273232M
+            req.params.page = 2;
+            const mockProducts = [{ _id: "1", name: "P1" }];
+            const chain = {
+                select: jest.fn().mockReturnThis(),
+                skip: jest.fn().mockReturnThis(),
+                limit: jest.fn().mockReturnThis(),
+                sort: jest.fn().mockResolvedValue(mockProducts),
+            };
+            productModel.find.mockReturnValue(chain);
+
+            await productListController(req, res);
+
+            expect(chain.select).toHaveBeenCalledWith("-photo");
+            expect(chain.skip).toHaveBeenCalledWith(6);
+            expect(chain.limit).toHaveBeenCalledWith(6);
+            expect(chain.sort).toHaveBeenCalledWith({ createdAt: -1 });
+            expect(res.status).toHaveBeenCalledWith(200);
+        });
+
+        it("returns 400 when pagination query fails", async () => {
+            // Basil Boh, A0273232M
+            req.params.page = 1;
+            const chain = {
+                select: jest.fn().mockReturnThis(),
+                skip: jest.fn().mockReturnThis(),
+                limit: jest.fn().mockReturnThis(),
+                sort: jest.fn().mockRejectedValue(new Error("List error")),
+            };
+            productModel.find.mockReturnValue(chain);
+
+            await productListController(req, res);
+
+            expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.send).toHaveBeenCalledWith({
+                success: false,
+                message: "error in per page ctrl",
+                error: expect.any(Error),
+            });
+        });
+    });
+
+    describe("searchProductController", () => {
+        it("returns results for keyword search", async () => {
+            // Basil Boh, A0273232M
+            req.params.keyword = "laptop";
+            const mockResults = [{ _id: "1", name: "Laptop" }];
+            const chain = { select: jest.fn().mockResolvedValue(mockResults) };
+            productModel.find.mockReturnValue(chain);
+
+            await searchProductController(req, res);
+
+            expect(productModel.find).toHaveBeenCalledWith({
+                $or: [
+                    { name: { $regex: "laptop", $options: "i" } },
+                    { description: { $regex: "laptop", $options: "i" } },
+                ],
+            });
+            expect(chain.select).toHaveBeenCalledWith("-photo");
+            expect(res.json).toHaveBeenCalledWith(mockResults);
+        });
+
+        it("returns 400 when search query fails", async () => {
+            // Basil Boh, A0273232M
+            req.params.keyword = "x";
+            productModel.find.mockReturnValue({
+                select: jest.fn().mockRejectedValue(new Error("Search error")),
+            });
+
+            await searchProductController(req, res);
+
+            expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.send).toHaveBeenCalledWith({
+                success: false,
+                message: "Error In Search Product API",
+                error: expect.any(Error),
+            });
+        });
+    });
+
+    describe("relatedProductController", () => {
+        it("returns related products by category excluding pid", async () => {
+            // Basil Boh, A0273232M
+            req.params = { pid: "p1", cid: "c1" };
+            const mockProducts = [{ _id: "2", name: "Related" }];
+            const chain = {
+                select: jest.fn().mockReturnThis(),
+                limit: jest.fn().mockReturnThis(),
+                populate: jest.fn().mockResolvedValue(mockProducts),
+            };
+            productModel.find.mockReturnValue(chain);
+
+            await relatedProductController(req, res);
+
+            expect(productModel.find).toHaveBeenCalledWith({
+                category: "c1",
+                _id: { $ne: "p1" },
+            });
+            expect(chain.select).toHaveBeenCalledWith("-photo");
+            expect(chain.limit).toHaveBeenCalledWith(3);
+            expect(chain.populate).toHaveBeenCalledWith("category");
+            expect(res.status).toHaveBeenCalledWith(200);
+        });
+
+        it("returns 400 when related lookup fails", async () => {
+            // Basil Boh, A0273232M
+            req.params = { pid: "p1", cid: "c1" };
+            productModel.find.mockReturnValue({
+                select: jest.fn().mockReturnThis(),
+                limit: jest.fn().mockReturnThis(),
+                populate: jest.fn().mockRejectedValue(new Error("Related error")),
+            });
+
+            await relatedProductController(req, res);
+
+            expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.send).toHaveBeenCalledWith({
+                success: false,
+                message: "error while getting related product",
+                error: expect.any(Error),
+            });
+        });
+    });
+
+    describe("productCategoryController", () => {
+        it("returns category and products for a valid slug", async () => {
+            // Basil Boh, A0273232M
+            req.params.slug = "electronics";
+            const mockCategory = { _id: "c1", slug: "electronics" };
+            const mockProducts = [{ _id: "1", name: "P1" }];
+            categoryModel.findOne.mockResolvedValue(mockCategory);
+            const populate = jest.fn().mockResolvedValue(mockProducts);
+            productModel.find.mockReturnValue({ populate });
+
+            await productCategoryController(req, res);
+
+            expect(categoryModel.findOne).toHaveBeenCalledWith({ slug: "electronics" });
+            expect(productModel.find).toHaveBeenCalledWith({ category: mockCategory });
+            expect(populate).toHaveBeenCalledWith("category");
+            expect(res.status).toHaveBeenCalledWith(200);
+        });
+
+        it("returns 400 when category lookup fails", async () => {
+            // Basil Boh, A0273232M
+            req.params.slug = "electronics";
+            categoryModel.findOne.mockRejectedValue(new Error("Category error"));
+
+            await productCategoryController(req, res);
+
+            expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.send).toHaveBeenCalledWith({
+                success: false,
+                error: expect.any(Error),
+                message: "Error While Getting products",
+            });
+        });
+    });
+});
