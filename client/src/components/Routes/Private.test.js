@@ -47,7 +47,7 @@ describe('Private Route', () => { // Leong Soon Mun Stephane, A0273409B
         expect(screen.getByTestId('spinner')).toBeInTheDocument();
     });
 
-    it('should redirect to Outlet if auth token is valid', async () => { // Leong Soon Mun Stephane, A0273409B
+    it('should redirect to Outlet if auth token is valid and response is ok', async () => { // Leong Soon Mun Stephane, A0273409B
         // Arrange
         useAuth.mockReturnValue([{ token: true }, jest.fn()]);
         axios.get.mockResolvedValueOnce({ data: { ok: true } });
@@ -81,10 +81,9 @@ describe('Private Route', () => { // Leong Soon Mun Stephane, A0273409B
         expect(await screen.findByTestId('spinner')).toBeInTheDocument();
     });
 
-    it('should redirect to Spinner if get fails', async () => { // Leong Soon Mun Stephane, A0273409B
+    it('should redirect to Spinner if token is valid but get fails', async () => { // Leong Soon Mun Stephane, A0273409B
         // Arrange
         let mockError = new Error("network error")
-        // let mockError = "hello world"
         let consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => { });
         useAuth.mockReturnValue([{ token: true }, jest.fn()]);
         axios.get.mockRejectedValueOnce(mockError);

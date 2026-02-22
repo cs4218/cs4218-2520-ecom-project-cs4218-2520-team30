@@ -53,7 +53,7 @@ window.matchMedia = window.matchMedia || function () {
     };
 };
 
-describe('Profile Component', () => { // Leong Soon Mun Stephane, A0273409B
+describe('Profile Page', () => { // Leong Soon Mun Stephane, A0273409B
     beforeEach(() => {
         jest.clearAllMocks();
     });

@@ -231,7 +231,7 @@ export const updateProfileController = async (req, res) => {
     });
   } catch (error) {
     console.log(error);
-    res.status(400).send({
+    res.status(500).send({ // Leong Soon Mun Stephane, A0273409B
       success: false,
       message: "Error while updating profile",
       error,
