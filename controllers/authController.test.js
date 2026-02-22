@@ -10,6 +10,7 @@ import orderModel from "../models/orderModel.js";
 import { hashPassword, comparePassword } from "../helpers/authHelper.js";
 import JWT from "jsonwebtoken";
 import {
+  getAllUsersController,
   registerController,
   loginController,
   forgotPasswordController,
@@ -25,6 +26,7 @@ jest.mock("../models/orderModel.js");
 jest.spyOn(userModel, 'findOne');
 jest.spyOn(userModel, 'findById');
 jest.spyOn(userModel, 'findByIdAndUpdate');
+jest.spyOn(userModel, 'find');
 
 
 jest.spyOn(userModel.prototype, 'save').mockImplementation(function () {
@@ -44,6 +46,7 @@ beforeEach(() => {
   userModel.findOne.mockResolvedValue(null);
   userModel.findById.mockResolvedValue(null);
   userModel.findByIdAndUpdate.mockResolvedValue(null);
+  userModel.find.mockReturnValue(null);
   userModel.prototype.save.mockImplementation(function () {
     return Promise.resolve({
       _id: "mockUserId123",
@@ -1486,5 +1489,75 @@ describe('Auth Controller - Order', () => { // Leong Soon Mun Stephane, A0273409
         error: mockError,
       });
     })
+  });
+});
+
+describe('Admin View Users', () => { // Leong Soon Mun Stephane, A0273409B
+  let consoleLogSpy;
+  let req, res;
+
+  describe("getAllUsersController", () => {  // Leong Soon Mun Stephane, A0273409B
+
+    beforeEach(() => {
+      req = {};
+      res = {
+        status: jest.fn().mockReturnThis(),
+        send: jest.fn(),
+        json: jest.fn(),
+      };
+      consoleLogSpy = jest.spyOn(console, 'log');
+      jest.clearAllMocks();
+    });
+
+    afterEach(() => {
+      consoleLogSpy.mockRestore();
+    });
+
+    it('should respond with users if successful', async () => { // Leong Soon Mun Stephane, A0273409B
+      // Arrange
+      let users = {
+        select: jest.fn().mockReturnThis(),
+        sort: jest.fn().mockResolvedValueOnce(['user1', 'user2']),
+      };
+      userModel.find.mockReturnValue(users);
+
+      // Act
+      await getAllUsersController(req, res);
+
+      // Assert
+      expect(userModel.find).toHaveBeenCalledWith({});
+      expect(users.select).toHaveBeenCalledWith('name email phone address role');
+      expect(users.sort).toHaveBeenCalledWith({ createdAt: -1 });
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.send).toHaveBeenCalledWith({
+        success: true,
+        message: "All users fetched successfully",
+        users: ['user1', 'user2'],
+      });
+    });
+
+    it('should respond with 500 and message if error occurs', async () => { // Leong Soon Mun Stephane, A0273409B
+      // Arrange
+      let mockError = new Error('find user error');
+      let users = {
+        select: jest.fn().mockReturnThis(),
+        sort: jest.fn().mockRejectedValueOnce(mockError),
+      };
+      userModel.find.mockReturnValue(users);
+      consoleLogSpy.mockImplementation(() => { })
+
+      // Act
+      await getAllUsersController(req, res)
+
+      // Assert
+      expect(consoleLogSpy).toHaveBeenCalledWith(mockError);
+      expect(res.status).toHaveBeenCalledWith(500);
+      expect(res.send).toHaveBeenCalledWith({
+        success: false,
+        message: "Error While Getting Users",
+        error: mockError,
+      });
+    });
+
   });
 });
