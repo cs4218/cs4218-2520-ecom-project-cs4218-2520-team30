@@ -18,7 +18,7 @@ export const registerController = async (req, res) => {
       return res.send({ message: "Password is required" });
     }
     if (!phone) {
-      return res.send({ message: "Phone no is required" });
+      return res.send({ message: "Phone number is required" });
     }
     if (!address) {
       return res.send({ message: "Address is required" });
@@ -69,7 +69,7 @@ export const registerController = async (req, res) => {
     console.log(error);
     res.status(500).send({
       success: false,
-      message: "Error in registration",
+      message: "Error while registering user",
       error,
     });
   }
@@ -118,14 +118,14 @@ export const loginController = async (req, res) => {
     if (!user) {
       return res.status(404).send({
         success: false,
-        message: "Email is not registered",
+        message: "Invalid email or password",
       });
     }
     const match = await comparePassword(password, user.password);
     if (!match) {
       return res.status(200).send({
         success: false,
-        message: "Invalid password",
+        message: "Invalid email or password",
       });
     }
     //token
@@ -134,7 +134,7 @@ export const loginController = async (req, res) => {
     });
     res.status(200).send({
       success: true,
-      message: "Login successfully",
+      message: "Logged in successfully",
       user: {
         _id: user._id,
         name: user.name,
@@ -161,13 +161,13 @@ export const forgotPasswordController = async (req, res) => {
   try {
     const { email, answer, newPassword } = req.body;
     if (!email) {
-      res.status(400).send({ message: "Email is required" });
+      return res.status(400).send({ message: "Email is required" });
     }
     if (!answer) {
-      res.status(400).send({ message: "Answer is required" });
+      return res.status(400).send({ message: "Answer is required" });
     }
     if (!newPassword) {
-      res.status(400).send({ message: "New password is required" });
+      return res.status(400).send({ message: "New password is required" });
     }
     //check
     const user = await userModel.findOne({ email, answer });
@@ -204,7 +204,7 @@ export const testController = (req, res) => {
   }
 };
 
-//update prfole
+//update profile // Leong Soon Mun Stephane, A0273409B
 export const updateProfileController = async (req, res) => {
   try {
     const { name, email, password, address, phone } = req.body;
@@ -251,7 +251,7 @@ export const getOrdersController = async (req, res) => {
     console.log(error);
     res.status(500).send({
       success: false,
-      message: "Error WHile Geting Orders",
+      message: "Error While Getting Orders", // Leong Soon Mun Stephane, A0273409B
       error,
     });
   }
@@ -263,13 +263,13 @@ export const getAllOrdersController = async (req, res) => {
       .find({})
       .populate("products", "-photo")
       .populate("buyer", "name")
-      .sort({ createdAt: "-1" });
+      .sort({ createdAt: -1 }); // Leong Soon Mun Stephane, A0273409B
     res.json(orders);
   } catch (error) {
     console.log(error);
     res.status(500).send({
       success: false,
-      message: "Error WHile Geting Orders",
+      message: "Error While Getting Orders", // Leong Soon Mun Stephane, A0273409B
       error,
     });
   }
@@ -290,7 +290,30 @@ export const orderStatusController = async (req, res) => {
     console.log(error);
     res.status(500).send({
       success: false,
-      message: "Error While Updateing Order",
+      message: "Error While Updating Order", // Leong Soon Mun Stephane, A0273409B
+      error,
+    });
+  }
+};
+
+// get All Users
+export const getAllUsersController = async (req, res) => { // Leong Soon Mun Stephane, A0273409B
+  try {
+    const users = await userModel
+      .find({})
+      .select('name email phone address role') 
+      .sort({ createdAt: -1 });
+
+    res.status(200).send({
+      success: true,
+      message: "All users fetched successfully",
+      users,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).send({
+      success: false,
+      message: "Error While Getting Users",
       error,
     });
   }

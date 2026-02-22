@@ -12,6 +12,10 @@ export const requireSignIn = async (req, res, next) => {
         next();
     } catch (error) {
         console.log(error);
+        return res.status(401).send({
+            success: false,
+            message: "Invalid or expired token",
+        });
     }
 };
 
@@ -19,17 +23,18 @@ export const requireSignIn = async (req, res, next) => {
 export const isAdmin = async (req, res, next) => {
     try {
         const user = await userModel.findById(req.user._id);
-        if(user.role !== 1) {
-            return res.status(401).send({
+        // Check if user exists and has admin role
+        if(!user || user.role !== 1) {
+            return res.status(403).send({
                 success: false,
-                message: "UnAuthorized Access",
+                message: "Forbidden - Admin access required",
             });
         } else {
             next();
         }
     } catch (error) {
         console.log(error);
-        res.status(401).send({
+        res.status(500).send({
             success: false,
             error,
             message: "Error in admin middleware",

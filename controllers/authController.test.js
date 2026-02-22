@@ -1,4 +1,4 @@
-import { jest, describe, beforeEach, beforeAll, it, expect } from "@jest/globals";
+import { jest, describe, beforeEach, beforeAll, it, expect, afterEach } from "@jest/globals";
 
 jest.mock("../helpers/authHelper.js");
 
@@ -6,18 +6,27 @@ jest.mock("jsonwebtoken");
 
 // Import everything
 import userModel from "../models/userModel.js";
+import orderModel from "../models/orderModel.js";
 import { hashPassword, comparePassword } from "../helpers/authHelper.js";
 import JWT from "jsonwebtoken";
 import {
+  getAllUsersController,
   registerController,
   loginController,
   forgotPasswordController,
-  testController
+  testController,
+  orderStatusController,
+  getAllOrdersController,
+  getOrdersController,
+  updateProfileController,
 } from "./authController.js";
+
+jest.mock("../models/orderModel.js");
 
 jest.spyOn(userModel, 'findOne');
 jest.spyOn(userModel, 'findById');
 jest.spyOn(userModel, 'findByIdAndUpdate');
+jest.spyOn(userModel, 'find');
 
 
 jest.spyOn(userModel.prototype, 'save').mockImplementation(function () {
@@ -37,6 +46,7 @@ beforeEach(() => {
   userModel.findOne.mockResolvedValue(null);
   userModel.findById.mockResolvedValue(null);
   userModel.findByIdAndUpdate.mockResolvedValue(null);
+  userModel.find.mockReturnValue(null);
   userModel.prototype.save.mockImplementation(function () {
     return Promise.resolve({
       _id: "mockUserId123",
@@ -110,7 +120,320 @@ const expectLoginError = async (body, expectedStatus, expectedMessage) => {
   });
 };
 
+/**
+ * Helper to assert registration validation errors
+ */
+const expectRegisterError = async (body, expectedMessage) => {
+  const fakeReq = createFakeRequest({ body });
+  const fakeRes = createFakeResponse();
+  await registerController(fakeReq, fakeRes);
+  expect(fakeRes.send).toHaveBeenCalledWith({
+    message: expectedMessage,
+  });
+};
 
+
+
+/**
+ * Test registerController
+ * Testing Type: Communication-based + Input validation
+ **/
+describe("Auth Controller - Register", () => {
+
+  describe("Required Fields Validation", () => {
+    //Tay Kai Jun, A0283343E
+    test("should return error when missing name (API uses 'error' key)", async () => {
+      const fakeReq = createFakeRequest({ body: { email: "test@test.com" } });
+      const fakeRes = createFakeResponse();
+      await registerController(fakeReq, fakeRes);
+      expect(fakeRes.send).toHaveBeenCalledWith({ error: "Name is required" });
+    });
+
+    //Tay Kai Jun, A0283343E
+    test.each([
+      [{ name: "Test" }, "Email is required", "missing email"],
+      [{ name: "Test", email: "test@test.com" }, "Password is required", "missing password"],
+      [{ name: "Test", email: "test@test.com", password: "pass123" }, "Phone number is required", "missing phone"],
+      [{ name: "Test", email: "test@test.com", password: "pass123", phone: "1234567890" }, "Address is required", "missing address"],
+      [{ name: "Test", email: "test@test.com", password: "pass123", phone: "1234567890", address: "123 St" }, "Answer is required", "missing answer"],
+    ])("should return error when %s", async (body, expectedMessage) => {
+      await expectRegisterError(body, expectedMessage);
+    });
+  });
+
+  describe("Email Format Validation", () => {
+    //Tay Kai Jun, A0283343E
+    test.each([
+      ["invalidemail", "no @ or domain"],
+      ["invalidemail.com", "missing @ symbol"],
+      ["test@@example.com", "multiple @ symbols"],
+      ["test@", "missing domain"],
+      ["@example.com", "missing local part"],
+      ["test@.com", "domain starts with dot"],
+    ])("should return error when email is '%s' (%s)", async (email) => {
+      const body = {
+        name: "Test User",
+        email,
+        password: "password123",
+        phone: "1234567890",
+        address: "123 Test St",
+        answer: "test answer",
+      };
+      await expectRegisterError(body, "Email must be a valid format");
+    });
+  });
+
+  describe("Password Length Validation", () => {
+    //Tay Kai Jun, A0283343E
+    test("should return 'Password is required' when password is empty string", async () => {
+      const body = {
+        name: "Test User",
+        email: "test@test.com",
+        password: "",
+        phone: "1234567890",
+        address: "123 Test St",
+        answer: "test answer",
+      };
+      await expectRegisterError(body, "Password is required");
+    });
+
+    //Tay Kai Jun, A0283343E
+    test.each([
+      ["1", "1 character (far below minimum)"],
+      ["Pass1", "5 characters (just below minimum of 6)"],
+      ["12345", "5 numeric characters"],
+    ])("should return error when password is '%s' (%s)", async (password) => {
+      const body = {
+        name: "Test User",
+        email: "test@test.com",
+        password,
+        phone: "1234567890",
+        address: "123 Test St",
+        answer: "test answer",
+      };
+      await expectRegisterError(body, "Password must be at least 6 characters long");
+    });
+
+    //Tay Kai Jun, A0283343E
+    test("should accept password with exactly 6 characters", async () => {
+      // Arrange
+      const body = {
+        name: "Test User",
+        email: "new@test.com",
+        password: "Pass12", // exactly 6 characters
+        phone: "1234567890",
+        address: "123 Test St",
+        answer: "test answer",
+      };
+      userModel.findOne.mockResolvedValue(null);
+      const fakeReq = createFakeRequest({ body });
+      const fakeRes = createFakeResponse();
+
+      // Act
+      await registerController(fakeReq, fakeRes);
+
+      // Assert
+      expect(hashPassword).toHaveBeenCalledWith("Pass12");
+      expect(fakeRes.status).toHaveBeenCalledWith(201);
+      expect(fakeRes.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          success: true,
+          message: "User registered successfully",
+        })
+      );
+    });
+  });
+
+  describe("Phone Number Validation", () => {
+    //Tay Kai Jun, A0283343E
+    test.each([
+      ["abc123", "contains letters"],
+      ["123-456-7890", "contains hyphens"],
+      ["(123) 456-7890", "formatted with parentheses"],
+      ["123 456 7890", "contains spaces"],
+      ["+1234567890", "contains plus sign"],
+    ])("should return error when phone is '%s' (%s)", async (phone) => {
+      const body = {
+        name: "Test User",
+        email: "test@test.com",
+        password: "password123",
+        phone,
+        address: "123 Test St",
+        answer: "test answer",
+      };
+      await expectRegisterError(body, "Phone number must contain only numbers");
+    });
+
+    //Tay Kai Jun, A0283343E
+    test("should accept valid numeric phone number", async () => {
+      // Arrange
+      const body = {
+        name: "Test User",
+        email: "newuser@test.com",
+        password: "password123",
+        phone: "9876543210",
+        address: "123 Test St",
+        answer: "test answer",
+      };
+      userModel.findOne.mockResolvedValue(null);
+      const fakeReq = createFakeRequest({ body });
+      const fakeRes = createFakeResponse();
+
+      // Act
+      await registerController(fakeReq, fakeRes);
+
+      // Assert
+      expect(fakeRes.status).toHaveBeenCalledWith(201);
+      expect(fakeRes.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          success: true,
+          message: "User registered successfully",
+        })
+      );
+    });
+  });
+
+  describe("Duplicate User", () => {
+    //Tay Kai Jun, A0283343E
+    test("should return error when email already exists", async () => {
+      // Arrange
+      const existingUser = {
+        _id: "user123",
+        email: "existing@test.com",
+        name: "Existing User",
+      };
+      userModel.findOne.mockResolvedValue(existingUser);
+      const body = {
+        name: "New User",
+        email: "existing@test.com",
+        password: "password123",
+        phone: "1234567890",
+        address: "123 Test St",
+        answer: "test answer",
+      };
+      const fakeReq = createFakeRequest({ body });
+      const fakeRes = createFakeResponse();
+
+      // Act
+      await registerController(fakeReq, fakeRes);
+
+      // Assert
+      expect(userModel.findOne).toHaveBeenCalledWith({ email: "existing@test.com" });
+      expect(fakeRes.status).toHaveBeenCalledWith(200);
+      expect(fakeRes.send).toHaveBeenCalledWith({
+        success: false,
+        message: "Already registered please login",
+      });
+      expect(hashPassword).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("Successful Registration - Control Flow", () => {
+    //Tay Kai Jun, A0283343E
+    test("should register new user successfully", async () => {
+      // Arrange
+      userModel.findOne.mockResolvedValue(null);
+      hashPassword.mockResolvedValue("hashed_password_123");
+      const mockSavedUser = {
+        _id: "mockUserId123",
+        name: "New User",
+        email: "newuser@test.com",
+        phone: "9876543210",
+        address: "456 New St",
+        password: "hashed_password_123",
+        answer: "my answer",
+      };
+      userModel.prototype.save.mockResolvedValue(mockSavedUser);
+      const body = {
+        name: "New User",
+        email: "newuser@test.com",
+        password: "password123",
+        phone: "9876543210",
+        address: "456 New St",
+        answer: "my answer",
+      };
+      const fakeReq = createFakeRequest({ body });
+      const fakeRes = createFakeResponse();
+
+      // Act
+      await registerController(fakeReq, fakeRes);
+
+      // Assert
+      expect(userModel.findOne).toHaveBeenCalledWith({ email: "newuser@test.com" });
+      expect(hashPassword).toHaveBeenCalledWith("password123");
+      expect(userModel.prototype.save).toHaveBeenCalled();
+      expect(fakeRes.status).toHaveBeenCalledWith(201);
+      expect(fakeRes.send).toHaveBeenCalledWith({
+        success: true,
+        message: "User registered successfully",
+        user: mockSavedUser,
+      });
+    });
+
+    //Tay Kai Jun, A0283343E
+    test("should hash password before saving", async () => {
+      // Arrange
+      userModel.findOne.mockResolvedValue(null);
+      hashPassword.mockResolvedValue("super_secure_hash");
+      const fakeReq = createFakeRegisterRequest({ password: "mypassword" });
+      const fakeRes = createFakeResponse();
+
+      // Act
+      await registerController(fakeReq, fakeRes);
+
+      // Assert
+      expect(hashPassword).toHaveBeenCalledWith("mypassword");
+    });
+  });
+
+  describe("Database Error Handling", () => {
+    //Tay Kai Jun, A0283343E
+    test("should handle database error during registration", async () => {
+      // Arrange
+      userModel.findOne.mockRejectedValue(new Error("Database connection failed"));
+      const fakeReq = createFakeRegisterRequest();
+      const fakeRes = createFakeResponse();
+      const consoleSpy = jest.spyOn(console, "log").mockImplementation();
+
+      // Act
+      await registerController(fakeReq, fakeRes);
+
+      // Assert
+      expect(fakeRes.status).toHaveBeenCalledWith(500);
+      expect(fakeRes.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          success: false,
+          message: "Error while registering user",
+        })
+      );
+      expect(consoleSpy).toHaveBeenCalled();
+      consoleSpy.mockRestore();
+    });
+
+    //Tay Kai Jun, A0283343E
+    test("should handle error during password hashing", async () => {
+      // Arrange
+      userModel.findOne.mockResolvedValue(null);
+      hashPassword.mockRejectedValue(new Error("Hashing failed"));
+      const fakeReq = createFakeRegisterRequest();
+      const fakeRes = createFakeResponse();
+      const consoleSpy = jest.spyOn(console, "log").mockImplementation();
+
+      // Act
+      await registerController(fakeReq, fakeRes);
+
+      // Assert
+      expect(fakeRes.status).toHaveBeenCalledWith(500);
+      expect(fakeRes.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          success: false,
+          message: "Error while registering user",
+        })
+      );
+      consoleSpy.mockRestore();
+    });
+  });
+});
 
 /**
  * Test loginController 
@@ -190,7 +513,7 @@ describe("Auth Controller - Login", () => {
       expect(fakeRes.status).toHaveBeenCalledWith(404);
       expect(fakeRes.send).toHaveBeenCalledWith({
         success: false,
-        message: "Email is not registered",
+        message: "Invalid email or password",
       });
       expect(comparePassword).not.toHaveBeenCalled();
     });
@@ -211,12 +534,12 @@ describe("Auth Controller - Login", () => {
       expect(fakeRes.status).toHaveBeenCalledWith(404);
       expect(fakeRes.send).toHaveBeenCalledWith({
         success: false,
-        message: "Email is not registered",
+        message: "Invalid email or password",
       });
     });
   });
 
-  describe("Invalid Password", () => {
+  describe("Invalid Email or Password", () => {
     //Tay Kai Jun, A0283343E
     test("expected to return error when password does not match", async () => {
     
@@ -244,7 +567,7 @@ describe("Auth Controller - Login", () => {
       expect(fakeRes.status).toHaveBeenCalledWith(200);
       expect(fakeRes.send).toHaveBeenCalledWith({
         success: false,
-        message: "Invalid password",
+        message: "Invalid email or password",
       });
       expect(JWT.sign).not.toHaveBeenCalled();
     });
@@ -275,7 +598,7 @@ describe("Auth Controller - Login", () => {
       expect(fakeRes.status).toHaveBeenCalledWith(200);
       expect(fakeRes.send).toHaveBeenCalledWith({
         success: false,
-        message: "Invalid password",
+        message: "Invalid email or password",
       });
     });
 
@@ -305,7 +628,7 @@ describe("Auth Controller - Login", () => {
       expect(fakeRes.status).toHaveBeenCalledWith(200);
       expect(fakeRes.send).toHaveBeenCalledWith({
         success: false,
-        message: "Invalid password",
+        message: "Invalid email or password",
       });
       expect(JWT.sign).not.toHaveBeenCalled();
     });
@@ -346,7 +669,7 @@ describe("Auth Controller - Login", () => {
       expect(fakeRes.send).toHaveBeenCalledWith(
         expect.objectContaining({
           success: true,
-          message: "Login successfully",
+          message: "Logged in successfully",
           user: expect.objectContaining({
             _id: "userId123",
             name: "John Doe",
@@ -391,7 +714,7 @@ describe("Auth Controller - Login", () => {
       expect(fakeRes.send).toHaveBeenCalledWith(
         expect.objectContaining({
           success: true,
-          message: "Login successfully",
+          message: "Logged in successfully",
           user: expect.objectContaining({
             _id: "userId999",
             name: "Alice Smith",
@@ -436,7 +759,7 @@ describe("Auth Controller - Login", () => {
       expect(fakeRes.send).toHaveBeenCalledWith(
         expect.objectContaining({
           success: true,
-          message: "Login successfully",
+          message: "Logged in successfully",
           user: expect.objectContaining({
             _id: "adminId001",
             name: "Admin User",
@@ -539,5 +862,702 @@ describe("Auth Controller - Database Error Handling", () => {
 
       consoleSpy.mockRestore();
     });
+  });
+});
+
+/**
+ * Test forgotPasswordController
+ * Testing Type: Communication-based + Input validation
+
+ */
+describe("Auth Controller - Forgot Password", () => {
+
+  /**
+   * Create fake forgot password request with default values
+   */
+  const createFakeForgotPasswordRequest = (overrides = {}) =>
+    createFakeRequest({
+      body: {
+        email: "test@example.com",
+        answer: "football",
+        newPassword: "newpass123",
+        ...overrides,
+      },
+    });
+
+  /**
+   * Helper to assert forgot password validation errors
+   */
+  const expectForgotPasswordError = async (body, expectedStatus, expectedMessage) => {
+    const fakeReq = createFakeRequest({ body });
+    const fakeRes = createFakeResponse();
+    await forgotPasswordController(fakeReq, fakeRes);
+    expect(fakeRes.status).toHaveBeenCalledWith(expectedStatus);
+    expect(fakeRes.send).toHaveBeenCalledWith({
+      message: expectedMessage,
+    });
+  };
+
+  describe("Required Fields Validation - Equivalence Partitions", () => {
+    //Tay Kai Jun, A0283343E
+    test("should return error when email is missing", async () => {
+      await expectForgotPasswordError(
+        { answer: "football", newPassword: "newpass123" },
+        400,
+        "Email is required"
+      );
+    });
+
+    //Tay Kai Jun, A0283343E
+    test("should return error when answer is missing", async () => {
+      await expectForgotPasswordError(
+        { email: "test@example.com", newPassword: "newpass123" },
+        400,
+        "Answer is required"
+      );
+    });
+
+    //Tay Kai Jun, A0283343E
+    test("should return error when newPassword is missing", async () => {
+      await expectForgotPasswordError(
+        { email: "test@example.com", answer: "football" },
+        400,
+        "New password is required"
+      );
+    });
+
+    //Tay Kai Jun, A0283343E
+    test("should return error when all fields are missing", async () => {
+      await expectForgotPasswordError({}, 400, "Email is required");
+    });
+  });
+
+  describe("User Not Found - Boundary Values", () => {
+    //Tay Kai Jun, A0283343E
+    test("should return error when user with email and answer not found", async () => {
+      // Arrange
+      userModel.findOne.mockResolvedValue(null);
+      const fakeReq = createFakeForgotPasswordRequest();
+      const fakeRes = createFakeResponse();
+
+      // Act
+      await forgotPasswordController(fakeReq, fakeRes);
+
+      // Assert
+      expect(userModel.findOne).toHaveBeenCalledWith({
+        email: "test@example.com",
+        answer: "football",
+      });
+      expect(fakeRes.status).toHaveBeenCalledWith(404);
+      expect(fakeRes.send).toHaveBeenCalledWith({
+        success: false,
+        message: "Wrong email or answer",
+      });
+      expect(hashPassword).not.toHaveBeenCalled();
+    });
+
+    //Tay Kai Jun, A0283343E
+    test("should return error when answer is incorrect", async () => {
+      // Arrange
+      userModel.findOne.mockResolvedValue(null);
+      const fakeReq = createFakeForgotPasswordRequest({ answer: "wrong answer" });
+      const fakeRes = createFakeResponse();
+
+      // Act
+      await forgotPasswordController(fakeReq, fakeRes);
+
+      // Assert
+      expect(fakeRes.status).toHaveBeenCalledWith(404);
+      expect(fakeRes.send).toHaveBeenCalledWith({
+        success: false,
+        message: "Wrong email or answer",
+      });
+    });
+  });
+
+  describe("Successful Password Reset CF", () => {
+    //Tay Kai Jun, A0283343E
+    test("should reset password successfully", async () => {
+      // Arrange
+      const mockUser = {
+        _id: "user123",
+        email: "test@example.com",
+        answer: "football",
+        name: "Test User",
+      };
+      userModel.findOne.mockResolvedValue(mockUser);
+      hashPassword.mockResolvedValue("hashed_new_password");
+      userModel.findByIdAndUpdate.mockResolvedValue({
+        ...mockUser,
+        password: "hashed_new_password",
+      });
+      const fakeReq = createFakeForgotPasswordRequest();
+      const fakeRes = createFakeResponse();
+
+      // Act
+      await forgotPasswordController(fakeReq, fakeRes);
+
+      // Assert
+      expect(userModel.findOne).toHaveBeenCalledWith({
+        email: "test@example.com",
+        answer: "football",
+      });
+      expect(hashPassword).toHaveBeenCalledWith("newpass123");
+      expect(userModel.findByIdAndUpdate).toHaveBeenCalledWith("user123", {
+        password: "hashed_new_password",
+      });
+      expect(fakeRes.status).toHaveBeenCalledWith(200);
+      expect(fakeRes.send).toHaveBeenCalledWith({
+        success: true,
+        message: "Password reset successfully",
+      });
+    });
+
+    //Tay Kai Jun, A0283343E
+    test("should hash new password before updating", async () => {
+      // Arrange
+      const mockUser = { _id: "user456", email: "test@example.com", answer: "football" };
+      userModel.findOne.mockResolvedValue(mockUser);
+      hashPassword.mockResolvedValue("super_secure_hash");
+      const fakeReq = createFakeForgotPasswordRequest({ newPassword: "mynewpassword" });
+      const fakeRes = createFakeResponse();
+
+      // Act
+      await forgotPasswordController(fakeReq, fakeRes);
+
+      // Assert
+      expect(hashPassword).toHaveBeenCalledWith("mynewpassword");
+      expect(userModel.findByIdAndUpdate).toHaveBeenCalledWith("user456", {
+        password: "super_secure_hash",
+      });
+    });
+  });
+
+  describe("Database Error Handling", () => {
+    //Tay Kai Jun, A0283343E
+    test("should handle database error during user lookup", async () => {
+      // Arrange
+      userModel.findOne.mockRejectedValue(new Error("Database connection failed"));
+      const fakeReq = createFakeForgotPasswordRequest();
+      const fakeRes = createFakeResponse();
+      const consoleSpy = jest.spyOn(console, "log").mockImplementation();
+
+      // Act
+      await forgotPasswordController(fakeReq, fakeRes);
+
+      // Assert
+      expect(fakeRes.status).toHaveBeenCalledWith(500);
+      expect(fakeRes.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          success: false,
+          message: "Something went wrong",
+        })
+      );
+      expect(consoleSpy).toHaveBeenCalled();
+      consoleSpy.mockRestore();
+    });
+
+    //Tay Kai Jun, A0283343E
+    test("should handle error during password hashing", async () => {
+      // Arrange
+      const mockUser = { _id: "user789", email: "test@example.com", answer: "football" };
+      userModel.findOne.mockResolvedValue(mockUser);
+      hashPassword.mockRejectedValue(new Error("Hashing failed"));
+      const fakeReq = createFakeForgotPasswordRequest();
+      const fakeRes = createFakeResponse();
+      const consoleSpy = jest.spyOn(console, "log").mockImplementation();
+
+      // Act
+      await forgotPasswordController(fakeReq, fakeRes);
+
+      // Assert
+      expect(fakeRes.status).toHaveBeenCalledWith(500);
+      expect(fakeRes.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          success: false,
+          message: "Something went wrong",
+        })
+      );
+      consoleSpy.mockRestore();
+    });
+
+    //Tay Kai Jun, A0283343E
+    test("should handle error during password update", async () => {
+      // Arrange
+      const mockUser = { _id: "user101", email: "test@example.com", answer: "football" };
+      userModel.findOne.mockResolvedValue(mockUser);
+      hashPassword.mockResolvedValue("hashed_password");
+      userModel.findByIdAndUpdate.mockRejectedValue(new Error("Update failed"));
+      const fakeReq = createFakeForgotPasswordRequest();
+      const fakeRes = createFakeResponse();
+      const consoleSpy = jest.spyOn(console, "log").mockImplementation();
+
+      // Act
+      await forgotPasswordController(fakeReq, fakeRes);
+
+      // Assert
+      expect(fakeRes.status).toHaveBeenCalledWith(500);
+      expect(fakeRes.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          success: false,
+          message: "Something went wrong",
+        })
+      );
+      consoleSpy.mockRestore();
+    });
+  });
+});
+
+/**
+ * Test testController
+ * Testing Type: Simple protected route verification
+ */
+describe("Auth Controller - Test Protected Route", () => {
+
+  describe("Successful Response", () => {
+    //Tay Kai Jun, A0283343E
+    test("should return 'Protected Routes' message", () => {
+      // Arrange
+      const fakeReq = createFakeRequest();
+      const fakeRes = createFakeResponse();
+
+      // Act
+      testController(fakeReq, fakeRes);
+
+      // Assert
+      expect(fakeRes.send).toHaveBeenCalledWith("Protected Routes");
+    });
+  });
+
+  describe("Error Handling", () => {
+    //Tay Kai Jun, A0283343E
+    test("should handle error when send throws", () => {
+      // Arrange
+      const fakeReq = createFakeRequest();
+      const fakeRes = {
+        send: jest.fn()
+          .mockImplementationOnce(() => {
+            throw new Error("Send failed");
+          })
+          .mockImplementationOnce(() => {}),
+      };
+      const consoleSpy = jest.spyOn(console, "log").mockImplementation();
+
+      // Act
+      testController(fakeReq, fakeRes);
+
+      // Assert
+      expect(consoleSpy).toHaveBeenCalled();
+      expect(fakeRes.send).toHaveBeenCalledTimes(2);
+      expect(fakeRes.send).toHaveBeenCalledWith(
+        expect.objectContaining({ error: expect.any(Error) })
+      );
+      consoleSpy.mockRestore();
+    });
+  });
+});
+
+describe('Auth Controller - Order', () => { // Leong Soon Mun Stephane, A0273409B
+  let consoleLogSpy;
+  let req, res;
+
+  describe('updateProfileController', () => { // Leong Soon Mun Stephane, A0273409B
+    let existingUser;
+
+    beforeEach(() => {
+      req = {
+        user: {},
+        body: {},
+      }
+      res = {
+        status: jest.fn().mockReturnThis(),
+        send: jest.fn(),
+        json: jest.fn(),
+      }
+      existingUser = {
+        name: "old tester",
+        email: "oldtest@gmail.com",
+        password: "oldpassword",
+        address: "old address",
+        phone: "12345678",
+      }
+      consoleLogSpy = jest.spyOn(console, 'log');
+      jest.clearAllMocks();
+    });
+
+    afterEach(() => {
+      consoleLogSpy.mockRestore();
+    });
+
+    it('should respond with 200 if update with password is successful', async () => { // Leong Soon Mun Stephane, A0273409B
+      // Arrange
+      req.user._id = 1
+      req.body = {
+        name: "new tester",
+        email: "newtest@gmail.com",
+        password: "newpassword",
+        address: "new address",
+        phone: "87654321",
+      }
+      let updatedUser = { flag: "new user" }
+      userModel.findById.mockResolvedValueOnce(existingUser);
+      hashPassword.mockResolvedValueOnce("hashnewpassword");
+      userModel.findByIdAndUpdate.mockResolvedValueOnce(updatedUser);
+
+
+      // Act
+      await updateProfileController(req, res);
+
+      // Assert
+      expect(userModel.findById).toHaveBeenCalledWith(1);
+      expect(hashPassword).toHaveBeenCalledWith("newpassword");
+      expect(userModel.findByIdAndUpdate).toHaveBeenCalledWith(
+        1,
+        {
+          name: "new tester",
+          password: "hashnewpassword",
+          address: "new address",
+          phone: "87654321",
+        }, {
+        new: true
+      });
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.send).toHaveBeenCalledWith({
+        success: true,
+        message: "Profile updated successfully",
+        updatedUser: updatedUser,
+      });
+    });
+
+    it('should respond with 200 if there are no updates', async () => { // Leong Soon Mun Stephane, A0273409B
+      // Arrange
+      req.user._id = 1
+      let updatedUser = { flag: "old user" }
+      userModel.findById.mockResolvedValueOnce(existingUser);
+      userModel.findByIdAndUpdate.mockResolvedValueOnce(updatedUser);
+
+
+      // Act
+      await updateProfileController(req, res);
+
+      // Assert
+      expect(userModel.findById).toHaveBeenCalledWith(1);
+      expect(hashPassword).not.toHaveBeenCalled();
+      expect(userModel.findByIdAndUpdate).toHaveBeenCalledWith(
+        1,
+        {
+          name: "old tester",
+          password: "oldpassword",
+          address: "old address",
+          phone: "12345678",
+        }, {
+        new: true
+      });
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.send).toHaveBeenCalledWith({
+        success: true,
+        message: "Profile updated successfully",
+        updatedUser: updatedUser,
+      });
+    });
+
+    it('should return response json with error if password is shorter than 6 characters', async () => { // Leong Soon Mun Stephane, A0273409B
+      // Arrange
+      req.user._id = 1
+      req.body = {
+        name: "new tester",
+        email: "newtest@gmail.com",
+        password: "short",
+        address: "new address",
+        phone: "87654321",
+      }
+      userModel.findById.mockResolvedValueOnce(existingUser);
+
+      // Act
+      await updateProfileController(req, res);
+
+      // Assert
+      expect(userModel.findById).toHaveBeenCalledWith(1);
+      expect(hashPassword).not.toHaveBeenCalled();
+      expect(userModel.findByIdAndUpdate).not.toHaveBeenCalled();
+      expect(res.json).toHaveBeenCalledWith({
+        error: "Password is required and 6 character long",
+      });
+    });
+
+    it('should respond with 400 and message if error occurs', async () => { // Leong Soon Mun Stephane, A0273409B
+      // Arrange
+      req.user._id = 1
+      req.body = {
+        name: "new tester",
+        email: "newtest@gmail.com",
+        password: "short",
+        address: "new address",
+        phone: "87654321",
+      }
+      let mockError = new Error('findById updateProfileController error');
+      userModel.findById.mockRejectedValueOnce(mockError);
+      consoleLogSpy.mockImplementation(() => { });
+
+      // Act
+      await updateProfileController(req, res);
+
+      // Assert
+      expect(consoleLogSpy).toHaveBeenCalledWith(mockError);
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.send).toHaveBeenCalledWith({
+        success: false,
+        message: "Error while updating profile",
+        error: mockError,
+      });
+    });
+
+  });
+
+  describe('getOrdersController', () => { // Leong Soon Mun Stephane, A0273409B
+    beforeEach(() => {
+      req = {
+        user: {}
+      };
+      res = {
+        status: jest.fn().mockReturnThis(),
+        send: jest.fn(),
+        json: jest.fn(),
+      };
+      consoleLogSpy = jest.spyOn(console, 'log');
+      jest.clearAllMocks();
+    });
+
+    afterEach(() => {
+      consoleLogSpy.mockRestore();
+    });
+
+    it('should respond with orders in json if successful', async () => { // Leong Soon Mun Stephane, A0273409B
+      // Arrange
+      req.user._id = 1;
+      let orderObject = {
+        populate: jest.fn().mockReturnThis(),
+      };
+      orderModel.find.mockReturnValue(orderObject);
+
+      // Act
+      await getOrdersController(req, res);
+
+      // Assert
+      expect(orderModel.find).toHaveBeenCalledWith({ buyer: 1 });
+      expect(orderObject.populate).toHaveBeenCalledWith('products', '-photo');
+      expect(orderObject.populate).toHaveBeenCalledWith('buyer', 'name');
+      expect(res.json).toHaveBeenCalled();
+    });
+
+    it('should respond with 500 and message if error occurs', async () => { // Leong Soon Mun Stephane, A0273409B
+      // Arrange
+      req.user._id = 1;
+      let mockError = new Error('find orders error');
+      let rejectedValue = jest.fn().mockRejectedValueOnce(mockError)
+      let orderObject = {
+        populate: jest.fn().mockReturnValueOnce({ populate: rejectedValue }),
+      };
+      orderModel.find.mockReturnValueOnce(orderObject);
+      consoleLogSpy.mockImplementation(() => { })
+
+      // Act
+      await getOrdersController(req, res);
+
+      // Assert
+      expect(consoleLogSpy).toHaveBeenCalledWith(mockError);
+      expect(res.status).toHaveBeenCalledWith(500);
+      expect(res.send).toHaveBeenCalledWith({
+        success: false,
+        message: "Error While Getting Orders",
+        error: mockError,
+      });
+    });
+
+  });
+
+  describe('getAllOrdersController', () => { // Leong Soon Mun Stephane, A0273409B
+    beforeEach(() => {
+      req = {};
+      res = {
+        status: jest.fn().mockReturnThis(),
+        send: jest.fn(),
+        json: jest.fn(),
+      };
+      consoleLogSpy = jest.spyOn(console, 'log');
+      jest.clearAllMocks();
+    });
+
+    afterEach(() => {
+      consoleLogSpy.mockRestore();
+    });
+
+    it('should respond with orders in json if successful', async () => { // Leong Soon Mun Stephane, A0273409B
+      // Arrange
+      let orderObject = {
+        populate: jest.fn().mockReturnThis(),
+        sort: jest.fn().mockResolvedValueOnce([]),
+      };
+      orderModel.find.mockReturnValue(orderObject);
+
+      // Act
+      await getAllOrdersController(req, res);
+
+      // Assert
+      expect(orderModel.find).toHaveBeenCalledWith({});
+      expect(orderObject.populate).toHaveBeenCalledWith('products', '-photo');
+      expect(orderObject.populate).toHaveBeenCalledWith('buyer', 'name');
+      expect(orderObject.sort).toHaveBeenCalledWith({ createdAt: -1 });
+      expect(res.json).toHaveBeenCalled();
+    });
+
+    it('should respond with 500 and message if error occurs', async () => { // Leong Soon Mun Stephane, A0273409B
+      // Arrange
+      let mockError = new Error('find orders error');
+      let orderObject = {
+        populate: jest.fn().mockReturnThis(),
+        sort: jest.fn().mockRejectedValueOnce(mockError),
+      };
+      orderModel.find.mockReturnValue(orderObject);
+      consoleLogSpy.mockImplementation(() => { })
+
+      // Act
+      await getAllOrdersController(req, res)
+
+      // Assert
+      expect(consoleLogSpy).toHaveBeenCalledWith(mockError);
+      expect(res.status).toHaveBeenCalledWith(500);
+      expect(res.send).toHaveBeenCalledWith({
+        success: false,
+        message: "Error While Getting Orders",
+        error: mockError,
+      });
+    });
+  });
+
+  describe('orderStatusController', () => { // Leong Soon Mun Stephane, A0273409B
+
+    beforeEach(() => {
+      req = {
+        body: {},
+        params: {},
+      };
+      res = {
+        status: jest.fn().mockReturnThis(),
+        send: jest.fn(),
+        json: jest.fn(),
+      };
+      consoleLogSpy = jest.spyOn(console, 'log');
+      jest.clearAllMocks();
+    });
+
+    afterEach(() => {
+      consoleLogSpy.mockRestore();
+    });
+
+    it('should respond with orders in json if successful', async () => { // Leong Soon Mun Stephane, A0273409B
+      // Arrange
+      req.params.orderId = 1;
+      req.body.status = 200;
+      orderModel.findByIdAndUpdate.mockResolvedValueOnce(null);
+
+      // Act
+      await orderStatusController(req, res)
+
+      // Assert
+      expect(orderModel.findByIdAndUpdate).toHaveBeenCalledWith(1, { status: 200 }, { new: true },);
+      expect(res.json).toHaveBeenCalled();
+    });
+
+    it('should respond with 500 and message if error occurs', async () => { // Leong Soon Mun Stephane, A0273409B
+      // Arrange
+      req.params.orderId = 1;
+      req.body.status = 200;
+      let mockError = new Error('findByIdAndUpdate error')
+      orderModel.findByIdAndUpdate.mockRejectedValueOnce(mockError);
+      consoleLogSpy.mockImplementation(() => { })
+
+      // Act
+      await orderStatusController(req, res)
+
+      // Assert
+      expect(consoleLogSpy).toHaveBeenCalledWith(mockError);
+      expect(res.status).toHaveBeenCalledWith(500);
+      expect(res.send).toHaveBeenCalledWith({
+        success: false,
+        message: "Error While Updating Order",
+        error: mockError,
+      });
+    })
+  });
+});
+
+describe('Admin View Users', () => { // Leong Soon Mun Stephane, A0273409B
+  let consoleLogSpy;
+  let req, res;
+
+  describe("getAllUsersController", () => {  // Leong Soon Mun Stephane, A0273409B
+
+    beforeEach(() => {
+      req = {};
+      res = {
+        status: jest.fn().mockReturnThis(),
+        send: jest.fn(),
+        json: jest.fn(),
+      };
+      consoleLogSpy = jest.spyOn(console, 'log');
+      jest.clearAllMocks();
+    });
+
+    afterEach(() => {
+      consoleLogSpy.mockRestore();
+    });
+
+    it('should respond with users if successful', async () => { // Leong Soon Mun Stephane, A0273409B
+      // Arrange
+      let users = {
+        select: jest.fn().mockReturnThis(),
+        sort: jest.fn().mockResolvedValueOnce(['user1', 'user2']),
+      };
+      userModel.find.mockReturnValue(users);
+
+      // Act
+      await getAllUsersController(req, res);
+
+      // Assert
+      expect(userModel.find).toHaveBeenCalledWith({});
+      expect(users.select).toHaveBeenCalledWith('name email phone address role');
+      expect(users.sort).toHaveBeenCalledWith({ createdAt: -1 });
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.send).toHaveBeenCalledWith({
+        success: true,
+        message: "All users fetched successfully",
+        users: ['user1', 'user2'],
+      });
+    });
+
+    it('should respond with 500 and message if error occurs', async () => { // Leong Soon Mun Stephane, A0273409B
+      // Arrange
+      let mockError = new Error('find user error');
+      let users = {
+        select: jest.fn().mockReturnThis(),
+        sort: jest.fn().mockRejectedValueOnce(mockError),
+      };
+      userModel.find.mockReturnValue(users);
+      consoleLogSpy.mockImplementation(() => { })
+
+      // Act
+      await getAllUsersController(req, res)
+
+      // Assert
+      expect(consoleLogSpy).toHaveBeenCalledWith(mockError);
+      expect(res.status).toHaveBeenCalledWith(500);
+      expect(res.send).toHaveBeenCalledWith({
+        success: false,
+        message: "Error While Getting Users",
+        error: mockError,
+      });
+    });
+
   });
 });
