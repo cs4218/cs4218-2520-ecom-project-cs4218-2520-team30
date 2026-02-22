@@ -24,7 +24,8 @@ export default {
     "controllers/productController.js",
     "middlewares/authMiddleware.js",
     "helpers/authHelper.js",
-    "models/categoryModel.js"
+    "models/categoryModel.js",
+    "models/productModel.js"
   ],
   coverageThreshold: {
     global: {

@@ -16,7 +16,7 @@ export default {
     "\\.(css|scss)$": "identity-obj-proxy",
   },
 
-  // ignore all node_modules except styleMock (needed for css imports)
+  // ignore all node_modules except styleMock and axios (needed for css imports)
   transformIgnorePatterns: ["/node_modules/(?!(styleMock\\.js)$)"],
 
   // only run these tests
@@ -31,6 +31,7 @@ export default {
     "<rootDir>/client/src/pages/About.test.js",
     "<rootDir>/client/src/pages/Pagenotfound.test.js",
     "<rootDir>/client/src/components/Form/SearchInput.test.js",
+    "<rootDir>/client/src/components/Form/CategoryForm.test.js",
     "<rootDir>/client/src/context/search.test.js",
     "<rootDir>/client/src/pages/admin/*.test.js",
     "<rootDir>/client/src/components/*.test.js",
@@ -40,6 +41,9 @@ export default {
     "<rootDir>/client/src/pages/About.test.js",
     "<rootDir>/client/src/pages/Pagenotfound.test.js",
     "<rootDir>/client/src/components/Form/SearchInput.test.js",
+    "<rootDir>/client/src/context/search.test.js",
+    "<rootDir>/client/src/pages/admin/*.test.js",
+    "<rootDir>/client/src/components/*.test.js",
     "<rootDir>/client/src/components/*.test.js",
     "<rootDir>/client/src/context/search.test.js",
     "<rootDir>/client/src/components/AdminMenu.test.js",
@@ -83,6 +87,7 @@ export default {
     "client/src/pages/Auth/ForgotPassword.js",
     "client/src/pages/user/Profile.js",
     "client/src/pages/user/Orders.js",
+    "!client/src/**/*.test.js"
   ],
   coverageThreshold: {
     global: {
