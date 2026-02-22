@@ -1,0 +1,122 @@
+import React from "react";
+import { render, screen } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
+import "@testing-library/jest-dom";
+import AdminMenu from "./AdminMenu";
+
+// Alek Kwek, A0273471A
+describe("AdminMenu Component", () => {
+    // Alek Kwek, A0273471A
+
+    test("renders the Admin Panel header correctly", () => {
+        // Arrange
+        const headingName = /admin panel/i;
+
+        // Act
+        render(
+            <MemoryRouter>
+                <AdminMenu />
+            </MemoryRouter>
+        );
+
+        // Assert
+        const headingElement = screen.getByRole("heading", { name: headingName });
+        expect(headingElement).toBeInTheDocument();
+    });
+
+    // Alek Kwek, A0273471A
+    test("contains a navigation link to Create Category", () => {
+        // Arrange
+        const expectedPath = "/dashboard/admin/create-category";
+        const linkName = /create category/i;
+
+        // Act
+        render(
+            <MemoryRouter>
+                <AdminMenu />
+            </MemoryRouter>
+        );
+
+        // Assert
+        const link = screen.getByRole("link", { name: linkName });
+        expect(link).toBeInTheDocument();
+        expect(link).toHaveAttribute("href", expectedPath);
+    });
+
+    // Alek Kwek, A0273471A
+    test("contains a navigation link to Create Product", () => {
+        // Arrange
+        const expectedPath = "/dashboard/admin/create-product";
+        const linkName = /create product/i;
+
+        // Act
+        render(
+            <MemoryRouter>
+                <AdminMenu />
+            </MemoryRouter>
+        );
+
+        // Assert
+        const link = screen.getByRole("link", { name: linkName });
+        expect(link).toBeInTheDocument();
+        expect(link).toHaveAttribute("href", expectedPath);
+    });
+
+    // Alek Kwek, A0273471A
+    test("contains a navigation link to Products", () => {
+        // Arrange
+        const expectedPath = "/dashboard/admin/products";
+        // Using explicit anchors (^) to ensure it doesn't match 'Create Product'
+        const linkName = /^products$/i;
+
+        // Act
+        render(
+            <MemoryRouter>
+                <AdminMenu />
+            </MemoryRouter>
+        );
+
+        // Assert
+        const link = screen.getByRole("link", { name: linkName });
+        expect(link).toBeInTheDocument();
+        expect(link).toHaveAttribute("href", expectedPath);
+    });
+
+    // Alek Kwek, A0273471A
+    test("contains a navigation link to Orders", () => {
+        // Arrange
+        const expectedPath = "/dashboard/admin/orders";
+        const linkName = /orders/i;
+
+        // Act
+        render(
+            <MemoryRouter>
+                <AdminMenu />
+            </MemoryRouter>
+        );
+
+        // Assert
+        const link = screen.getByRole("link", { name: linkName });
+        expect(link).toBeInTheDocument();
+        expect(link).toHaveAttribute("href", expectedPath);
+    });
+
+    // Alek Kwek, A0273471A
+    test("contains a navigation link to Users", () => {
+        // Arrange
+        const expectedPath = "/dashboard/admin/users";
+        const linkName = /users/i;
+
+        // Act
+        render(
+            <MemoryRouter>
+                <AdminMenu />
+            </MemoryRouter>
+        );
+
+        // Assert
+        const link = screen.getByRole("link", { name: linkName });
+        expect(link).toBeInTheDocument();
+        expect(link).toHaveAttribute("href", expectedPath);
+    });
+});
