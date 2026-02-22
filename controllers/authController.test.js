@@ -1,4 +1,4 @@
-import { jest, describe, beforeEach, beforeAll, it, expect } from "@jest/globals";
+import { jest, describe, beforeEach, beforeAll, it, expect, afterEach } from "@jest/globals";
 
 jest.mock("../helpers/authHelper.js");
 
@@ -6,6 +6,7 @@ jest.mock("jsonwebtoken");
 
 // Import everything
 import userModel from "../models/userModel.js";
+import orderModel from "../models/orderModel.js";
 import { hashPassword, comparePassword } from "../helpers/authHelper.js";
 import JWT from "jsonwebtoken";
 import {
@@ -13,8 +14,14 @@ import {
   registerController,
   loginController,
   forgotPasswordController,
-  testController
+  testController,
+  orderStatusController,
+  getAllOrdersController,
+  getOrdersController,
+  updateProfileController,
 } from "./authController.js";
+
+jest.mock("../models/orderModel.js");
 
 jest.spyOn(userModel, 'findOne');
 jest.spyOn(userModel, 'findById');
@@ -1147,6 +1154,341 @@ describe("Auth Controller - Test Protected Route", () => {
       );
       consoleSpy.mockRestore();
     });
+  });
+});
+
+describe('Auth Controller - Order', () => { // Leong Soon Mun Stephane, A0273409B
+  let consoleLogSpy;
+  let req, res;
+
+  describe('updateProfileController', () => { // Leong Soon Mun Stephane, A0273409B
+    let existingUser;
+
+    beforeEach(() => {
+      req = {
+        user: {},
+        body: {},
+      }
+      res = {
+        status: jest.fn().mockReturnThis(),
+        send: jest.fn(),
+        json: jest.fn(),
+      }
+      existingUser = {
+        name: "old tester",
+        email: "oldtest@gmail.com",
+        password: "oldpassword",
+        address: "old address",
+        phone: "12345678",
+      }
+      consoleLogSpy = jest.spyOn(console, 'log');
+      jest.clearAllMocks();
+    });
+
+    afterEach(() => {
+      consoleLogSpy.mockRestore();
+    });
+
+    it('should respond with 200 if update with password is successful', async () => { // Leong Soon Mun Stephane, A0273409B
+      // Arrange
+      req.user._id = 1
+      req.body = {
+        name: "new tester",
+        email: "newtest@gmail.com",
+        password: "newpassword",
+        address: "new address",
+        phone: "87654321",
+      }
+      let updatedUser = { flag: "new user" }
+      userModel.findById.mockResolvedValueOnce(existingUser);
+      hashPassword.mockResolvedValueOnce("hashnewpassword");
+      userModel.findByIdAndUpdate.mockResolvedValueOnce(updatedUser);
+
+
+      // Act
+      await updateProfileController(req, res);
+
+      // Assert
+      expect(userModel.findById).toHaveBeenCalledWith(1);
+      expect(hashPassword).toHaveBeenCalledWith("newpassword");
+      expect(userModel.findByIdAndUpdate).toHaveBeenCalledWith(
+        1,
+        {
+          name: "new tester",
+          password: "hashnewpassword",
+          address: "new address",
+          phone: "87654321",
+        }, {
+        new: true
+      });
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.send).toHaveBeenCalledWith({
+        success: true,
+        message: "Profile updated successfully",
+        updatedUser: updatedUser,
+      });
+    });
+
+    it('should respond with 200 if there are no updates', async () => { // Leong Soon Mun Stephane, A0273409B
+      // Arrange
+      req.user._id = 1
+      let updatedUser = { flag: "old user" }
+      userModel.findById.mockResolvedValueOnce(existingUser);
+      userModel.findByIdAndUpdate.mockResolvedValueOnce(updatedUser);
+
+
+      // Act
+      await updateProfileController(req, res);
+
+      // Assert
+      expect(userModel.findById).toHaveBeenCalledWith(1);
+      expect(hashPassword).not.toHaveBeenCalled();
+      expect(userModel.findByIdAndUpdate).toHaveBeenCalledWith(
+        1,
+        {
+          name: "old tester",
+          password: "oldpassword",
+          address: "old address",
+          phone: "12345678",
+        }, {
+        new: true
+      });
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.send).toHaveBeenCalledWith({
+        success: true,
+        message: "Profile updated successfully",
+        updatedUser: updatedUser,
+      });
+    });
+
+    it('should return response json with error if password is shorter than 6 characters', async () => { // Leong Soon Mun Stephane, A0273409B
+      // Arrange
+      req.user._id = 1
+      req.body = {
+        name: "new tester",
+        email: "newtest@gmail.com",
+        password: "short",
+        address: "new address",
+        phone: "87654321",
+      }
+      userModel.findById.mockResolvedValueOnce(existingUser);
+
+      // Act
+      await updateProfileController(req, res);
+
+      // Assert
+      expect(userModel.findById).toHaveBeenCalledWith(1);
+      expect(hashPassword).not.toHaveBeenCalled();
+      expect(userModel.findByIdAndUpdate).not.toHaveBeenCalled();
+      expect(res.json).toHaveBeenCalledWith({
+        error: "Password is required and 6 character long",
+      });
+    });
+
+    it('should respond with 400 and message if error occurs', async () => { // Leong Soon Mun Stephane, A0273409B
+      // Arrange
+      req.user._id = 1
+      req.body = {
+        name: "new tester",
+        email: "newtest@gmail.com",
+        password: "short",
+        address: "new address",
+        phone: "87654321",
+      }
+      let mockError = new Error('findById updateProfileController error');
+      userModel.findById.mockRejectedValueOnce(mockError);
+      consoleLogSpy.mockImplementation(() => { });
+
+      // Act
+      await updateProfileController(req, res);
+
+      // Assert
+      expect(consoleLogSpy).toHaveBeenCalledWith(mockError);
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.send).toHaveBeenCalledWith({
+        success: false,
+        message: "Error while updating profile",
+        error: mockError,
+      });
+    });
+
+  });
+
+  describe('getOrdersController', () => { // Leong Soon Mun Stephane, A0273409B
+    beforeEach(() => {
+      req = {
+        user: {}
+      };
+      res = {
+        status: jest.fn().mockReturnThis(),
+        send: jest.fn(),
+        json: jest.fn(),
+      };
+      consoleLogSpy = jest.spyOn(console, 'log');
+      jest.clearAllMocks();
+    });
+
+    afterEach(() => {
+      consoleLogSpy.mockRestore();
+    });
+
+    it('should respond with orders in json if successful', async () => { // Leong Soon Mun Stephane, A0273409B
+      // Arrange
+      req.user._id = 1;
+      let orderObject = {
+        populate: jest.fn().mockReturnThis(),
+      };
+      orderModel.find.mockReturnValue(orderObject);
+
+      // Act
+      await getOrdersController(req, res);
+
+      // Assert
+      expect(orderModel.find).toHaveBeenCalledWith({ buyer: 1 });
+      expect(orderObject.populate).toHaveBeenCalledWith('products', '-photo');
+      expect(orderObject.populate).toHaveBeenCalledWith('buyer', 'name');
+      expect(res.json).toHaveBeenCalled();
+    });
+
+    it('should respond with 500 and message if error occurs', async () => { // Leong Soon Mun Stephane, A0273409B
+      // Arrange
+      req.user._id = 1;
+      let mockError = new Error('find orders error');
+      let rejectedValue = jest.fn().mockRejectedValueOnce(mockError)
+      let orderObject = {
+        populate: jest.fn().mockReturnValueOnce({ populate: rejectedValue }),
+      };
+      orderModel.find.mockReturnValueOnce(orderObject);
+      consoleLogSpy.mockImplementation(() => { })
+
+      // Act
+      await getOrdersController(req, res);
+
+      // Assert
+      expect(consoleLogSpy).toHaveBeenCalledWith(mockError);
+      expect(res.status).toHaveBeenCalledWith(500);
+      expect(res.send).toHaveBeenCalledWith({
+        success: false,
+        message: "Error While Getting Orders",
+        error: mockError,
+      });
+    });
+
+  });
+
+  describe('getAllOrdersController', () => { // Leong Soon Mun Stephane, A0273409B
+    beforeEach(() => {
+      req = {};
+      res = {
+        status: jest.fn().mockReturnThis(),
+        send: jest.fn(),
+        json: jest.fn(),
+      };
+      consoleLogSpy = jest.spyOn(console, 'log');
+      jest.clearAllMocks();
+    });
+
+    afterEach(() => {
+      consoleLogSpy.mockRestore();
+    });
+
+    it('should respond with orders in json if successful', async () => { // Leong Soon Mun Stephane, A0273409B
+      // Arrange
+      let orderObject = {
+        populate: jest.fn().mockReturnThis(),
+        sort: jest.fn().mockResolvedValueOnce([]),
+      };
+      orderModel.find.mockReturnValue(orderObject);
+
+      // Act
+      await getAllOrdersController(req, res);
+
+      // Assert
+      expect(orderModel.find).toHaveBeenCalledWith({});
+      expect(orderObject.populate).toHaveBeenCalledWith('products', '-photo');
+      expect(orderObject.populate).toHaveBeenCalledWith('buyer', 'name');
+      expect(orderObject.sort).toHaveBeenCalledWith({ createdAt: -1 });
+      expect(res.json).toHaveBeenCalled();
+    });
+
+    it('should respond with 500 and message if error occurs', async () => { // Leong Soon Mun Stephane, A0273409B
+      // Arrange
+      let mockError = new Error('find orders error');
+      let orderObject = {
+        populate: jest.fn().mockReturnThis(),
+        sort: jest.fn().mockRejectedValueOnce(mockError),
+      };
+      orderModel.find.mockReturnValue(orderObject);
+      consoleLogSpy.mockImplementation(() => { })
+
+      // Act
+      await getAllOrdersController(req, res)
+
+      // Assert
+      expect(consoleLogSpy).toHaveBeenCalledWith(mockError);
+      expect(res.status).toHaveBeenCalledWith(500);
+      expect(res.send).toHaveBeenCalledWith({
+        success: false,
+        message: "Error While Getting Orders",
+        error: mockError,
+      });
+    });
+  });
+
+  describe('orderStatusController', () => { // Leong Soon Mun Stephane, A0273409B
+
+    beforeEach(() => {
+      req = {
+        body: {},
+        params: {},
+      };
+      res = {
+        status: jest.fn().mockReturnThis(),
+        send: jest.fn(),
+        json: jest.fn(),
+      };
+      consoleLogSpy = jest.spyOn(console, 'log');
+      jest.clearAllMocks();
+    });
+
+    afterEach(() => {
+      consoleLogSpy.mockRestore();
+    });
+
+    it('should respond with orders in json if successful', async () => { // Leong Soon Mun Stephane, A0273409B
+      // Arrange
+      req.params.orderId = 1;
+      req.body.status = 200;
+      orderModel.findByIdAndUpdate.mockResolvedValueOnce(null);
+
+      // Act
+      await orderStatusController(req, res)
+
+      // Assert
+      expect(orderModel.findByIdAndUpdate).toHaveBeenCalledWith(1, { status: 200 }, { new: true },);
+      expect(res.json).toHaveBeenCalled();
+    });
+
+    it('should respond with 500 and message if error occurs', async () => { // Leong Soon Mun Stephane, A0273409B
+      // Arrange
+      req.params.orderId = 1;
+      req.body.status = 200;
+      let mockError = new Error('findByIdAndUpdate error')
+      orderModel.findByIdAndUpdate.mockRejectedValueOnce(mockError);
+      consoleLogSpy.mockImplementation(() => { })
+
+      // Act
+      await orderStatusController(req, res)
+
+      // Assert
+      expect(consoleLogSpy).toHaveBeenCalledWith(mockError);
+      expect(res.status).toHaveBeenCalledWith(500);
+      expect(res.send).toHaveBeenCalledWith({
+        success: false,
+        message: "Error While Updating Order",
+        error: mockError,
+      });
+    })
   });
 });
 

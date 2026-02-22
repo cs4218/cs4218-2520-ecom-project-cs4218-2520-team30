@@ -17,13 +17,15 @@ export default {
   // jest code coverage
   collectCoverage: true,
   collectCoverageFrom: [
+    "models/orderModel.js",
     "config/**",
     "controllers/categoryController.js",
     "controllers/authController.js",
     "controllers/productController.js",
     "middlewares/authMiddleware.js",
     "helpers/authHelper.js",
-    "models/categoryModel.js"
+    "models/categoryModel.js",
+    "models/productModel.js"
   ],
   coverageThreshold: {
     global: {
