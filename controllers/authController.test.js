@@ -1404,7 +1404,7 @@ describe('Auth Controller - Order', () => { // Leong Soon Mun Stephane, A0273409
       expect(orderModel.find).toHaveBeenCalledWith({});
       expect(orderObject.populate).toHaveBeenCalledWith('products', '-photo');
       expect(orderObject.populate).toHaveBeenCalledWith('buyer', 'name');
-      expect(orderObject.sort).toHaveBeenCalledWith({ createdAt: '-1' });
+      expect(orderObject.sort).toHaveBeenCalledWith({ createdAt: -1 });
       expect(res.json).toHaveBeenCalled();
     });
 
