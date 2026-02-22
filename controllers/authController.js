@@ -295,3 +295,26 @@ export const orderStatusController = async (req, res) => {
     });
   }
 };
+
+// get All Users
+export const getAllUsersController = async (req, res) => { // Leong Soon Mun Stephane, A0273409B
+  try {
+    const users = await userModel
+      .find({})
+      .select('name email phone address role') 
+      .sort({ createdAt: -1 });
+
+    res.status(200).send({
+      success: true,
+      message: "All users fetched successfully",
+      users,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).send({
+      success: false,
+      message: "Error While Getting Users",
+      error,
+    });
+  }
+};
