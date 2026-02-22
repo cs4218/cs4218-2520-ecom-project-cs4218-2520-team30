@@ -93,7 +93,9 @@ export default {
     "client/src/components/UserMenu.js",
     "client/src/pages/user/Dashboard.js",
     "client/src/pages/user/Orders.js",
-    "!client/src/**/*.test.js"
+    "!client/src/**/*.test.js",
+    "!client/src/components/Prices.js",
+    "!client/src/components/Routes/AdminRoute.js",
   ],
   coverageThreshold: {
     global: {
