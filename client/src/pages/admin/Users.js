@@ -1,12 +1,13 @@
+// Leong Soon Mun Stephane, A0273409B
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import Layout from '../../components/Layout';
 import AdminMenu from '../../components/AdminMenu';
 
 const Users = () => {
-  const [users, setUsers] = useState([]);
+  const [users, setUsers] = useState([]); // Leong Soon Mun Stephane, A0273409B
 
-  const getAllUsers = async () => {
+  const getAllUsers = async () => { // Leong Soon Mun Stephane, A0273409B
     try {
       const { data } = await axios.get("/api/v1/auth/all-users");
       if (data?.success) {
@@ -17,7 +18,7 @@ const Users = () => {
     }
   };
 
-  useEffect(() => {
+  useEffect(() => { // Leong Soon Mun Stephane, A0273409B
     getAllUsers();
   }, []);
   return (
@@ -29,6 +30,7 @@ const Users = () => {
           </div>
           <div className="col-md-9">
             <h1>All Users</h1>
+            {/* Leong Soon Mun Stephane, A0273409B */}
             <div className="table-responsive border shadow">
               <table className="table">
                 <thead>
@@ -53,6 +55,7 @@ const Users = () => {
                 </tbody>
               </table>
             </div>
+            {/* Leong Soon Mun Stephane, A0273409B */}
           </div>
         </div>
       </div>
