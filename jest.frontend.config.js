@@ -16,7 +16,7 @@ export default {
     "\\.(css|scss)$": "identity-obj-proxy",
   },
 
-  // ignore all node_modules except styleMock (needed for css imports)
+  // ignore all node_modules except styleMock and axios (needed for css imports)
   transformIgnorePatterns: ["/node_modules/(?!(styleMock\\.js)$)"],
 
   // only run these tests
@@ -25,13 +25,29 @@ export default {
     "<rootDir>/client/src/pages/Search.test.js",
     "<rootDir>/client/src/pages/HomePage.test.js",
     "<rootDir>/client/src/pages/Categories.test.js",
-    "<rootDir>/client/src/pages/Policy.test.js",
     "<rootDir>/client/src/hooks/useCategory.test.js",
+    "<rootDir>/client/src/pages/admin/Products.test.js",
+    "<rootDir>/client/src/pages/admin/AdminOrders.test.js",
     "<rootDir>/client/src/pages/About.test.js",
     "<rootDir>/client/src/pages/Pagenotfound.test.js",
     "<rootDir>/client/src/components/Form/SearchInput.test.js",
+    "<rootDir>/client/src/components/Form/CategoryForm.test.js",
+    "<rootDir>/client/src/context/search.test.js",
+    "<rootDir>/client/src/pages/admin/*.test.js",
+    "<rootDir>/client/src/components/*.test.js",
     "<rootDir>/client/src/components/*.test.js",
     "<rootDir>/client/src/context/search.test.js",
+    "<rootDir>/client/src/pages/Policy.test.js",
+    "<rootDir>/client/src/pages/About.test.js",
+    "<rootDir>/client/src/pages/Pagenotfound.test.js",
+    "<rootDir>/client/src/components/Form/SearchInput.test.js",
+    "<rootDir>/client/src/context/search.test.js",
+    "<rootDir>/client/src/pages/admin/*.test.js",
+    "<rootDir>/client/src/components/*.test.js",
+    "<rootDir>/client/src/components/*.test.js",
+    "<rootDir>/client/src/context/search.test.js",
+    "<rootDir>/client/src/components/AdminMenu.test.js",
+    "<rootDir>/client/src/pages/admin/Users.test.js",
     "<rootDir>/client/src/context/cart.test.js",
     "<rootDir>/client/src/pages/CartPage.test.js",
     "<rootDir>/client/src/pages/Contact.test.js",
@@ -40,6 +56,8 @@ export default {
   ],
 
   // jest code coverage
+  // Alek Kwek, A0273471A
+
   collectCoverage: true,
   collectCoverageFrom: [
     "client/src/pages/Auth/**",
@@ -50,6 +68,10 @@ export default {
     "client/src/pages/Categories.js",
     "client/src/components/Form/SearchInput.js",
     "client/src/context/search.js",
+    "client/src/pages/admin/**",
+    "client/src/pages/admin/Products.js",
+    "client/src/pages/admin/AdminOrders.js",
+    "client/src/components/**",
     "client/src/context/cart.js",
     "client/src/context/auth.js",
     "client/src/hooks/useCategory.js",
@@ -60,8 +82,10 @@ export default {
     "client/src/components/Footer.js",
     "client/src/components/Layout.js",
     "client/src/components/Spinner.js",
+    "client/src/components/AdminMenu.js",
     "client/src/pages/Auth/ForgotPassword.js",
-    "client/src/pages/user/Profile.js"
+    "client/src/pages/user/Profile.js",
+    "!client/src/**/*.test.js"
   ],
   coverageThreshold: {
     global: {
