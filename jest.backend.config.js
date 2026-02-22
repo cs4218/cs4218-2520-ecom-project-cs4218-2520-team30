@@ -11,7 +11,7 @@ export default {
     "**/config/*.test.js",
     "**/middlewares/*.test.js",
     "**/helpers/*.test.js",
-    "**/models/*.test.js"
+    "**/models/*.test.js",
   ],
 
   // jest code coverage
@@ -25,7 +25,8 @@ export default {
     "middlewares/authMiddleware.js",
     "helpers/authHelper.js",
     "models/categoryModel.js",
-    "models/productModel.js"
+    "models/productModel.js",
+    "models/userModel.js",
   ],
   coverageThreshold: {
     global: {

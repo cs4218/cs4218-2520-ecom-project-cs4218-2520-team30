@@ -53,6 +53,9 @@ export default {
     "<rootDir>/client/src/pages/Contact.test.js",
     "<rootDir>/client/src/context/auth.test.js",
     "<rootDir>/client/src/pages/user/Profile.test.js",
+    "<rootDir>/client/src/components/Routes/Private.test.js",
+    "<rootDir>/client/src/components/UserMenu.test.js",
+    "<rootDir>/client/src/pages/user/Dashboard.test.js",
     "<rootDir>/client/src/pages/user/Orders.test.js",
   ],
 
@@ -86,8 +89,13 @@ export default {
     "client/src/components/AdminMenu.js",
     "client/src/pages/Auth/ForgotPassword.js",
     "client/src/pages/user/Profile.js",
+    "client/src/components/Routes/Private.js",
+    "client/src/components/UserMenu.js",
+    "client/src/pages/user/Dashboard.js",
     "client/src/pages/user/Orders.js",
-    "!client/src/**/*.test.js"
+    "!client/src/**/*.test.js",
+    "!client/src/components/Prices.js",
+    "!client/src/components/Routes/AdminRoute.js",
   ],
   coverageThreshold: {
     global: {
