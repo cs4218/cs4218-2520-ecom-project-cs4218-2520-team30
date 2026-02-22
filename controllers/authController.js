@@ -263,7 +263,7 @@ export const getAllOrdersController = async (req, res) => {
       .find({})
       .populate("products", "-photo")
       .populate("buyer", "name")
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 }); // Leong Soon Mun Stephane, A0273409B
     res.json(orders);
   } catch (error) {
     console.log(error);
