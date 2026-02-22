@@ -1261,13 +1261,13 @@ describe('Auth Controller - Order', () => { // Leong Soon Mun Stephane, A0273409
       });
     });
 
-    it('should return response json with error if password is shorter than 6 characters', async () => { // Leong Soon Mun Stephane, A0273409B
+    it('should return response json with error if password is 5 characters', async () => { // Leong Soon Mun Stephane, A0273409B
       // Arrange
       req.user._id = 1
       req.body = {
         name: "new tester",
         email: "newtest@gmail.com",
-        password: "short",
+        password: "12345",
         address: "new address",
         phone: "87654321",
       }
@@ -1282,6 +1282,62 @@ describe('Auth Controller - Order', () => { // Leong Soon Mun Stephane, A0273409
       expect(userModel.findByIdAndUpdate).not.toHaveBeenCalled();
       expect(res.json).toHaveBeenCalledWith({
         error: "Password is required and 6 character long",
+      });
+    });
+
+    it('should return response with 200 if password is 6 characters', async () => { // Leong Soon Mun Stephane, A0273409B
+      // Arrange
+      req.user._id = 1
+      req.body = {
+        name: "new tester",
+        email: "newtest@gmail.com",
+        password: "123456",
+        address: "new address",
+        phone: "87654321",
+      }
+      let updatedUser = { flag: "new user" }
+      userModel.findById.mockResolvedValueOnce(existingUser);
+      hashPassword.mockResolvedValueOnce("hashnewpassword");
+      userModel.findByIdAndUpdate.mockResolvedValueOnce(updatedUser);
+
+
+      // Act
+      await updateProfileController(req, res);
+
+      // Assert
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.send).toHaveBeenCalledWith({
+        success: true,
+        message: "Profile updated successfully",
+        updatedUser: updatedUser,
+      });
+    });
+
+    it('should return response with 200 if password is 7 characters', async () => { // Leong Soon Mun Stephane, A0273409B
+      // Arrange
+      req.user._id = 1
+      req.body = {
+        name: "new tester",
+        email: "newtest@gmail.com",
+        password: "1234567",
+        address: "new address",
+        phone: "87654321",
+      }
+      let updatedUser = { flag: "new user" }
+      userModel.findById.mockResolvedValueOnce(existingUser);
+      hashPassword.mockResolvedValueOnce("hashnewpassword");
+      userModel.findByIdAndUpdate.mockResolvedValueOnce(updatedUser);
+
+
+      // Act
+      await updateProfileController(req, res);
+
+      // Assert
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.send).toHaveBeenCalledWith({
+        success: true,
+        message: "Profile updated successfully",
+        updatedUser: updatedUser,
       });
     });
 
