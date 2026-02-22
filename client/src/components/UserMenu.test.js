@@ -38,7 +38,7 @@ describe('UserMenu Component', () => { // Leong Soon Mun Stephane, A0273409B
         // Assert
         let profileLink = screen.getByRole('link', { name: /profile/i });
         expect(profileLink).toHaveAttribute('href', '/dashboard/user/profile');
-        let ordersLink = screen.getByRole('link', { name: /profile/i });
-        expect(ordersLink).toHaveAttribute('href', '/dashboard/user/profile');       
+        let ordersLink = screen.getByRole('link', { name: /orders/i });
+        expect(ordersLink).toHaveAttribute('href', '/dashboard/user/orders');       
     })
 })
