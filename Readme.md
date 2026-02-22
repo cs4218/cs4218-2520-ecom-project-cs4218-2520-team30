@@ -6,7 +6,8 @@
 |----------|-------------|--------------------------------------|------------------------------|
 | **Protected Routes** | Tay Kai Jun | - `context/auth.js` | - `helpers/authHelper.js`<br>- `middlewares/authMiddleware.js` |
 | **Registration** | Tay Kai Jun | - `pages/Auth/Register.js` | - `controllers/authController.js`<br>  1. registerController |
-| **Login** | Tay Kai Jun | - `pages/Auth/Login.js` | - `controllers/authController.js`<br>  1. loginController<br>  2. forgotPasswordController<br>  3. testController |
+| **Login** | Tay Kai Jun | - `pages/Auth/Login.js` | - `controllers/authController.js`<br>  1. loginController<br>  2. testController |
+| **Forgot Password** | Tay Kai Jun | - `pages/Auth/ForgotPassword.js` | - `controllers/authController.js`<br>  1. forgotPasswordController |
 | **Search** | Tay Kai Jun | - `components/Form/SearchInput.js`<br>- `context/search.js`<br>- `pages/Search.js` | | **Admin Dashboard** | Alek Kwek | - `components/AdminMenu.js`<br>- `pages/admin/AdminDashboard.js` | |
 | **Admin Actions** | Alek Kwek |- `components/Form/CategoryForm.js`<br>- `pages/admin/CreateCategory.js`<br>- `pages/admin/CreateProduct.js`<br>- `pages/admin/UpdateProduct.js` | - `controllers/categoryController.js`<br>  1. createCategoryController<br>  2. updateCategoryController<br>  3. deleteCategoryController |
 | **Admin View Orders** | Alek Kwek | - `pages/admin/AdminOrders.js` | |
@@ -14,7 +15,7 @@
 | **General** | Leong Soon Mun Stephane | - `components/Routes/Private.js`<br>- `components/UserMenu.js`<br>- `pages/user/Dashboard.js` | - `models/userModel.js` |
 | **Order** | Leong Soon Mun Stephane | - `pages/user/Orders.js` | - `controllers/authController.js`<br>  1. updateProfileController<br>  2. getOrdersController<br>  3. getAllOrdersController<br>  4. orderStatusController<br>- `models/orderModel.js` |
 | **Profile** | Leong Soon Mun Stephane | - `pages/user/Profile.js` | |
-| **Admin View Users** | Leong Soon Mun Stephane | - `pages/admin/Users.js` | |
+| **Admin View Users** | Leong Soon Mun Stephane | - `pages/admin/Users.js` | - `controllers/authController.js`<br>  1. getAllUsersController |
 | **Product** | Basil Boh | - `pages/ProductDetails.js`<br>- `pages/CategoryProduct.js` | - `controllers/productController.js`<br>  1. getProductController<br>  2. getSingleProductController<br>  3. productPhotoController<br>  4. productFiltersController<br>  5. productCountController<br>  6. productListController<br>  7. searchProductController<br>  8. realtedProductController<br>  9. productCategoryController<br>- `models/productModel.js` |
 | **Contact** | Basil Boh | - `pages/Contact.js` | |
 | **Policy** | Basil Boh | - `pages/Policy.js` | |
