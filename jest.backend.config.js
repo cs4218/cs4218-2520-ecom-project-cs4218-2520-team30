@@ -17,6 +17,7 @@ export default {
   // jest code coverage
   collectCoverage: true,
   collectCoverageFrom: [
+    "models/orderModel.js",
     "config/**",
     "controllers/categoryController.js",
     "controllers/authController.js",
