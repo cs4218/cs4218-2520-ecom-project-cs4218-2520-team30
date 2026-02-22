@@ -1341,7 +1341,7 @@ describe('Auth Controller - Order', () => { // Leong Soon Mun Stephane, A0273409
       });
     });
 
-    it('should respond with 400 and message if error occurs', async () => { // Leong Soon Mun Stephane, A0273409B
+    it('should respond with 500 and message if error occurs', async () => { // Leong Soon Mun Stephane, A0273409B
       // Arrange
       req.user._id = 1
       req.body = {
@@ -1360,7 +1360,7 @@ describe('Auth Controller - Order', () => { // Leong Soon Mun Stephane, A0273409
 
       // Assert
       expect(consoleLogSpy).toHaveBeenCalledWith(mockError);
-      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.status).toHaveBeenCalledWith(500);
       expect(res.send).toHaveBeenCalledWith({
         success: false,
         message: "Error while updating profile",
