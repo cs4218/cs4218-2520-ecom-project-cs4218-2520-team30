@@ -1,30 +1,58 @@
 // Leong Soon Mun Stephane, A0273409B
-import { jest, describe, beforeEach, it, expect } from "@jest/globals";
+import { jest, describe, it, expect } from "@jest/globals";
 import orderModel from './orderModel';
+import mongoose from "mongoose";
 
 describe("orderModel", () => { // Leong Soon Mun Stephane, A0273409B
 
-    it("should have suitable field type", () => { // Leong Soon Mun Stephane, A0273409B
+    it("should validate successfully if fields are valid", () => { // Leong Soon Mun Stephane, A0273409B
         // Arrange
-        let productsField = orderModel.schema.path('products');
-        let paymentField = orderModel.schema.path('payment');
-        let buyerField = orderModel.schema.path('buyer');
-        let statusField = orderModel.schema.path('status');
+        let orderMock = {
+            products: new mongoose.Types.ObjectId(),
+            payment: 'card',
+            buyer: new mongoose.Types.ObjectId(),
+        }
+
+        // Act
+        let order = new orderModel(orderMock);
+        let error = order.validateSync();
 
         // Assert
-        expect(productsField.instance).toBe("Array");
-        expect(paymentField.instance).toBe("Mixed");
-        expect(buyerField.instance).toBe("ObjectId");
-        expect(statusField.instance).toBe("String");
+        expect(error).toBeUndefined();
     });
 
+    it("should invalidate if status is not part of enum", () => { // Leong Soon Mun Stephane, A0273409B
+        // Arrange
+        let orderMock = {
+            products: new mongoose.Types.ObjectId(),
+            payment: 'card',
+            buyer: new mongoose.Types.ObjectId(),
+            status: "not an enum"
+        }
+
+        // Act
+        let order = new orderModel(orderMock);
+        let error = order.validateSync();
+
+        // Assert
+        expect(error).toBeDefined();
+        expect(error.errors["status"]).toBeDefined();
+    });
 
     it("should have Not Process as default for status", () => { // Leong Soon Mun Stephane, A0273409B
         // Arrange
-        let statusField = orderModel.schema.path('status');
+        let orderMock = {
+            products: new mongoose.Types.ObjectId(),
+            payment: 'card',
+            buyer: new mongoose.Types.ObjectId(),
+
+        }
+
+        // Act
+        let order = new orderModel(orderMock);
 
         // Assert
-        expect(statusField.options.default).toBe("Not Process");
+        expect(order.status).toBe("Not Process");
     });
 
     it("should have users as ref for buyer", () => { // Leong Soon Mun Stephane, A0273409B

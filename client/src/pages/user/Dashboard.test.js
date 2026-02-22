@@ -69,7 +69,7 @@ describe('Dashboard Page', () => { // Leong Soon Mun Stephane, A0273409B
             </MemoryRouter>
         )
 
-            // Assert
+        // Assert
         let headings = screen.getAllByRole('heading', { level: 3 });
         headings.forEach((h3) => {
             expect(h3).toHaveTextContent('');
@@ -100,8 +100,6 @@ describe('Dashboard Page', () => { // Leong Soon Mun Stephane, A0273409B
         // Arrange
         useAuth.mockReturnValue([{}, jest.fn()]);
         
-
-
         // Act
         render(
             <MemoryRouter initialEntries={['/dashboard']}>

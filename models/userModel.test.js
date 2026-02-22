@@ -14,7 +14,6 @@ describe("userModel", () => { // Leong Soon Mun Stephane, A0273409B
             address: null,
             answer: null,
         }
-        jest.resetAllMocks();
     });
 
     it("should validate successfully if fields are valid", () => { // Leong Soon Mun Stephane, A0273409B
@@ -26,9 +25,8 @@ describe("userModel", () => { // Leong Soon Mun Stephane, A0273409B
         userMock.address = "johndoe address";
         userMock.answer = "johndoe answer";
 
-        let user = new userModel(userMock);
-
         // Act
+        let user = new userModel(userMock);
         let error = user.validateSync();
 
         // Assert
@@ -37,9 +35,9 @@ describe("userModel", () => { // Leong Soon Mun Stephane, A0273409B
 
     it("should throw validation error if required fields are missing", () => { // Leong Soon Mun Stephane, A0273409B
         // Arrange
-        let user = new userModel(userMock);
 
         // Act
+        let user = new userModel(userMock);
         let error = user.validateSync();
 
         // Assert
@@ -59,60 +57,36 @@ describe("userModel", () => { // Leong Soon Mun Stephane, A0273409B
         expect(emailField.options.unique).toBe(true);
     });
 
-    it("should have suitable field type", () => { // Leong Soon Mun Stephane, A0273409B
+    it("should trim name", () => { // Leong Soon Mun Stephane, A0273409B
         // Arrange
-        let nameField = userModel.schema.path('name');
-        let emailField = userModel.schema.path('email');
-        let passwordField = userModel.schema.path('password');
-        let phoneField = userModel.schema.path('phone');
-        let addressField = userModel.schema.path('address');
-        let answerField = userModel.schema.path('answer');
-        let roleField = userModel.schema.path('role');
+        userMock.name = "       johndoe      ";
+        userMock.email = "johndoe@gmail.com";
+        userMock.password = "password123";
+        userMock.phone = "87654321";
+        userMock.address = "johndoe address";
+        userMock.answer = "johndoe answer";
+
+        // Act
+        let user = new userModel(userMock);
+        let error = user.validateSync();
 
         // Assert
-        expect(nameField.instance).toBe("String");
-        expect(emailField.instance).toBe("String");
-        expect(passwordField.instance).toBe("String");
-        expect(phoneField.instance).toBe("String");
-        expect(addressField.instance).toBe("Mixed");
-        expect(answerField.instance).toBe("String");
-        expect(roleField.instance).toBe("Number");
-    });
-
-    it("should have trim option for name", () => { // Leong Soon Mun Stephane, A0273409B
-        // Arrange
-        let nameField = userModel.schema.path('name');
-
-        // Assert
-        expect(nameField.options.trim).toBe(true);
-    });
-
-    it("should be required for fields except role", () => { // Leong Soon Mun Stephane, A0273409B
-        // Arrange
-        let nameField = userModel.schema.path('name');
-        let emailField = userModel.schema.path('email');
-        let passwordField = userModel.schema.path('password');
-        let phoneField = userModel.schema.path('phone');
-        let addressField = userModel.schema.path('address');
-        let answerField = userModel.schema.path('answer');
-        let roleField = userModel.schema.path('role');
-
-
-        // Assert
-        expect(nameField.isRequired).toBe(true);
-        expect(emailField.isRequired).toBe(true);
-        expect(passwordField.isRequired).toBe(true);
-        expect(phoneField.isRequired).toBe(true);
-        expect(addressField.isRequired).toBe(true);
-        expect(answerField.isRequired).toBe(true);
-        expect(roleField.isRequired).not.toBe(true);
+        expect(user.name).toBe("johndoe")
     });
 
     it("should have 0 as default for role", () => { // Leong Soon Mun Stephane, A0273409B
         // Arrange
-        let roleField = userModel.schema.path('role');
+        userMock.name = "johndoe";
+        userMock.email = "johndoe@gmail.com";
+        userMock.password = "password123";
+        userMock.phone = "87654321";
+        userMock.address = "johndoe address";
+        userMock.answer = "johndoe answer";
+
+        // Act
+        let user = new userModel(userMock);
 
         // Assert
-        expect(roleField.options.default).toBe(0);
+        expect(user.role).toBe(0)
     });
 });

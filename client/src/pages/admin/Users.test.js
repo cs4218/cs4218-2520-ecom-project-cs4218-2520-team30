@@ -24,7 +24,7 @@ jest.mock("../../components/AdminMenu", () => ({
     default: () => <div data-testid="admin-menu">AdminMenu</div>,
 }));
 
-describe('User Component', () => { // Leong Soon Mun Stephane, A0273409B
+describe('Users Page', () => { // Leong Soon Mun Stephane, A0273409B
     let res;
     beforeEach(() => {
         res = {
@@ -218,4 +218,91 @@ describe('User Component', () => { // Leong Soon Mun Stephane, A0273409B
         await waitFor(() => expect(logSpy).toHaveBeenCalledWith(mockError));
         logSpy.mockRestore()
     });
+    
+    it('should not display user information if res has no users', async () => { // Leong Soon Mun Stephane, A0273409B
+        // Arrange
+        res.data.success = false;
+        res.data.users = []
+        axios.get.mockResolvedValueOnce(res);
+
+        // Act
+        render(
+            <MemoryRouter initialEntries={['/dashboard/admin/users']}>
+                <Routes>
+                    <Route path="/dashboard/admin/users" element={<Users />} />
+                </Routes>
+            </MemoryRouter>
+        );
+
+        // Assert
+        await waitFor(() => expect(axios.get).toBeCalledWith("/api/v1/auth/all-users"));
+        await waitFor(() => expect(screen.queryAllByRole('row').length).toBe(1)); // 1 for header
+    });
+
+    it('should display multiple users if 2 are given', async () => { // Leong Soon Mun Stephane, A0273409B
+        // Arrange
+        res.data.success = true;
+        res.data.users = [
+            {
+                _id: 1,
+                name: 'user1',
+                email: 'user1@email.com',
+                phone: '12345678',
+                address: 'user1 address',
+                role: 1,
+            },
+            {
+                _id: 2,
+                name: 'user2',
+                email: 'user2@email.com',
+                phone: '87654321',
+                address: 'user2 address',
+                role: 2,
+            },
+        ]
+        axios.get.mockResolvedValueOnce(res);
+
+        // Act
+        render(
+            <MemoryRouter initialEntries={['/dashboard/admin/users']}>
+                <Routes>
+                    <Route path="/dashboard/admin/users" element={<Users />} />
+                </Routes>
+            </MemoryRouter>
+        );
+
+        // Assert
+        await waitFor(() => expect(axios.get).toBeCalledWith("/api/v1/auth/all-users"));
+        await waitFor(() => {
+            expect(screen.getByText('user1')).toBeInTheDocument();
+        });
+        await waitFor(() => {
+            expect(screen.getByText('user1@email.com')).toBeInTheDocument();
+        });
+        await waitFor(() => {
+            expect(screen.getByText('12345678')).toBeInTheDocument();
+        });
+        await waitFor(() => {
+            expect(screen.getByText('user1 address')).toBeInTheDocument();
+        });
+        await waitFor(() => {
+            expect(screen.getByText('Admin')).toBeInTheDocument();
+        });
+        await waitFor(() => {
+            expect(screen.getByText('user2')).toBeInTheDocument();
+        });
+        await waitFor(() => {
+            expect(screen.getByText('user2@email.com')).toBeInTheDocument();
+        });
+        await waitFor(() => {
+            expect(screen.getByText('87654321')).toBeInTheDocument();
+        });
+        await waitFor(() => {
+            expect(screen.getByText('user2 address')).toBeInTheDocument();
+        });
+        await waitFor(() => {
+            expect(screen.getByText('User')).toBeInTheDocument();
+        });
+    });
+    
 });
