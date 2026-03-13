@@ -1,17 +1,6 @@
 /**
  * Integration Tests: forgotPasswordController × userModel × authHelper
  * Sandwich integration testing for the Forgot Password feature.
- *
- * Sandwich approach:
- *   - Phase 1 (Bottom): userModel + MongoDB tested independently
- *   - Phase 2 (Bottom): authHelper (hashPassword + comparePassword) tested independently
- *   - Phase 3 (Top):    Express route layer tested independently
- *   - Phase 4 (Middle): forgotPasswordController integrates top ↔ bottom with real DB,
- *                        real authHelper, and real HTTP requests
- *
- * Verifies the user flow of submitting forgot-password credentials (email, answer,
- * newPassword), looking up the user by email + answer, hashing the new password,
- * persisting the update, and returning the correct success or error response.
  */
 
 import { jest, describe, beforeAll, afterAll, afterEach, it, expect } from "@jest/globals";
@@ -79,7 +68,6 @@ const seedUser = async (overrides = {}) => {
 
 /**
  * Helper: send a real HTTP request to an Express server.
- * Uses Node's built-in http module — no supertest dependency needed.
  */
 const makeRequest = (baseUrl, method, path, body) => {
   return new Promise((resolve, reject) => {
@@ -115,16 +103,11 @@ const makeRequest = (baseUrl, method, path, body) => {
 };
 
 /**
- * ============================================================
  * Phase 1 (Bottom Layer): userModel + MongoDB Integration
- *
- * Tests the lowest layer in isolation — Mongoose model operations
- * against a real in-memory MongoDB. Verifies user lookup by
- * email + answer, and password update via findByIdAndUpdate.
- * ============================================================
  */
 describe("Phase 1 [Bottom]: userModel + MongoDB Integration (Forgot Password Context)", () => {
   describe("User Lookup by Email and Answer", () => {
+    // Tay Kai Jun A0283343E
     test("should find an existing user by email and answer", async () => {
       await seedUser();
       const found = await userModel.findOne({
@@ -138,6 +121,7 @@ describe("Phase 1 [Bottom]: userModel + MongoDB Integration (Forgot Password Con
       expect(found.answer).toBe(validUserData.answer);
     });
 
+    // Tay Kai Jun A0283343E
     test("should return null when email matches but answer does not", async () => {
       await seedUser();
       const found = await userModel.findOne({
@@ -148,6 +132,7 @@ describe("Phase 1 [Bottom]: userModel + MongoDB Integration (Forgot Password Con
       expect(found).toBeNull();
     });
 
+    // Tay Kai Jun A0283343E
     test("should return null when answer matches but email does not", async () => {
       await seedUser();
       const found = await userModel.findOne({
@@ -158,6 +143,7 @@ describe("Phase 1 [Bottom]: userModel + MongoDB Integration (Forgot Password Con
       expect(found).toBeNull();
     });
 
+    // Tay Kai Jun A0283343E
     test("should return null when neither email nor answer match", async () => {
       await seedUser();
       const found = await userModel.findOne({
@@ -168,6 +154,7 @@ describe("Phase 1 [Bottom]: userModel + MongoDB Integration (Forgot Password Con
       expect(found).toBeNull();
     });
 
+    // Tay Kai Jun A0283343E
     test("should return null when no users exist in the database", async () => {
       const found = await userModel.findOne({
         email: validUserData.email,
@@ -179,6 +166,7 @@ describe("Phase 1 [Bottom]: userModel + MongoDB Integration (Forgot Password Con
   });
 
   describe("Password Update via findByIdAndUpdate", () => {
+    // Tay Kai Jun A0283343E
     test("should update the password field for an existing user", async () => {
       const { user } = await seedUser();
       const newHashedPw = await hashPassword("NewPassword456");
@@ -190,6 +178,7 @@ describe("Phase 1 [Bottom]: userModel + MongoDB Integration (Forgot Password Con
       expect(updated.password).not.toBe(user.password);
     });
 
+    // Tay Kai Jun A0283343E
     test("should not modify other fields when updating password", async () => {
       const { user } = await seedUser();
       const newHashedPw = await hashPassword("NewPassword456");
@@ -208,16 +197,11 @@ describe("Phase 1 [Bottom]: userModel + MongoDB Integration (Forgot Password Con
 });
 
 /**
- * ============================================================
- * Phase 2 (Bottom Layer): authHelper (hashPassword + comparePassword)
- *
- * Tests the second bottom layer — password hashing helper
- * integrated with bcrypt. Verifies that a new password can be
- * hashed and later verified via comparePassword.
- * ============================================================
+ * Phase 2 (Bottom Layer): authHelper + bcrypt Integration
  */
-describe("Phase 2 [Bottom]: authHelper <-> bcrypt Integration (Forgot Password Context)", () => {
+describe("Phase 2 [Bottom]: authHelper + bcrypt Integration (Forgot Password Context)", () => {
   describe("hashPassword for new password", () => {
+    // Tay Kai Jun A0283343E
     test("should hash a new password and return a bcrypt-format string", async () => {
       const hashed = await hashPassword("NewPassword456");
 
@@ -227,6 +211,7 @@ describe("Phase 2 [Bottom]: authHelper <-> bcrypt Integration (Forgot Password C
       expect(hashed).toMatch(/^\$2[aby]\$/);
     });
 
+    // Tay Kai Jun A0283343E
     test("should produce different hashes for old and new passwords", async () => {
       const hashOld = await hashPassword("OldPassword123");
       const hashNew = await hashPassword("NewPassword456");
@@ -236,6 +221,7 @@ describe("Phase 2 [Bottom]: authHelper <-> bcrypt Integration (Forgot Password C
   });
 
   describe("hashPassword + comparePassword round-trip (password reset)", () => {
+    // Tay Kai Jun A0283343E
     test("should verify the new password against its hash after reset", async () => {
       const newPassword = "NewPassword456";
       const hashed = await hashPassword(newPassword);
@@ -244,6 +230,7 @@ describe("Phase 2 [Bottom]: authHelper <-> bcrypt Integration (Forgot Password C
       expect(isMatch).toBe(true);
     });
 
+    // Tay Kai Jun A0283343E
     test("should reject the old password against the new hash after reset", async () => {
       const oldPassword = "OldPassword123";
       const newPassword = "NewPassword456";
@@ -253,6 +240,7 @@ describe("Phase 2 [Bottom]: authHelper <-> bcrypt Integration (Forgot Password C
       expect(isMatch).toBe(false);
     });
 
+    // Tay Kai Jun A0283343E
     test("should verify new password from DB after an in-place update", async () => {
       const { user } = await seedUser();
       const newPassword = "ResetPass789";
@@ -265,6 +253,7 @@ describe("Phase 2 [Bottom]: authHelper <-> bcrypt Integration (Forgot Password C
       expect(isMatch).toBe(true);
     });
 
+    // Tay Kai Jun A0283343E
     test("should reject old password from DB after an in-place update", async () => {
       const { user, plainPassword } = await seedUser();
       const newHash = await hashPassword("ResetPass789");
@@ -279,14 +268,7 @@ describe("Phase 2 [Bottom]: authHelper <-> bcrypt Integration (Forgot Password C
 });
 
 /**
- * ============================================================
- * Phase 3 (Top Layer): Express Route Layer (Independent)
- *
- * Tests the top layer in isolation — verifies that the Express
- * route configuration correctly maps POST /api/v1/auth/forgot-password
- * to the forgotPasswordController, that express.json() middleware
- * parses the request body, and that the HTTP transport works.
- * ============================================================
+ * Phase 3 (Top Layer): Express Route Integration
  */
 describe("Phase 3 [Top]: Express Route Layer (Forgot Password)", () => {
   let app;
@@ -318,6 +300,7 @@ describe("Phase 3 [Top]: Express Route Layer (Forgot Password)", () => {
   });
 
   describe("Route Mapping and Middleware", () => {
+    // Tay Kai Jun A0283343E
     test("should respond to POST /api/v1/auth/forgot-password (route exists and is wired to controller)", async () => {
       const response = await makeRequest(baseUrl, "POST", "/api/v1/auth/forgot-password", {
         email: "route@test.com",
@@ -325,19 +308,18 @@ describe("Phase 3 [Top]: Express Route Layer (Forgot Password)", () => {
         newPassword: "SomePassword123",
       });
 
-      // The controller returns a structured JSON body with `message`.
-      // An unmapped route would NOT produce this shape.
       expect(response.body).toHaveProperty("message");
     });
 
+    // Tay Kai Jun A0283343E
     test("should parse JSON request body through express.json() middleware", async () => {
-      // Empty body — controller validation ("Email is required") proves body was parsed
       const response = await makeRequest(baseUrl, "POST", "/api/v1/auth/forgot-password", {});
 
       expect(response.statusCode).toBe(400);
       expect(response.body.message).toBe("Email is required");
     });
 
+    // Tay Kai Jun A0283343E
     test("should return 400 when only email is provided", async () => {
       const response = await makeRequest(baseUrl, "POST", "/api/v1/auth/forgot-password", {
         email: "test@test.com",
@@ -347,6 +329,7 @@ describe("Phase 3 [Top]: Express Route Layer (Forgot Password)", () => {
       expect(response.body.message).toBe("Answer is required");
     });
 
+    // Tay Kai Jun A0283343E
     test("should return 400 when only email and answer are provided (no newPassword)", async () => {
       const response = await makeRequest(baseUrl, "POST", "/api/v1/auth/forgot-password", {
         email: "test@test.com",
@@ -357,6 +340,7 @@ describe("Phase 3 [Top]: Express Route Layer (Forgot Password)", () => {
       expect(response.body.message).toBe("New password is required");
     });
 
+    // Tay Kai Jun A0283343E
     test("should return 404 from controller for non-existent user (proves route → controller wiring)", async () => {
       const response = await makeRequest(baseUrl, "POST", "/api/v1/auth/forgot-password", {
         email: "noone@test.com",
@@ -372,26 +356,10 @@ describe("Phase 3 [Top]: Express Route Layer (Forgot Password)", () => {
 });
 
 /**
- * ============================================================
- * Phase 4 (Middle Layer — Full Sandwich Integration):
- * forgotPasswordController + userModel + authHelper
- *
- * The "filling" of the sandwich. Now that the bottom layers
- * (DB model, authHelper) and the top layer (Express routes,
- * HTTP transport, middleware) have been verified independently,
- * this phase integrates the forgotPasswordController as the
- * middle layer that connects everything.
- *
- *   HTTP POST → Express middleware → Route → forgotPasswordController
- *     → userModel.findOne({ email, answer }) (real MongoDB)
- *     → hashPassword (real bcrypt)
- *     → userModel.findByIdAndUpdate (real MongoDB)
- *     → HTTP JSON response
- * ============================================================
+ * 
+ * Phase 4: forgotPasswordController + userModel + authHelper Integration
  */
 describe("Phase 4 [Middle — Sandwich]: forgotPasswordController + userModel + authHelper Integration", () => {
-
-  // ── 4a: Full HTTP End-to-End (top meets bottom through middle) ──
 
   describe("Full HTTP End-to-End (Sandwich)", () => {
     let app;
@@ -422,6 +390,7 @@ describe("Phase 4 [Middle — Sandwich]: forgotPasswordController + userModel + 
       }
     });
 
+    // Tay Kai Jun A0283343E
     test("should reset password successfully through full HTTP → Express → Controller → DB stack", async () => {
       await seedUser();
       const newPassword = "BrandNewPass789";
@@ -436,12 +405,12 @@ describe("Phase 4 [Middle — Sandwich]: forgotPasswordController + userModel + 
       expect(response.body.success).toBe(true);
       expect(response.body.message).toBe("Password reset successfully");
 
-      // Verify the new password was actually persisted in the DB
       const dbUser = await userModel.findOne({ email: validUserData.email });
       const isMatch = await comparePassword(newPassword, dbUser.password);
       expect(isMatch).toBe(true);
     });
 
+    // Tay Kai Jun A0283343E
     test("should reject wrong answer through the full HTTP stack", async () => {
       await seedUser();
 
@@ -455,7 +424,8 @@ describe("Phase 4 [Middle — Sandwich]: forgotPasswordController + userModel + 
       expect(response.body.success).toBe(false);
       expect(response.body.message).toBe("Wrong email or answer");
     });
-
+    
+    // Tay Kai Jun A0283343E
     test("should reject non-existent email through the full HTTP stack", async () => {
       await seedUser();
 
@@ -470,6 +440,7 @@ describe("Phase 4 [Middle — Sandwich]: forgotPasswordController + userModel + 
       expect(response.body.message).toBe("Wrong email or answer");
     });
 
+    // Tay Kai Jun A0283343E
     test("should return 400 for missing fields through the full HTTP stack", async () => {
       const response = await makeRequest(baseUrl, "POST", "/api/v1/auth/forgot-password", {});
 
@@ -478,9 +449,8 @@ describe("Phase 4 [Middle — Sandwich]: forgotPasswordController + userModel + 
     });
   });
 
-  // ── 4b: Controller-level detailed tests (middle layer behaviour) ──
-
   describe("Successful Password Reset Flow (Controller-level)", () => {
+    // Tay Kai Jun A0283343E
     test("should reset password and return 200 with success payload", async () => {
       await seedUser();
       const newPassword = "NewPassword456";
@@ -501,6 +471,7 @@ describe("Phase 4 [Middle — Sandwich]: forgotPasswordController + userModel + 
       });
     });
 
+    // Tay Kai Jun A0283343E
     test("should persist the new hashed password in the database", async () => {
       await seedUser();
       const newPassword = "NewPassword456";
@@ -522,6 +493,7 @@ describe("Phase 4 [Middle — Sandwich]: forgotPasswordController + userModel + 
       expect(isMatch).toBe(true);
     });
 
+    // Tay Kai Jun A0283343E
     test("should invalidate the old password after reset", async () => {
       const { plainPassword } = await seedUser();
       const newPassword = "NewPassword456";
@@ -540,6 +512,7 @@ describe("Phase 4 [Middle — Sandwich]: forgotPasswordController + userModel + 
       expect(oldMatch).toBe(false);
     });
 
+    // Tay Kai Jun A0283343E
     test("should not modify other user fields when resetting password", async () => {
       const { user } = await seedUser();
 
@@ -563,6 +536,7 @@ describe("Phase 4 [Middle — Sandwich]: forgotPasswordController + userModel + 
   });
 
   describe("Invalid Credentials (Controller + Database)", () => {
+    // Tay Kai Jun A0283343E
     test("should return 404 when email does not exist", async () => {
       await seedUser();
 
@@ -582,6 +556,7 @@ describe("Phase 4 [Middle — Sandwich]: forgotPasswordController + userModel + 
       });
     });
 
+    // Tay Kai Jun A0283343E
     test("should return 404 when answer is incorrect", async () => {
       await seedUser();
 
@@ -601,6 +576,7 @@ describe("Phase 4 [Middle — Sandwich]: forgotPasswordController + userModel + 
       });
     });
 
+    // Tay Kai Jun A0283343E
     test("should return 404 when both email and answer are wrong", async () => {
       await seedUser();
 
@@ -620,6 +596,7 @@ describe("Phase 4 [Middle — Sandwich]: forgotPasswordController + userModel + 
       });
     });
 
+    // Tay Kai Jun A0283343E
     test("should not modify the password when email/answer verification fails", async () => {
       const { user } = await seedUser();
       const originalPassword = user.password;
@@ -639,6 +616,7 @@ describe("Phase 4 [Middle — Sandwich]: forgotPasswordController + userModel + 
   });
 
   describe("Field Validation (Controller Validates Before DB Interaction)", () => {
+    // Tay Kai Jun A0283343E
     test("should return 400 when email is missing", async () => {
       const req = createFakeRequest({
         answer: validUserData.answer,
@@ -652,6 +630,7 @@ describe("Phase 4 [Middle — Sandwich]: forgotPasswordController + userModel + 
       expect(res.send).toHaveBeenCalledWith({ message: "Email is required" });
     });
 
+    // Tay Kai Jun A0283343E
     test("should return 400 when answer is missing", async () => {
       const req = createFakeRequest({
         email: validUserData.email,
@@ -665,6 +644,7 @@ describe("Phase 4 [Middle — Sandwich]: forgotPasswordController + userModel + 
       expect(res.send).toHaveBeenCalledWith({ message: "Answer is required" });
     });
 
+    // Tay Kai Jun A0283343E
     test("should return 400 when newPassword is missing", async () => {
       const req = createFakeRequest({
         email: validUserData.email,
@@ -678,6 +658,7 @@ describe("Phase 4 [Middle — Sandwich]: forgotPasswordController + userModel + 
       expect(res.send).toHaveBeenCalledWith({ message: "New password is required" });
     });
 
+    // Tay Kai Jun A0283343E
     test("should return 400 when all fields are missing", async () => {
       const req = createFakeRequest({});
       const res = createFakeResponse();
@@ -688,6 +669,7 @@ describe("Phase 4 [Middle — Sandwich]: forgotPasswordController + userModel + 
       expect(res.send).toHaveBeenCalledWith({ message: "Email is required" });
     });
 
+    // Tay Kai Jun A0283343E
     test("should return 400 when email is empty string", async () => {
       const req = createFakeRequest({
         email: "",
@@ -702,6 +684,7 @@ describe("Phase 4 [Middle — Sandwich]: forgotPasswordController + userModel + 
       expect(res.send).toHaveBeenCalledWith({ message: "Email is required" });
     });
 
+    // Tay Kai Jun A0283343E
     test("should return 400 when answer is empty string", async () => {
       const req = createFakeRequest({
         email: validUserData.email,
@@ -716,6 +699,7 @@ describe("Phase 4 [Middle — Sandwich]: forgotPasswordController + userModel + 
       expect(res.send).toHaveBeenCalledWith({ message: "Answer is required" });
     });
 
+    // Tay Kai Jun A0283343E
     test("should return 400 when newPassword is empty string", async () => {
       const req = createFakeRequest({
         email: validUserData.email,
@@ -730,6 +714,7 @@ describe("Phase 4 [Middle — Sandwich]: forgotPasswordController + userModel + 
       expect(res.send).toHaveBeenCalledWith({ message: "New password is required" });
     });
 
+    // Tay Kai Jun A0283343E
     test("should not query the database when validation fails", async () => {
       await seedUser();
       const spy = jest.spyOn(userModel, "findOne");
@@ -745,6 +730,7 @@ describe("Phase 4 [Middle — Sandwich]: forgotPasswordController + userModel + 
   });
 
   describe("Multiple Users Isolation", () => {
+    // Tay Kai Jun A0283343E
     test("should only reset the password for the matched user", async () => {
       const { user: user1 } = await seedUser({ email: "user1@test.com", answer: "answer1", password: "OldPass111" });
       const { user: user2 } = await seedUser({ email: "user2@test.com", answer: "answer2", password: "OldPass222" });
@@ -793,6 +779,7 @@ describe("Phase 4 [Middle — Sandwich]: forgotPasswordController + userModel + 
   });
 
   describe("Password Security (hashPassword + Database)", () => {
+    // Tay Kai Jun A0283343E
     test("should store only the hashed password, not plaintext", async () => {
       await seedUser();
       const newPassword = "PlainTextCheck123";
@@ -832,6 +819,7 @@ describe("Phase 4 [Middle — Sandwich]: forgotPasswordController + userModel + 
     });
 
     test("should handle very long new password", async () => {
+      
       await seedUser();
       const newPassword = "A".repeat(200);
 
@@ -872,6 +860,7 @@ describe("Phase 4 [Middle — Sandwich]: forgotPasswordController + userModel + 
   });
 
   describe("Sequential Password Resets", () => {
+    // Tay Kai Jun A0283343E
     test("should allow multiple consecutive password resets for the same user", async () => {
       await seedUser();
 
@@ -903,6 +892,7 @@ describe("Phase 4 [Middle — Sandwich]: forgotPasswordController + userModel + 
   });
 
   describe("Error Handling (Controller catch block with DB)", () => {
+    // Tay Kai Jun A0283343E
     test("should return 500 when database connection is interrupted during findOne", async () => {
       jest.spyOn(userModel, "findOne").mockRejectedValueOnce(new Error("DB connection lost"));
       jest.spyOn(console, "log").mockImplementation(() => {});
