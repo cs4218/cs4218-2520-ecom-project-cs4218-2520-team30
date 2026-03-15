@@ -35,6 +35,12 @@ async function fillRegistrationForm(page: Page, userData: TestUser) {
   await page.getByPlaceholder("What is Your Favorite Sport").fill(userData.answer);
 }
 
+async function loginUser(page: Page, email: string, password: string) {
+  await page.getByPlaceholder("Enter Your Email ").fill(email);
+  await page.getByPlaceholder("Enter Your Password").fill(password);
+  await page.getByRole("button", { name: "LOGIN" }).click();
+}
+
 test.describe("Registration Page E2E Tests", () => {
   // Tay Kai Jun A0283343E
   test("TC1: should display the registration page with all form fields", async ({
@@ -188,5 +194,154 @@ test.describe("Registration Page E2E Tests", () => {
 
     // Should stay on register page
     await expect(page).toHaveURL(/\/register/);
+  });
+});
+
+test.describe("Login Page E2E Tests", () => {
+  // Tay Kai Jun A0283343E
+  test("TC1: should login as admin and navigate to admin dashboard", async ({
+    page,
+  }) => {
+    // Tay Kai Jun A0283343E
+    await page.goto("/login");
+    await loginUser(page, "admin@admin.com", "password123");
+
+    // Verify success toast
+    await expect(
+      page.locator("div[role='status']").getByText("Logged in successfully")
+    ).toBeVisible({ timeout: 10000 });
+
+    // Verify header shows admin name dropdown instead of Login/Register links
+    await expect(page.getByRole("link", { name: "Login" })).not.toBeVisible();
+    await expect(
+      page.getByRole("link", { name: "Register" })
+    ).not.toBeVisible();
+
+    // Navigate to admin dashboard via header name dropdown
+    await page.locator(".nav-link.dropdown-toggle").last().click();
+    await page.getByRole("link", { name: "Dashboard" }).click();
+
+    await expect(page).toHaveURL(/\/dashboard\/admin/);
+    await expect(
+      page.locator(".card").getByText("MyAdmin").first()
+    ).toBeVisible();
+  });
+
+  // Tay Kai Jun A0283343E
+  test("TC2: should login as normal user and navigate to user dashboard", async ({
+    page,
+  }) => {
+    // Tay Kai Jun A0283343E
+    await page.goto("/login");
+    await loginUser(page, "user@test.com", "password123");
+
+    // Verify success toast
+    await expect(
+      page.locator("div[role='status']").getByText("Logged in successfully")
+    ).toBeVisible({ timeout: 10000 });
+
+    // Verify redirected to home page
+    await expect(page).toHaveURL("/");
+
+    // Navigate to user dashboard via header name dropdown
+    await page.locator(".nav-link.dropdown-toggle").last().click();
+    await page.getByRole("link", { name: "Dashboard" }).click();
+
+    await expect(page).toHaveURL(/\/dashboard\/user/);
+    await expect(
+      page.locator(".card").getByText("user@test.com").first()
+    ).toBeVisible();
+  });
+
+  // Tay Kai Jun A0283343E
+  test("TC3: should show error toast on login with wrong password", async ({
+    page,
+  }) => {
+    // Tay Kai Jun A0283343E
+    await page.goto("/login");
+    await loginUser(page, "user@test.com", "wrongpassword");
+
+    // Verify error toast
+    await expect(
+      page.locator("div[role='status']").getByText("Invalid email or password")
+    ).toBeVisible({ timeout: 10000 });
+
+    // Should stay on login page
+    await expect(page).toHaveURL(/\/login/);
+  });
+
+  // Tay Kai Jun A0283343E
+  test("TC4: should login and then logout successfully", async ({ page }) => {
+    // Tay Kai Jun A0283343E
+    await page.goto("/login");
+    await loginUser(page, "user@test.com", "password123");
+
+    // Wait for login to complete
+    await expect(
+      page.locator("div[role='status']").getByText("Logged in successfully")
+    ).toBeVisible({ timeout: 10000 });
+
+    // Logout via header name dropdown
+    await page.locator(".nav-link.dropdown-toggle").last().click();
+    await page.getByRole("link", { name: "Logout" }).click();
+
+    // Verify logout toast
+    await expect(
+      page.locator("div[role='status']").getByText("Logout Successfully")
+    ).toBeVisible({ timeout: 10000 });
+
+    // Verify header reverts to showing Login and Register links
+    await expect(page.getByRole("link", { name: "Login" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Register" })).toBeVisible();
+  });
+
+  // Tay Kai Jun A0283343E
+  test("TC5: should register a new user, login, add item to cart, and view cart", async ({
+    page,
+    request,
+  }) => {
+    // Tay Kai Jun A0283343E
+    const userData = generateTestUser("_login_tc5");
+
+    // Register via API to avoid creating extra UI-registered users
+    await request.post("http://localhost:6060/api/v1/auth/register", {
+      data: userData,
+    });
+
+    // Login with the newly registered user
+    await page.goto("/login");
+    await loginUser(page, userData.email, userData.password);
+
+    await expect(
+      page.locator("div[role='status']").getByText("Logged in successfully")
+    ).toBeVisible({ timeout: 10000 });
+
+    // Should be on homepage with products visible
+    await expect(page).toHaveURL("/");
+
+    // Add the first available product to cart
+    const addToCartButton = page.getByText("ADD TO CART").first();
+    await expect(addToCartButton).toBeVisible({ timeout: 10000 });
+    await addToCartButton.click();
+
+    // Verify "Item Added to cart" toast
+    await expect(page.getByText("Item Added to cart")).toBeVisible({
+      timeout: 5000,
+    });
+
+    // Verify cart badge in header shows 1
+    await expect(page.locator(".ant-badge")).toContainText("1");
+
+    // Navigate to cart page
+    await page.getByRole("link", { name: "Cart" }).click();
+    await expect(page).toHaveURL(/\/cart/);
+
+    // Verify cart page greets the user by name
+    await expect(
+      page.getByText(`Hello ${userData.name}`)
+    ).toBeVisible();
+
+    // Verify there is 1 item in the cart
+    await expect(page.getByText(/You Have 1 items? in your cart/)).toBeVisible();
   });
 });
