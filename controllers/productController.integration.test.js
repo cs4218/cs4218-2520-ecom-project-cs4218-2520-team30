@@ -1,0 +1,163 @@
+// Alek Kwek, A0273471A
+import express from "express";
+import request from "supertest";
+import mongoose from "mongoose";
+import JWT from "jsonwebtoken";
+import slugify from "slugify";
+import { MongoMemoryServer } from "mongodb-memory-server";
+import productRoutes from "../routes/productRoutes.js";
+import userModel from "../models/userModel.js";
+import categoryModel from "../models/categoryModel.js";
+import productModel from "../models/productModel.js";
+
+describe("Admin product management integration tests", () => {
+  let app;
+  let mongoServer;
+
+  beforeAll(async () => {
+    process.env.JWT_SECRET = "integration-test-secret";
+    app = express();
+    app.use(express.json());
+    app.use("/api/v1/product", productRoutes);
+    mongoServer = await MongoMemoryServer.create();
+    await mongoose.connect(mongoServer.getUri(), {
+      dbName: "jest-integration",
+    });
+  });
+
+  afterEach(async () => {
+    if (mongoose.connection.readyState !== 1) {
+      return;
+    }
+
+    await Promise.all([
+      userModel.deleteMany({}),
+      categoryModel.deleteMany({}),
+      productModel.deleteMany({}),
+    ]);
+  });
+
+  afterAll(async () => {
+    if (mongoose.connection.readyState !== 0) {
+      await mongoose.disconnect();
+    }
+
+    if (mongoServer) {
+      await mongoServer.stop();
+    }
+  });
+
+  const createAdminContext = async () => {
+    const admin = await userModel.create({
+      name: "Admin Tester",
+      email: "admin@example.com",
+      password: "hashed-password",
+      phone: "91234567",
+      address: { line1: "Testing Street" },
+      answer: "blue",
+      role: 1,
+    });
+
+    const category = await categoryModel.create({
+      name: "Electronics",
+      slug: "electronics",
+    });
+
+    const token = JWT.sign(
+      { _id: admin._id.toString() },
+      process.env.JWT_SECRET
+    );
+
+    return { admin, category, token };
+  };
+
+  test("creates an admin product through the protected route and persists it", async () => {
+    const { category, token } = await createAdminContext();
+
+    const response = await request(app)
+      .post("/api/v1/product/create-product")
+      .set("authorization", token)
+      .field("name", "Integration Laptop")
+      .field("description", "Created through route integration test")
+      .field("price", "1999")
+      .field("category", category._id.toString())
+      .field("quantity", "8")
+      .field("shipping", "true")
+      .attach("photo", Buffer.from("fake-image-content"), "laptop.jpg");
+
+    expect(response.status).toBe(201);
+    expect(response.body.success).toBe(true);
+    expect(response.body.message).toBe("Product Created Successfully");
+
+    const savedProduct = await productModel.findOne({ name: "Integration Laptop" });
+    expect(savedProduct).not.toBeNull();
+    expect(savedProduct.slug).toBe(slugify("Integration Laptop"));
+    expect(savedProduct.description).toBe("Created through route integration test");
+    expect(savedProduct.price).toBe(1999);
+    expect(savedProduct.quantity).toBe(8);
+    expect(savedProduct.category.toString()).toBe(category._id.toString());
+    expect(savedProduct.photo.contentType).toBe("image/jpeg");
+    expect(savedProduct.photo.data.length).toBeGreaterThan(0);
+  });
+
+  test("updates an admin product through the protected route and saves the new values", async () => {
+    const { category, token } = await createAdminContext();
+    const initialProduct = await productModel.create({
+      name: "Old Laptop",
+      slug: "old-laptop",
+      description: "Old description",
+      price: 1200,
+      category: category._id,
+      quantity: 5,
+      shipping: false,
+    });
+
+    const response = await request(app)
+      .put(`/api/v1/product/update-product/${initialProduct._id}`)
+      .set("authorization", token)
+      .field("name", "Updated Laptop")
+      .field("description", "Updated description")
+      .field("price", "1450")
+      .field("category", category._id.toString())
+      .field("quantity", "11")
+      .field("shipping", "true")
+      .attach("photo", Buffer.from("updated-image-content"), "updated.jpg");
+
+    expect(response.status).toBe(201);
+    expect(response.body.success).toBe(true);
+    expect(response.body.message).toBe("Product Updated Successfully");
+
+    const updatedProduct = await productModel.findById(initialProduct._id);
+    expect(updatedProduct.name).toBe("Updated Laptop");
+    expect(updatedProduct.slug).toBe(slugify("Updated Laptop"));
+    expect(updatedProduct.description).toBe("Updated description");
+    expect(updatedProduct.price).toBe(1450);
+    expect(updatedProduct.quantity).toBe(11);
+    expect(updatedProduct.photo.contentType).toBe("image/jpeg");
+    expect(updatedProduct.photo.data.length).toBeGreaterThan(0);
+  });
+
+  test("deletes an admin product through the protected route and removes it from persistence", async () => {
+    const { category, token } = await createAdminContext();
+    const product = await productModel.create({
+      name: "Delete Me",
+      slug: "delete-me",
+      description: "Temporary product",
+      price: 100,
+      category: category._id,
+      quantity: 1,
+      shipping: false,
+    });
+
+    const response = await request(app)
+      .delete(`/api/v1/product/delete-product/${product._id}`)
+      .set("authorization", token);
+
+    expect(response.status).toBe(200);
+    expect(response.body.success).toBe(true);
+    expect(response.body.message).toBe("Product Deleted successfully");
+
+    const deletedProduct = await productModel.findById(product._id);
+    expect(deletedProduct).toBeNull();
+  });
+});
