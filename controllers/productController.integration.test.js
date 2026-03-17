@@ -10,6 +10,7 @@ import userModel from "../models/userModel.js";
 import categoryModel from "../models/categoryModel.js";
 import productModel from "../models/productModel.js";
 
+// Alek Kwek, A0273471A
 describe("Admin product management integration tests", () => {
   let app;
   let mongoServer;
@@ -71,6 +72,7 @@ describe("Admin product management integration tests", () => {
     return { admin, category, token };
   };
 
+  // Alek Kwek, A0273471A
   test("creates an admin product through the protected route and persists it", async () => {
     const { category, token } = await createAdminContext();
 
@@ -100,6 +102,7 @@ describe("Admin product management integration tests", () => {
     expect(savedProduct.photo.data.length).toBeGreaterThan(0);
   });
 
+  // Alek Kwek, A0273471A
   test("updates an admin product through the protected route and saves the new values", async () => {
     const { category, token } = await createAdminContext();
     const initialProduct = await productModel.create({
@@ -137,6 +140,7 @@ describe("Admin product management integration tests", () => {
     expect(updatedProduct.photo.data.length).toBeGreaterThan(0);
   });
 
+  // Alek Kwek, A0273471A
   test("deletes an admin product through the protected route and removes it from persistence", async () => {
     const { category, token } = await createAdminContext();
     const product = await productModel.create({
