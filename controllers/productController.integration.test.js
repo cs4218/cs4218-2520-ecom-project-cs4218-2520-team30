@@ -10,6 +10,19 @@ import userModel from "../models/userModel.js";
 import categoryModel from "../models/categoryModel.js";
 import productModel from "../models/productModel.js";
 
+jest.mock("braintree", () => {
+  const mockGenerate = jest.fn();
+  const mockSale = jest.fn();
+
+  return {
+    BraintreeGateway: jest.fn().mockImplementation(() => ({
+      clientToken: { generate: mockGenerate },
+      transaction: { sale: mockSale },
+    })),
+    Environment: { Sandbox: "Sandbox" },
+  };
+});
+
 // Alek Kwek, A0273471A
 describe("Admin product management integration tests", () => {
   let app;
