@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Admin Dashboard Flow', () => {
+  // Alek Kwek, A0273471A
   async function loginAsAdmin(page) {
     await page.goto('/login');
     await page.fill('input[placeholder="Enter Your Email "]', 'playwright-admin@test.com');
@@ -14,6 +15,7 @@ test.describe('Admin Dashboard Flow', () => {
     await loginAsAdmin(page);
   });
 
+  // Alek Kwek, A0273471A
   test('Admin can log in and view profile information on dashboard', async ({ page }) => {
     await page.goto('/dashboard/admin');
     await expect(page).toHaveURL('/dashboard/admin');
@@ -23,6 +25,7 @@ test.describe('Admin Dashboard Flow', () => {
     await expect(page.locator('h3', { hasText: 'Admin Contact : 1234567890' })).toBeVisible();
   });
 
+  // Alek Kwek, A0273471A
   test('Admin dashboard profile information persists after refresh', async ({ page }) => {
     await page.goto('/dashboard/admin');
     await expect(page).toHaveURL('/dashboard/admin');
@@ -34,6 +37,7 @@ test.describe('Admin Dashboard Flow', () => {
     await expect(page.locator('h3', { hasText: 'Admin Contact : 1234567890' })).toBeVisible();
   });
 
+  // Alek Kwek, A0273471A
   test('Invalid admin login does not reach the dashboard', async ({ page }) => {
     await page.goto('/login');
     await page.fill('input[placeholder="Enter Your Email "]', 'playwright-admin@test.com');
@@ -45,6 +49,7 @@ test.describe('Admin Dashboard Flow', () => {
     await expect(page.getByRole('button', { name: 'LOGIN' })).toBeVisible();
   });
 
+  // Alek Kwek, A0273471A
   test('Unauthenticated user cannot directly access admin dashboard', async ({ browser }) => {
     const context = await browser.newContext();
     const page = await context.newPage();
@@ -55,6 +60,7 @@ test.describe('Admin Dashboard Flow', () => {
     await context.close();
   });
 
+  // Alek Kwek, A0273471A
   test('Admin logout clears session and blocks dashboard access', async ({ page }) => {
     await page.goto('/');
 
@@ -68,6 +74,7 @@ test.describe('Admin Dashboard Flow', () => {
     await expect(page).not.toHaveURL('/dashboard/admin');
   });
 
+  // Alek Kwek, A0273471A
   test('Admin remains able to access dashboard after revisiting login page', async ({ page }) => {
     await page.goto('/login');
     await expect(page.getByRole('button', { name: 'LOGIN' })).toBeVisible();
