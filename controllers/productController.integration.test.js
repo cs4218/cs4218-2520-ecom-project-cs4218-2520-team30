@@ -72,6 +72,30 @@ describe("Admin product management integration tests", () => {
     return { admin, category, token };
   };
 
+  const createNonAdminContext = async () => {
+    const user = await userModel.create({
+      name: "Regular User",
+      email: "user@example.com",
+      password: "hashed-password",
+      phone: "81234567",
+      address: { line1: "User Street" },
+      answer: "green",
+      role: 0,
+    });
+
+    const category = await categoryModel.create({
+      name: "Accessories",
+      slug: "accessories",
+    });
+
+    const token = JWT.sign(
+      { _id: user._id.toString() },
+      process.env.JWT_SECRET
+    );
+
+    return { user, category, token };
+  };
+
   // Alek Kwek, A0273471A
   test("creates an admin product through the protected route and persists it", async () => {
     const { category, token } = await createAdminContext();
@@ -163,5 +187,51 @@ describe("Admin product management integration tests", () => {
 
     const deletedProduct = await productModel.findById(product._id);
     expect(deletedProduct).toBeNull();
+  });
+
+  // Alek Kwek, A0273471A
+  test("rejects product creation when the request has no authentication token", async () => {
+    const category = await categoryModel.create({
+      name: "Security",
+      slug: "security",
+    });
+
+    const response = await request(app)
+      .post("/api/v1/product/create-product")
+      .field("name", "Unauthorized Product")
+      .field("description", "Should not be created")
+      .field("price", "20")
+      .field("category", category._id.toString())
+      .field("quantity", "2")
+      .field("shipping", "false");
+
+    expect(response.status).toBe(401);
+    expect(response.body.success).toBe(false);
+    expect(response.body.message).toBe("Invalid or expired token");
+
+    const savedProduct = await productModel.findOne({ name: "Unauthorized Product" });
+    expect(savedProduct).toBeNull();
+  });
+
+  // Alek Kwek, A0273471A
+  test("rejects product creation when the authenticated user is not an admin", async () => {
+    const { category, token } = await createNonAdminContext();
+
+    const response = await request(app)
+      .post("/api/v1/product/create-product")
+      .set("authorization", token)
+      .field("name", "Forbidden Product")
+      .field("description", "Should be blocked by admin middleware")
+      .field("price", "50")
+      .field("category", category._id.toString())
+      .field("quantity", "3")
+      .field("shipping", "false");
+
+    expect(response.status).toBe(403);
+    expect(response.body.success).toBe(false);
+    expect(response.body.message).toBe("Forbidden - Admin access required");
+
+    const savedProduct = await productModel.findOne({ name: "Forbidden Product" });
+    expect(savedProduct).toBeNull();
   });
 });
