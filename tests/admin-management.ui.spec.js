@@ -8,6 +8,10 @@ function uniqueName(prefix) {
   return `PW-MS2-${prefix}-${RUN_ID}`;
 }
 
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 async function loginAsAdmin(page) {
   await page.goto("/login");
 
@@ -28,48 +32,93 @@ async function openAdminPage(page, linkName, expectedUrl) {
   await expect(page).toHaveURL(expectedUrl);
 }
 
+async function openCreateProductPage(page) {
+  await page.getByRole("link", { name: "Create Product" }).click();
+  await expect(page).toHaveURL("/dashboard/admin/create-product");
+  await page.reload();
+  await expect(page).toHaveURL("/dashboard/admin/create-product");
+  await expect(
+    page.getByRole("heading", { name: /create product/i })
+  ).toBeVisible();
+}
+
 function normalizeText(value) {
   return value.replace(/\s+/g, " ").trim();
 }
 
-async function chooseOptionWithKeyboard(page, index, steps) {
+async function openSelect(page, index) {
   const select = page.locator(".ant-select").nth(index);
   await select.click();
-
-  for (let i = 0; i < steps; i += 1) {
-    await page.keyboard.press("ArrowDown");
-  }
-
-  await page.keyboard.press("Enter");
-  return normalizeText(
-    (await select.locator(".ant-select-selection-item").textContent()) || ""
-  );
+  const combobox = select.getByRole("combobox");
+  return combobox;
 }
 
 async function selectOption(page, index, optionName) {
-  for (let steps = 1; steps <= 6; steps += 1) {
-    const selected = await chooseOptionWithKeyboard(page, index, steps);
-    if (selected.includes(optionName)) {
-      return;
+  const combobox = await openSelect(page, index);
+  await combobox.fill(optionName);
+
+  const option = page.locator(".ant-select-item-option-content", {
+    hasText: new RegExp(`^${escapeRegExp(optionName)}$`),
+  });
+
+  await expect(option.last()).toBeVisible();
+  await option.last().click();
+}
+
+async function selectShippingOption(page, optionName) {
+  await openSelect(page, 1);
+
+  const option = page.locator(".ant-select-dropdown").last().getByText(optionName, {
+    exact: true,
+  });
+
+  if ((await option.count()) > 0) {
+    await option.last().click();
+    return;
+  }
+
+  await page.keyboard.press("ArrowDown");
+  if (optionName === "Yes") {
+    await page.keyboard.press("ArrowDown");
+  }
+  await page.keyboard.press("Enter");
+}
+
+async function selectCategoryWithFallback(page, preferredName, excludeName) {
+  const combobox = await openSelect(page, 0);
+  await combobox.fill(preferredName);
+
+  const preferredOption = page.locator(".ant-select-item-option-content", {
+    hasText: new RegExp(`^${escapeRegExp(preferredName)}$`),
+  });
+
+  if (
+    (await preferredOption.count()) > 0 &&
+    (await preferredOption.last().isVisible())
+  ) {
+    await preferredOption.last().click();
+    return preferredName;
+  }
+
+  await combobox.fill("");
+
+  const options = page.locator(".ant-select-item-option-content");
+  const optionCount = await options.count();
+
+  for (let i = 0; i < optionCount; i += 1) {
+    const option = options.nth(i);
+    if (!(await option.isVisible())) {
+      continue;
+    }
+
+    const optionName = normalizeText((await option.textContent()) || "");
+    if (optionName && optionName !== excludeName) {
+      await option.click();
+      return optionName;
     }
   }
 
-  throw new Error(`Could not select option: ${optionName}`);
-}
-
-async function selectFirstVisibleOption(page, index) {
-  return chooseOptionWithKeyboard(page, index, 1);
-}
-
-async function selectDifferentVisibleOption(page, index, currentOptionName) {
-  for (let steps = 1; steps <= 6; steps += 1) {
-    const selected = await chooseOptionWithKeyboard(page, index, steps);
-    if (!selected.includes(currentOptionName)) {
-      return selected;
-    }
-  }
-
-  throw new Error(`Could not find a different visible option from: ${currentOptionName}`);
+  throw new Error(`Could not select any category option. Preferred: ${preferredName}`);
 }
 
 async function createCategory(page, categoryName) {
@@ -188,11 +237,10 @@ test.describe("Admin management UI end-to-end flows", () => {
     await openAdminPage(page, "Create Category", "/dashboard/admin/create-category");
     await createCategory(page, categoryName);
 
-    await page.getByRole("link", { name: "Create Product" }).click();
-    await expect(page).toHaveURL("/dashboard/admin/create-product");
-    product.categoryName = await selectFirstVisibleOption(page, 0);
+    await openCreateProductPage(page);
+    product.categoryName = await selectCategoryWithFallback(page, categoryName);
     await fillProductForm(page, product);
-    await selectOption(page, 1, product.shippingLabel);
+    await selectShippingOption(page, product.shippingLabel);
     await page.getByRole("button", { name: /create product/i }).click();
 
     await expect(page).toHaveURL("/dashboard/admin/products");
@@ -264,11 +312,13 @@ test.describe("Admin management UI end-to-end flows", () => {
     await createCategory(page, originalCategoryName);
     await createCategory(page, updatedCategoryName);
 
-    await page.getByRole("link", { name: "Create Product" }).click();
-    await expect(page).toHaveURL("/dashboard/admin/create-product");
-    originalProduct.categoryName = await selectFirstVisibleOption(page, 0);
+    await openCreateProductPage(page);
+    originalProduct.categoryName = await selectCategoryWithFallback(
+      page,
+      originalCategoryName
+    );
     await fillProductForm(page, originalProduct);
-    await selectOption(page, 1, originalProduct.shippingLabel);
+    await selectShippingOption(page, originalProduct.shippingLabel);
     await page.getByRole("button", { name: /create product/i }).click();
 
     await expect(page).toHaveURL("/dashboard/admin/products");
@@ -285,13 +335,13 @@ test.describe("Admin management UI end-to-end flows", () => {
     );
     await expect(page.locator(".ant-select").nth(1)).toContainText("Yes");
 
-    updatedProduct.categoryName = await selectDifferentVisibleOption(
+    updatedProduct.categoryName = await selectCategoryWithFallback(
       page,
-      0,
+      updatedCategoryName,
       originalProduct.categoryName
     );
     await fillProductForm(page, updatedProduct);
-    await selectOption(page, 1, updatedProduct.shippingLabel);
+    await selectShippingOption(page, updatedProduct.shippingLabel);
     await expect(page.locator('input[placeholder="write a name"]')).toHaveValue(
       updatedProduct.name
     );
