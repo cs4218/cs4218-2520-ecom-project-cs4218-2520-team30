@@ -78,6 +78,7 @@ export const getProductController = async (req, res) => {
       .select("-photo")
       .limit(12)
       .sort({ createdAt: -1 });
+    res.set("Cache-Control", "no-store");
     res.status(200).send({
       success: true,
       countTotal: products.length,
@@ -102,6 +103,7 @@ export const getSingleProductController = async (req, res) => {
       .findOne({ slug: req.params.slug })
       .select("-photo")
       .populate("category");
+    res.set("Cache-Control", "no-store");
     res.status(200).send({
       success: true,
       message: "Single Product Fetched",

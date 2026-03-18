@@ -170,3 +170,19 @@ To begin unit testing with Jest in your project, follow these steps:
      ```bash
      npm run test
      ```
+
+## MS2 Contributions
+
+### Alek Kwek, A0273471A
+
+Integration Testing
+- Added top-down Admin Product Management integration tests for `client/src/pages/admin/CreateProduct.js` and `client/src/pages/admin/UpdateProduct.js` in separate `.integration.test.js` files.
+- Verified backend route integration for admin product create, update, and delete flows in `controllers/productController.integration.test.js`, including authentication and admin-authorization checks on delete.
+
+UI Testing
+- Replaced request-mocked Playwright specs with live end-to-end admin system tests in `tests/admin-management.ui.spec.js`.
+- Covered admin login, category create/edit/delete, product create with real image upload, redirect to the products list, product update with category and shipping changes, and final product deletion.
+
+Bug Fixes / Notes
+- Restored protection on `DELETE /api/v1/product/delete-product/:pid` with `requireSignIn` and `isAdmin` so delete matches the protected admin-only behavior of create and update.
+- Fixed the Update Product page title to `Dashboard - Update Product` so the page metadata matches the actual admin flow.
