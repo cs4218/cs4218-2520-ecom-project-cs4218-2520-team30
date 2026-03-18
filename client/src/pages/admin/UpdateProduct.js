@@ -19,6 +19,12 @@ const UpdateProduct = () => {
   const [shipping, setShipping] = useState("");
   const [photo, setPhoto] = useState("");
   const [id, setId] = useState("");
+  const shippingValue =
+    shipping === true || shipping === "1"
+      ? "1"
+      : shipping === false || shipping === "0"
+      ? "0"
+      : "";
 
   //get single product
   const getSingleProduct = async () => {
@@ -109,7 +115,7 @@ const UpdateProduct = () => {
     }
   };
   return (
-    <Layout title={"Dashboard - Create Product"}>
+    <Layout title={"Dashboard - Update Product"}>
       <div className="container-fluid m-3 p-3">
         <div className="row">
           <div className="col-md-3">
@@ -215,7 +221,7 @@ const UpdateProduct = () => {
                   onChange={(value) => {
                     setShipping(value);
                   }}
-                  value={shipping ? "yes" : "No"}
+                  value={shippingValue}
                 >
                   <Option value="0">No</Option>
                   <Option value="1">Yes</Option>

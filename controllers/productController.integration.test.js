@@ -203,6 +203,59 @@ describe("Admin product management integration tests", () => {
   });
 
   // Alek Kwek, A0273471A
+  test("rejects product deletion when the request has no authentication token", async () => {
+    const category = await categoryModel.create({
+      name: "Locked",
+      slug: "locked",
+    });
+    const product = await productModel.create({
+      name: "Protected Delete",
+      slug: "protected-delete",
+      description: "Should survive unauthenticated delete",
+      price: 60,
+      category: category._id,
+      quantity: 2,
+      shipping: true,
+    });
+
+    const response = await request(app).delete(
+      `/api/v1/product/delete-product/${product._id}`
+    );
+
+    expect(response.status).toBe(401);
+    expect(response.body.success).toBe(false);
+    expect(response.body.message).toBe("Invalid or expired token");
+
+    const persistedProduct = await productModel.findById(product._id);
+    expect(persistedProduct).not.toBeNull();
+  });
+
+  // Alek Kwek, A0273471A
+  test("rejects product deletion when the authenticated user is not an admin", async () => {
+    const { category, token } = await createNonAdminContext();
+    const product = await productModel.create({
+      name: "Non Admin Delete",
+      slug: "non-admin-delete",
+      description: "Should survive forbidden delete",
+      price: 70,
+      category: category._id,
+      quantity: 4,
+      shipping: false,
+    });
+
+    const response = await request(app)
+      .delete(`/api/v1/product/delete-product/${product._id}`)
+      .set("authorization", token);
+
+    expect(response.status).toBe(403);
+    expect(response.body.success).toBe(false);
+    expect(response.body.message).toBe("Forbidden - Admin access required");
+
+    const persistedProduct = await productModel.findById(product._id);
+    expect(persistedProduct).not.toBeNull();
+  });
+
+  // Alek Kwek, A0273471A
   test("rejects product creation when the request has no authentication token", async () => {
     const category = await categoryModel.create({
       name: "Security",
