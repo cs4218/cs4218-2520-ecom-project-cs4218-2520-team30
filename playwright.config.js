@@ -21,12 +21,20 @@ module.exports = defineConfig({
     trace: 'on-first-retry',
   },
   /* webServer config from main */
-  webServer: {
-    command: 'HOST=127.0.0.1 npm run client',
-    url: 'http://127.0.0.1:3000',
-    reuseExistingServer: !process.env.CI,
-    timeout: 120_000,
-  },
+  webServer: [
+    {
+      command: 'npm run server',
+      url: 'http://127.0.0.1:6060',
+      reuseExistingServer: !process.env.CI,
+      timeout: 120_000,
+    },
+    {
+      command: 'HOST=127.0.0.1 npm run client',
+      url: 'http://127.0.0.1:3000',
+      reuseExistingServer: !process.env.CI,
+      timeout: 120_000,
+    },
+  ],
   projects: [
     {
       name: 'chromium',

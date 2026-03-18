@@ -59,22 +59,6 @@ jobs:
           else
             echo "found=false" >> "$GITHUB_OUTPUT"
           fi
-      - name: Start API Server
-        if: steps.playwright-tests.outputs.found == 'true'
-        run: npm run server > server.log 2>&1 &
-      - name: Wait For API Server
-        if: steps.playwright-tests.outputs.found == 'true'
-        shell: bash
-        run: |
-          for i in {1..60}; do
-            if curl -fsS http://127.0.0.1:6060/ > /dev/null; then
-              exit 0
-            fi
-            sleep 2
-          done
-          echo "API server did not become ready in time."
-          cat server.log
-          exit 1
       - name: Seed Playwright Admin User
         if: steps.playwright-tests.outputs.found == 'true'
         run: node setupAdmin.js
@@ -84,9 +68,6 @@ jobs:
       - name: Skip Playwright UI Tests
         if: steps.playwright-tests.outputs.found != 'true'
         run: echo "No Playwright UI test files found under tests/. Skipping UI test run."
-      - name: Print API Server Log
-        if: always() && steps.playwright-tests.outputs.found == 'true'
-        run: test -f server.log && cat server.log || true
       - name: Upload Playwright Report
         if: always() && steps.playwright-tests.outputs.found == 'true'
         uses: actions/upload-artifact@v4
