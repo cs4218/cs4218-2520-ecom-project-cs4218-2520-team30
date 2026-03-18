@@ -5,6 +5,11 @@ export default {
   // when testing backend
   testEnvironment: "node",
 
+  // Transpile backend ESM so Jest can execute it consistently on Node 24.
+  transform: {
+    "^.+\\.js$": "babel-jest",
+  },
+
   // which test to run
   testMatch: [
     "**/controllers/*.test.js",
