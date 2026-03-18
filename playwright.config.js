@@ -25,13 +25,13 @@ export default defineConfig({
   /* webServer config from main */
   webServer: [
     {
-      command: "npm start",
+      command: "PORT=6060 npm start",
       url: "http://localhost:6060",
       reuseExistingServer: !isCI,
       timeout: 120_000,
     },
     {
-      command: "npm run client",
+      command: "PORT=3000 BROWSER=none npm run client",
       url: "http://localhost:3000",
       reuseExistingServer: !isCI,
       timeout: 120_000,
