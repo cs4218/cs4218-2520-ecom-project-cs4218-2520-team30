@@ -5,13 +5,12 @@ name: Run Tests
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     strategy:
@@ -20,18 +19,29 @@ jobs:
         # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
     steps:
-    - uses: actions/checkout@v4
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ matrix.node-version }}
-        cache: 'npm'
+      - uses: actions/checkout@v4
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "npm"
 
-    - run: npm ci
-    - run: npm install
-    - name: Install Client Dependencies
-      run: |
-        cd client
-        npm install
-    - run: npm run test:frontend
-    - run: npm run test:backend
+      - run: npm ci
+      - run: npm install
+      - name: Install Client Dependencies
+        run: |
+          cd client
+          npm install
+      - run: npm run test:frontend
+      - run: npm run test:backend
+      - name: Install Playwright Browser
+        run: npx playwright install --with-deps chromium
+      - name: Run Playwright UI Tests
+        run: npm run test:ui
+      - name: Upload Playwright Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          if-no-files-found: ignore
