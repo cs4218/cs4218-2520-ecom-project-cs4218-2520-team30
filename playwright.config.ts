@@ -2,6 +2,8 @@ import { defineConfig } from "@playwright/test";
 
 export default defineConfig({
   testDir: "./tests",
+  testMatch: "**/*.spec.ts",
+  testIgnore: ["**/integration/**", "**/setup/**"],
   timeout: 60000,
   expect: {
     timeout: 10000,
@@ -9,6 +11,7 @@ export default defineConfig({
   fullyParallel: false,
   retries: 0,
   reporter: "html",
+  globalTeardown: "./tests/setup/global-teardown.js",
   use: {
     baseURL: "http://localhost:3000",
     trace: "on-first-retry",
