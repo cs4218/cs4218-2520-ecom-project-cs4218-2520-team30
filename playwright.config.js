@@ -1,4 +1,5 @@
 const { defineConfig, devices } = require('@playwright/test');
+const isCI = process.env.CI === 'true';
 
 /**
  * See https://playwright.dev/docs/test-configuration.
@@ -7,9 +8,9 @@ module.exports = defineConfig({
   testDir: './tests',
   /* CI/CD and worker configuration from branch */
   fullyParallel: false,
-  forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : undefined,
+  forbidOnly: isCI,
+  retries: isCI ? 2 : 0,
+  workers: isCI ? 1 : undefined,
   /* Timeouts from main */
   timeout: 30_000,
   reporter: 'html',
@@ -25,13 +26,13 @@ module.exports = defineConfig({
     {
       command: 'npm start',
       url: 'http://localhost:6060',
-      reuseExistingServer: !process.env.CI,
+      reuseExistingServer: !isCI,
       timeout: 120_000,
     },
     {
       command: 'npm run client',
       url: 'http://localhost:3000',
-      reuseExistingServer: !process.env.CI,
+      reuseExistingServer: !isCI,
       timeout: 120_000,
     },
   ],
