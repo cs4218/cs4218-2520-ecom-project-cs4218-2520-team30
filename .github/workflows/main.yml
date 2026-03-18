@@ -17,6 +17,9 @@ jobs:
       DEV_MODE: test
       MONGO_URL: mongodb://127.0.0.1:27017/ecom-playwright
       JWT_SECRET: test-jwt-secret
+      BRAINTREE_MERCHANT_ID: test-merchant-id
+      BRAINTREE_PUBLIC_KEY: test-public-key
+      BRAINTREE_PRIVATE_KEY: test-private-key
 
     services:
       mongodb:
