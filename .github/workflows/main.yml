@@ -46,7 +46,6 @@ jobs:
           cache: "npm"
 
       - run: npm ci
-      - run: npm install
       - name: Install Client Dependencies
         run: npm install --prefix ./client
       - run: npm run test:frontend
@@ -67,6 +66,9 @@ jobs:
         run: node setupAdmin.js
       - name: Run Playwright UI Tests
         if: steps.playwright-tests.outputs.found == 'true'
+        env:
+          CI: "false"
+          BROWSER: none
         run: npm run test:ui
       - name: Skip Playwright UI Tests
         if: steps.playwright-tests.outputs.found != 'true'
