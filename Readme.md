@@ -25,6 +25,13 @@
 | **Category** | Johannsen Lum | - `hooks/useCategory.js`<br>- `pages/Categories.js` | - `controllers/categoryController.js`<br>  1. categoryController<br>  2. singleCategoryController<br>- `models/categoryModel.js` |
 | **Payment** | Johannsen Lum | | - `controllers/productController.js`<br>  1. braintreeTokenController<br>  2. brainTreePaymentController |
 
+### MS2 Integration Testing Contributions
+
+- Alek Kwek (A0273471A): Admin Category Actions integration testing
+- Backend integration tests: `controllers/categoryController.integration.test.js`
+- Frontend integration tests: `client/src/pages/admin/CreateCategory.integration.test.js`
+- Bug fixed during integration testing: `client/src/pages/admin/CreateCategory.js` (added missing React `key` for category table rows)
+
 
 ## 1. Project Introduction
 
