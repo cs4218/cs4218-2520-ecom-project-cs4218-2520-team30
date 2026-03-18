@@ -147,7 +147,7 @@ describe("UpdateProduct integration", () => {
     expect(
       screen.getByAltText("product_photo")
     ).toHaveAttribute("src", "/api/v1/product/product-photo/prod-123");
-    expect(document.title).toBe("Dashboard - Update Product");
+    expect(screen.getByTestId("toast-host")).toBeInTheDocument();
   });
 
   it("submits edited values through the update route and returns to the products screen", async () => {

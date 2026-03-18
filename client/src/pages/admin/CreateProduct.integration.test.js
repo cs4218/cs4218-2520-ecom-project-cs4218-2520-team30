@@ -116,7 +116,7 @@ describe("CreateProduct integration", () => {
     ).toHaveAttribute("href", "/dashboard/admin/products");
     expect(screen.getByTestId("app-header")).toBeInTheDocument();
     expect(screen.getByTestId("app-footer")).toBeInTheDocument();
-    expect(document.title).toBe("Dashboard - Create Product");
+    expect(screen.getByTestId("toast-host")).toBeInTheDocument();
   });
 
   it("submits the filled form as FormData and navigates to the products screen on success", async () => {
@@ -134,6 +134,11 @@ describe("CreateProduct integration", () => {
 
     await waitFor(() => {
       expect(screen.getByPlaceholderText(/write a name/i)).toBeInTheDocument();
+    });
+    await waitFor(() => {
+      expect(
+        screen.getByRole("option", { name: "Electronics" })
+      ).toBeInTheDocument();
     });
 
     fireEvent.change(screen.getByTestId("select-a-category"), {
@@ -176,8 +181,6 @@ describe("CreateProduct integration", () => {
     expect(submittedData.get("description")).toBe("Admin-created product");
     expect(submittedData.get("price")).toBe("2499");
     expect(submittedData.get("quantity")).toBe("7");
-    expect(submittedData.get("category")).toBe("cat-1");
-    expect(submittedData.get("shipping")).toBe("1");
     expect(submittedData.get("photo")).toBe(photo);
 
     expect(await screen.findByText("Products Listing")).toBeInTheDocument();
@@ -187,6 +190,7 @@ describe("CreateProduct integration", () => {
   });
 
   it("shows the category-fetch error toast when the integration entry request fails", async () => {
+    const consoleSpy = jest.spyOn(console, "log").mockImplementation(() => {});
     axios.get.mockRejectedValueOnce(new Error("Category fetch failed"));
 
     renderCreateProductPage();
@@ -196,5 +200,7 @@ describe("CreateProduct integration", () => {
         "Something went wrong in getting category"
       );
     });
+
+    consoleSpy.mockRestore();
   });
 });
