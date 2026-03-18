@@ -67,7 +67,6 @@ jobs:
       - name: Run Playwright UI Tests
         if: steps.playwright-tests.outputs.found == 'true'
         env:
-          CI: "false"
           BROWSER: none
         run: npm run test:ui
       - name: Skip Playwright UI Tests

@@ -1,34 +1,17 @@
-const mongoose = require("mongoose");
-const bcrypt = require("bcrypt");
-const dotenv = require("dotenv");
+import bcrypt from "bcrypt";
+import dotenv from "dotenv";
+import mongoose from "mongoose";
+
+import userModel from "./models/userModel.js";
 
 dotenv.config({ path: ".env" });
 
-const userSchema = new mongoose.Schema(
-  {
-    name: { type: String, required: true },
-    email: { type: String, required: true },
-    password: { type: String, required: true },
-    phone: { type: String, required: true },
-    address: { type: {}, required: true },
-    answer: { type: String, required: true },
-    role: { type: Number, default: 0 },
-  },
-  { timestamps: true }
-);
-
 const createAdmin = async () => {
+  let exitCode = 0;
+
   try {
     await mongoose.connect(process.env.MONGO_URL);
-    
-    // Check if the collection already has a model, if so use it, if not define it.
-    let userModel;
-    try {
-        userModel = mongoose.model("users");
-    } catch {
-        userModel = mongoose.model("users", userSchema);
-    }
-    
+
     const email = "playwright-admin@test.com";
     const password = "adminpassword123";
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -52,10 +35,15 @@ const createAdmin = async () => {
       await user.save();
       console.log("Admin user updated successfully.");
     }
-    process.exit(0);
   } catch (e) {
     console.error(e);
-    process.exit(1);
+    exitCode = 1;
+  } finally {
+    await mongoose.disconnect().catch(() => {
+      exitCode = 1;
+    });
+    process.exitCode = exitCode;
   }
 };
-createAdmin();
+
+await createAdmin();
