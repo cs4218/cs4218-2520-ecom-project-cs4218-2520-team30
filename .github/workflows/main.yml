@@ -68,7 +68,7 @@ jobs:
         if: steps.playwright-tests.outputs.found == 'true'
         env:
           BROWSER: none
-        run: npm run test:ui
+        run: DEBUG=pw:webserver npm run test:ui
       - name: Skip Playwright UI Tests
         if: steps.playwright-tests.outputs.found != 'true'
         run: echo "No Playwright UI test files found under tests/. Skipping UI test run."
