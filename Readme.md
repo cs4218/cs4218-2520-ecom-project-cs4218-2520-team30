@@ -27,9 +27,22 @@
 
 ### MS2 Integration Testing Contributions
 
-| Team Member | Integration Testing | UI Testing | Bug Fixes / Notes |
-|-------------|---------------------|------------|-------------------|
-| Alek Kwek (A0273471A) | Admin Category Actions<br>- `controllers/categoryController.integration.test.js`<br>- `client/src/pages/admin/CreateCategory.integration.test.js` | To be updated | `client/src/pages/admin/CreateCategory.js`<br>- Added missing React `key` for category table rows |
+#### Alek Kwek (A0273471A)
+
+Integration Testing
+
+- Admin Category Actions
+- `controllers/categoryController.integration.test.js`
+- `client/src/pages/admin/CreateCategory.integration.test.js`
+
+UI Testing
+
+- To be updated
+
+Bug Fixes / Notes
+
+- `client/src/pages/admin/CreateCategory.js`
+- Added missing React `key` for category table rows
 
 
 ## 1. Project Introduction
