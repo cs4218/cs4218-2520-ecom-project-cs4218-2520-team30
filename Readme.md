@@ -170,3 +170,15 @@ To begin unit testing with Jest in your project, follow these steps:
      ```bash
      npm run test
      ```
+
+### Alek Kwek, A0273471A
+Integration Testing
+Existing Integration Testing work was left unchanged in this review.
+
+UI Testing
+Replaced the mocked Playwright category test with black-box admin login, category CRUD, and product CRUD flows against the real frontend and backend.
+Playwright now launches isolated app instances for UI tests and uses strict Playwright-owned markers for setup and cleanup.
+
+Bug Fixes / Notes
+UI-test startup now avoids reusing unknown existing servers and avoids inheriting the unsafe default `.env` Mongo target during Playwright runs.
+The admin product delete route now requires authenticated admin access, and the product update shipping select now preserves the correct option value in real UI flows.

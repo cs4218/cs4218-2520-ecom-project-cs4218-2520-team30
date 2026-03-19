@@ -7,6 +7,18 @@ import { Select } from "antd";
 import { useNavigate, useParams } from "react-router-dom";
 const { Option } = Select;
 
+const getShippingSelectValue = (shipping) => {
+  if (shipping === true || shipping === "1") {
+    return "1";
+  }
+
+  if (shipping === false || shipping === "0") {
+    return "0";
+  }
+
+  return undefined;
+};
+
 const UpdateProduct = () => {
   const navigate = useNavigate();
   const params = useParams();
@@ -215,7 +227,7 @@ const UpdateProduct = () => {
                   onChange={(value) => {
                     setShipping(value);
                   }}
-                  value={shipping ? "yes" : "No"}
+                  value={getShippingSelectValue(shipping)}
                 >
                   <Option value="0">No</Option>
                   <Option value="1">Yes</Option>

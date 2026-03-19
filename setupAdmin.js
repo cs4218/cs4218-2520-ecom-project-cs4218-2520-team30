@@ -3,14 +3,17 @@ import dotenv from "dotenv";
 import mongoose from "mongoose";
 
 import userModel from "./models/userModel.js";
+import { getPlaywrightMongoUrl } from "./tests/uiTestUtils.js";
 
 dotenv.config({ path: ".env" });
+
+const mongoUrl = getPlaywrightMongoUrl();
 
 const createAdmin = async () => {
   let exitCode = 0;
 
   try {
-    await mongoose.connect(process.env.MONGO_URL);
+    await mongoose.connect(mongoUrl);
 
     const email = "playwright-admin@test.com";
     const password = "adminpassword123";
