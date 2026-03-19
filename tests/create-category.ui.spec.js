@@ -1,11 +1,21 @@
 import { test, expect } from "@playwright/test";
 
-import { createCategory, loginAsAdmin, resetAdminTestData } from "./uiTestUtils";
+import {
+  clearAdminTestData,
+  createCategory,
+  loginAsAdmin,
+  PLAYWRIGHT_PREFIX,
+  resetAdminTestData,
+} from "./uiTestUtils";
 
 const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 test.beforeEach(async () => {
   await resetAdminTestData();
+});
+
+test.afterEach(async () => {
+  await clearAdminTestData();
 });
 
 // Alek Kwek, A0273471A
@@ -15,8 +25,8 @@ test.describe("Create Category UI flow", () => {
     page,
   }) => {
     const suffix = Date.now();
-    const createdCategoryName = `UI Category ${suffix}`;
-    const updatedCategoryName = `Renamed UI Category ${suffix}`;
+    const createdCategoryName = `${PLAYWRIGHT_PREFIX} category ${suffix}`;
+    const updatedCategoryName = `${PLAYWRIGHT_PREFIX} renamed category ${suffix}`;
 
     await loginAsAdmin(page);
     await createCategory(page, createdCategoryName);

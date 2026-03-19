@@ -1,24 +1,30 @@
 // Alek Kwek, A0273471A
 import bcrypt from "bcrypt";
+import dotenv from "dotenv";
 import { expect } from "@playwright/test";
 import { MongoClient } from "mongodb";
+import { fileURLToPath } from "url";
+
+dotenv.config({ path: fileURLToPath(new URL("../.env", import.meta.url)) });
 
 export const ADMIN_EMAIL = "playwright-admin@test.com";
 export const ADMIN_PASSWORD = "adminpassword123";
+export const PLAYWRIGHT_PREFIX = "__playwright__";
 
-const DEFAULT_MONGO_URL = "mongodb://127.0.0.1:27017/ecom-playwright";
+const DEFAULT_MONGO_URL = "mongodb://127.0.0.1:27017/test";
 const PNG_BASE64 =
   "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9p0N8iAAAAAASUVORK5CYII=";
+const PLAYWRIGHT_NAME_REGEX = new RegExp(`^${PLAYWRIGHT_PREFIX}`);
 
 function getMongoConfig() {
   const mongoUrl = process.env.MONGO_URL || DEFAULT_MONGO_URL;
 
   try {
     const parsedUrl = new URL(mongoUrl);
-    const dbName = parsedUrl.pathname.replace(/^\//, "") || "ecom-playwright";
+    const dbName = parsedUrl.pathname.replace(/^\//, "") || "test";
     return { mongoUrl, dbName };
   } catch (error) {
-    return { mongoUrl, dbName: "ecom-playwright" };
+    return { mongoUrl, dbName: "test" };
   }
 }
 
@@ -32,11 +38,7 @@ export async function resetAdminTestData() {
   try {
     const db = client.db(dbName);
 
-    await Promise.all([
-      db.collection("categories").deleteMany({}),
-      db.collection("products").deleteMany({}),
-      db.collection("users").deleteMany({}),
-    ]);
+    await clearPlaywrightTestData(db);
 
     await db.collection("users").insertOne({
       name: "Playwright Admin",
@@ -52,6 +54,27 @@ export async function resetAdminTestData() {
   } finally {
     await client.close();
   }
+}
+
+export async function clearAdminTestData() {
+  const { mongoUrl, dbName } = getMongoConfig();
+  const client = new MongoClient(mongoUrl);
+
+  await client.connect();
+
+  try {
+    await clearPlaywrightTestData(client.db(dbName));
+  } finally {
+    await client.close();
+  }
+}
+
+async function clearPlaywrightTestData(db) {
+  await Promise.all([
+    db.collection("categories").deleteMany({ name: PLAYWRIGHT_NAME_REGEX }),
+    db.collection("products").deleteMany({ name: PLAYWRIGHT_NAME_REGEX }),
+    db.collection("users").deleteMany({ email: ADMIN_EMAIL }),
+  ]);
 }
 
 export async function loginAsAdmin(page) {

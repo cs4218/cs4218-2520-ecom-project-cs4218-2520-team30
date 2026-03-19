@@ -1,14 +1,20 @@
 import { test, expect } from "@playwright/test";
 
 import {
+  clearAdminTestData,
   createCategory,
   createProduct,
   loginAsAdmin,
+  PLAYWRIGHT_PREFIX,
   resetAdminTestData,
 } from "./uiTestUtils";
 
 test.beforeEach(async () => {
   await resetAdminTestData();
+});
+
+test.afterEach(async () => {
+  await clearAdminTestData();
 });
 
 // Alek Kwek, A0273471A
@@ -17,8 +23,8 @@ test.describe("Create Product UI flow", () => {
   test("admin can create a product after creating its category and see it on the products page", async ({
     page,
   }) => {
-    const categoryName = `UI Product Category ${Date.now()}`;
-    const productName = `Mirrorless Camera ${Date.now()}`;
+    const categoryName = `${PLAYWRIGHT_PREFIX} product category ${Date.now()}`;
+    const productName = `${PLAYWRIGHT_PREFIX} mirrorless camera ${Date.now()}`;
     const description = "Mirrorless test camera with kit lens";
 
     await loginAsAdmin(page);
@@ -45,9 +51,9 @@ test.describe("Create Product UI flow", () => {
     page,
   }) => {
     const suffix = Date.now();
-    const categoryName = `UI Update Category ${suffix}`;
-    const productName = `UI Camera ${suffix}`;
-    const updatedProductName = `${productName} Pro`;
+    const categoryName = `${PLAYWRIGHT_PREFIX} update category ${suffix}`;
+    const productName = `${PLAYWRIGHT_PREFIX} camera ${suffix}`;
+    const updatedProductName = `${productName} pro`;
     const description = "Starter camera listing for update flow";
     const updatedDescription = "Updated camera listing with refreshed details";
 
