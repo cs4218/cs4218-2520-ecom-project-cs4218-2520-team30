@@ -26,6 +26,26 @@
 | **Payment** | Johannsen Lum | | - `controllers/productController.js`<br>  1. braintreeTokenController<br>  2. brainTreePaymentController |
 
 
+### UI Tests (Playwright) 
+
+
+
+| Feature | Team Member | Tests | Files Tested | Test Flow |
+|---------|-------------|-------|--------------|-----------|
+| **Registration** | Tay Kai Jun | 7 | `pages/Auth/Register.js` | Form display → Field validation (password length, phone format) → Successful registration → Duplicate email handling |
+| **Login** | Tay Kai Jun | 5 | `pages/Auth/Login.js` | Admin login → User login → Wrong password → Logout flow → Full user journey (register → login → cart) |
+| **Search** | Tay Kai Jun | 10 | `pages/Search.js`, `pages/ProductDetails.js`, `pages/CartPage.js` | Search products → View details → Add to cart → Cart persistence → Guest checkout |
+
+
+### Integration Tests (Jest) 
+
+
+| Feature | Team Member | Tests | Components Tested | Test Flow |
+|---------|-------------|-------|-------------------|-----------|
+| **Login Controller** | Tay Kai Jun | 38 | `authController.loginController` ↔ `userModel` ↔ `authHelper` | User lookup (MongoDB) → Password comparison (bcrypt) → JWT token generation → Role-based response |
+| **Forgot Password** | Tay Kai Jun | 35 | `authController.forgotPasswordController` ↔ `userModel` ↔ `authHelper` | Email+answer validation → Password hashing → Database update → Multi-user isolation |
+
+
 ## 1. Project Introduction
 
 Virtual Vault is a full-stack MERN (MongoDB, Express.js, React.js, Node.js) e-commerce website, offering seamless connectivity and user-friendly features. The platform provides a robust framework for online shopping. The website is designed to adapt to evolving business needs and can be efficiently extended.
@@ -170,3 +190,4 @@ To begin unit testing with Jest in your project, follow these steps:
      ```bash
      npm run test
      ```
+
