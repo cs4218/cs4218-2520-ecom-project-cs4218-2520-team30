@@ -34,6 +34,7 @@ module.exports = defineConfig({
         ...(mongoTargets
           ? { MONGO_URL: mongoTargets.playwrightMongoUrl }
           : {}),
+        JWT_SECRET: process.env.JWT_SECRET || "playwright-jwt-secret",
         BRAINTREE_MERCHANT_ID:
           process.env.BRAINTREE_MERCHANT_ID || "playwright-merchant-id",
         BRAINTREE_PUBLIC_KEY:
