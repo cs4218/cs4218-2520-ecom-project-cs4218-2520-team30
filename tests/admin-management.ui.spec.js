@@ -115,16 +115,128 @@ async function openSelect(page, index) {
   return combobox;
 }
 
-async function selectOption(page, index, optionName) {
-  const combobox = await openSelect(page, index);
-  await combobox.fill(optionName);
+async function getVisibleDropdown(page) {
+  const dropdown = page.locator(".ant-select-dropdown").last();
+  await expect(dropdown).toBeVisible();
+  return dropdown;
+}
 
-  const option = page.locator(".ant-select-item-option-content", {
-    hasText: new RegExp(`^${escapeRegExp(optionName)}$`),
+async function clickVisibleDropdownText(page, optionName) {
+  const dropdown = await getVisibleDropdown(page);
+  const option = dropdown.getByText(optionName, { exact: true }).last();
+
+  if ((await option.count()) > 0) {
+    await expect(option).toBeVisible();
+    await option.click();
+    return true;
+  }
+
+  const allMatches = page.getByText(optionName, { exact: true });
+  const matchCount = await allMatches.count();
+
+  for (let i = matchCount - 1; i >= 0; i -= 1) {
+    const match = allMatches.nth(i);
+    if (!(await match.isVisible())) {
+      continue;
+    }
+
+    await match.click();
+    return true;
+  }
+
+  return false;
+}
+
+async function clickVisibleDropdownTitle(page, optionName) {
+  const options = page.getByTitle(optionName);
+  const optionCount = await options.count();
+
+  for (let i = optionCount - 1; i >= 0; i -= 1) {
+    const option = options.nth(i);
+    if (!(await option.isVisible())) {
+      continue;
+    }
+
+    await option.click();
+    return true;
+  }
+
+  return false;
+}
+
+async function clickVisibleTextViaDom(page, optionName) {
+  return page.evaluate((targetText) => {
+    const isVisible = (element) => {
+      if (!(element instanceof HTMLElement)) {
+        return false;
+      }
+
+      const style = window.getComputedStyle(element);
+      const rect = element.getBoundingClientRect();
+      return (
+        style.display !== "none" &&
+        style.visibility !== "hidden" &&
+        rect.width > 0 &&
+        rect.height > 0
+      );
+    };
+
+    const candidates = Array.from(
+      document.querySelectorAll("div, li, span")
+    ).filter(
+      (element) => isVisible(element) && element.textContent?.trim() === targetText
+    );
+
+    const target = candidates[candidates.length - 1];
+    if (!target) {
+      return false;
+    }
+
+    target.dispatchEvent(new MouseEvent("mousedown", { bubbles: true }));
+    target.dispatchEvent(new MouseEvent("mouseup", { bubbles: true }));
+    target.click();
+    return true;
+  }, optionName);
+}
+
+async function getVisibleOptionTextsViaDom(page) {
+  return page.evaluate(() => {
+    const isVisible = (element) => {
+      if (!(element instanceof HTMLElement)) {
+        return false;
+      }
+
+      const style = window.getComputedStyle(element);
+      const rect = element.getBoundingClientRect();
+      return (
+        style.display !== "none" &&
+        style.visibility !== "hidden" &&
+        rect.width > 0 &&
+        rect.height > 0
+      );
+    };
+
+    return Array.from(document.querySelectorAll("div, li, span"))
+      .filter((element) => isVisible(element))
+      .map((element) => element.textContent?.trim() || "")
+      .filter(
+        (text, index, allTexts) =>
+          text &&
+          text !== "No data" &&
+          !text.includes("\n") &&
+          text.length < 120 &&
+          allTexts.indexOf(text) === index
+      );
   });
+}
 
-  await expect(option.last()).toBeVisible();
-  await option.last().click();
+async function selectOption(page, index, optionName) {
+  await openSelect(page, index);
+
+  const selected = await clickVisibleDropdownText(page, optionName);
+  if (!selected) {
+    throw new Error(`Could not find option: ${optionName}`);
+  }
 }
 
 async function selectShippingOption(page, optionName) {
@@ -147,37 +259,22 @@ async function selectShippingOption(page, optionName) {
 }
 
 async function selectCategoryWithFallback(page, preferredName, excludeName) {
-  const combobox = await openSelect(page, 0);
-  await combobox.fill(preferredName);
+  const deadline = Date.now() + 5000;
 
-  const preferredOption = page.locator(".ant-select-item-option-content", {
-    hasText: new RegExp(`^${escapeRegExp(preferredName)}$`),
-  });
+  while (Date.now() < deadline) {
+    await openSelect(page, 0);
 
-  if (
-    (await preferredOption.count()) > 0 &&
-    (await preferredOption.last().isVisible())
-  ) {
-    await preferredOption.last().click();
-    return preferredName;
-  }
-
-  await combobox.fill("");
-
-  const options = page.locator(".ant-select-item-option-content");
-  const optionCount = await options.count();
-
-  for (let i = 0; i < optionCount; i += 1) {
-    const option = options.nth(i);
-    if (!(await option.isVisible())) {
-      continue;
+    if (
+      (await clickVisibleDropdownTitle(page, preferredName)) ||
+      (await clickVisibleDropdownText(page, preferredName)) ||
+      (await clickVisibleTextViaDom(page, preferredName))
+    ) {
+      await expect(page.locator(".ant-select").first()).toContainText(preferredName);
+      return preferredName;
     }
 
-    const optionName = normalizeText((await option.textContent()) || "");
-    if (optionName && optionName !== excludeName) {
-      await option.click();
-      return optionName;
-    }
+    await page.keyboard.press("Escape");
+    await page.waitForTimeout(250);
   }
 
   throw new Error(`Could not select any category option. Preferred: ${preferredName}`);
