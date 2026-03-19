@@ -34,6 +34,12 @@ module.exports = defineConfig({
         ...(mongoTargets
           ? { MONGO_URL: mongoTargets.playwrightMongoUrl }
           : {}),
+        BRAINTREE_MERCHANT_ID:
+          process.env.BRAINTREE_MERCHANT_ID || "playwright-merchant-id",
+        BRAINTREE_PUBLIC_KEY:
+          process.env.BRAINTREE_PUBLIC_KEY || "playwright-public-key",
+        BRAINTREE_PRIVATE_KEY:
+          process.env.BRAINTREE_PRIVATE_KEY || "playwright-private-key",
       },
     },
     {

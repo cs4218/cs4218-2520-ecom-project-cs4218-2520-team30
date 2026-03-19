@@ -144,7 +144,7 @@ UI Testing
 Added Playwright black-box admin order flows that log in through the UI, navigate from the admin dashboard to the orders page, view real order data, update a real order status, and verify the persisted result after returning to the orders page.
 
 Bug Fixes / Notes
-UI tests now run the real backend and frontend against a dedicated `playwright_ms2_ui` database, and Playwright cleanup only deletes exact Playwright-owned records identified by fixed `_id` values.
+UI tests now run the real backend and frontend against a dedicated `playwright_ms2_ui` database, and Playwright cleanup only deletes exact Playwright-owned records identified by fixed `_id` values. The Playwright backend startup also supplies fallback Braintree environment values when payment secrets are absent so the admin-orders UI flow can run in CI without touching payment features.
 
 ### Getting Started with Jest
 
