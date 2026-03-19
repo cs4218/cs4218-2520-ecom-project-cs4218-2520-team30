@@ -3,13 +3,75 @@ const { test, expect } = require("@playwright/test");
 const ADMIN_EMAIL = "playwright-admin@test.com";
 const ADMIN_PASSWORD = "adminpassword123";
 const RUN_ID = `${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+const TEST_DATA_PREFIX = "PW-MS2-";
 
 function uniqueName(prefix) {
-  return `PW-MS2-${prefix}-${RUN_ID}`;
+  return `${TEST_DATA_PREFIX}${prefix}-${RUN_ID}`;
 }
 
 function escapeRegExp(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function isUiTestEntityName(value) {
+  return (
+    typeof value === "string" &&
+    value.startsWith(TEST_DATA_PREFIX) &&
+    value.includes(RUN_ID)
+  );
+}
+
+async function getAdminApiToken(request) {
+  const loginResponse = await request.post("/api/v1/auth/login", {
+    data: {
+      email: ADMIN_EMAIL,
+      password: ADMIN_PASSWORD,
+    },
+  });
+
+  expect(loginResponse.ok()).toBeTruthy();
+
+  const loginBody = await loginResponse.json();
+  expect(loginBody.success).toBeTruthy();
+
+  return loginBody.token;
+}
+
+async function cleanupUiTestData(request) {
+  const token = await getAdminApiToken(request);
+  const headers = { Authorization: token };
+
+  const productsResponse = await request.get("/api/v1/product/get-product");
+  expect(productsResponse.ok()).toBeTruthy();
+
+  const { products = [] } = await productsResponse.json();
+  for (const product of products) {
+    if (!isUiTestEntityName(product.name)) {
+      continue;
+    }
+
+    const deleteProductResponse = await request.delete(
+      `/api/v1/product/delete-product/${product._id}`,
+      { headers }
+    );
+    expect(deleteProductResponse.ok()).toBeTruthy();
+  }
+
+  const categoriesResponse = await request.get("/api/v1/category/get-category");
+  expect(categoriesResponse.ok()).toBeTruthy();
+
+  const { category: categories = [] } = await categoriesResponse.json();
+  for (const category of categories) {
+    if (!isUiTestEntityName(category.name)) {
+      continue;
+    }
+
+    const deleteCategoryResponse = await request.delete(
+      `/api/v1/category/delete-category/${category._id}`,
+      { headers }
+    );
+    expect(deleteCategoryResponse.ok()).toBeTruthy();
+  }
 }
 
 async function loginAsAdmin(page) {
@@ -175,6 +237,14 @@ async function openProduct(page, productName) {
 
 // Alek Kwek, A0273471A
 test.describe("Admin management UI end-to-end flows", () => {
+  test.afterEach(async ({ request }) => {
+    await cleanupUiTestData(request);
+  });
+
+  test.afterAll(async ({ request }) => {
+    await cleanupUiTestData(request);
+  });
+
   // Alek Kwek, A0273471A
   test("admin can create, edit, and delete a category across admin pages", async ({
     page,
