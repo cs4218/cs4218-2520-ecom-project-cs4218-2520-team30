@@ -43,8 +43,20 @@ jobs:
           else
             echo "found=false" >> "$GITHUB_OUTPUT"
           fi
+      - name: Verify Playwright Mongo URL
+        if: steps.playwright-tests.outputs.found == 'true'
+        shell: bash
+        env:
+          MONGO_URL: ${{ secrets.MONGO_URL }}
+        run: |
+          if [ -z "$MONGO_URL" ]; then
+            echo "MONGO_URL GitHub secret is required for Playwright UI tests."
+            exit 1
+          fi
       - name: Run Playwright UI Tests
         if: steps.playwright-tests.outputs.found == 'true'
+        env:
+          MONGO_URL: ${{ secrets.MONGO_URL }}
         run: npm run test:ui
       - name: Skip Playwright UI Tests
         if: steps.playwright-tests.outputs.found != 'true'

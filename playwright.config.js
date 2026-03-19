@@ -1,8 +1,10 @@
+require("dotenv").config();
+
 const { defineConfig, devices } = require("@playwright/test");
 const { getMongoTargets } = require("./tests/uiTestUtils");
 
 const isCI = process.env.CI === "true";
-const mongoTargets = getMongoTargets();
+const mongoTargets = process.env.MONGO_URL ? getMongoTargets() : null;
 
 module.exports = defineConfig({
   testDir: "./tests",
@@ -29,7 +31,9 @@ module.exports = defineConfig({
       env: {
         ...process.env,
         PORT: "6060",
-        MONGO_URL: mongoTargets.playwrightMongoUrl,
+        ...(mongoTargets
+          ? { MONGO_URL: mongoTargets.playwrightMongoUrl }
+          : {}),
       },
     },
     {
