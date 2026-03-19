@@ -8,10 +8,10 @@ export default defineConfig({
   forbidOnly: isCI,
   retries: isCI ? 2 : 0,
   workers: isCI ? 1 : undefined,
-  timeout: 30_000,
+  timeout: 60_000,
   reporter: "html",
   expect: {
-    timeout: 5_000,
+    timeout: 10_000,
   },
   use: {
     baseURL: "http://localhost:3000",

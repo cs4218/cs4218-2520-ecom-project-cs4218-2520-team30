@@ -1,143 +1,95 @@
 import { test, expect } from "@playwright/test";
 
-test.beforeEach(async ({ page }) => {
-  await page.addInitScript(() => {
-    window.localStorage.setItem(
-      "auth",
-      JSON.stringify({
-        user: {
-          _id: "admin-user-id",
-          name: "Admin User",
-          email: "admin@example.com",
-          role: 1,
-        },
-        token: "mock-admin-token",
-      })
-    );
-  });
+import {
+  createCategory,
+  createProduct,
+  loginAsAdmin,
+  resetAdminTestData,
+} from "./uiTestUtils";
+
+test.beforeEach(async () => {
+  await resetAdminTestData();
 });
 
 // Alek Kwek, A0273471A
 test.describe("Create Product UI flow", () => {
   // Alek Kwek, A0273471A
-  test("admin can create a product and is redirected to all products", async ({
+  test("admin can create a product after creating its category and see it on the products page", async ({
     page,
   }) => {
-    const categories = [{ _id: "cat-1", name: "Electronics", slug: "electronics" }];
-    const products = [];
+    const categoryName = `UI Product Category ${Date.now()}`;
+    const productName = `Mirrorless Camera ${Date.now()}`;
+    const description = "Mirrorless test camera with kit lens";
 
-    await page.route("**/api/v1/auth/admin-auth", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({ ok: true }),
-      });
+    await loginAsAdmin(page);
+    await createCategory(page, categoryName);
+    await createProduct(page, {
+      categoryName,
+      name: productName,
+      description,
+      price: 1299,
+      quantity: 15,
+      imageName: "mirrorless-camera.png",
     });
 
-    await page.route("**/api/v1/category/get-category", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          success: true,
-          category: categories,
-        }),
-      });
+    const productCard = page.locator(".card").filter({ hasText: productName });
+    await expect(productCard).toHaveCount(1);
+    await expect(productCard.getByText(description)).toBeVisible();
+
+    await page.reload();
+    await expect(productCard).toHaveCount(1);
+  });
+
+  // Alek Kwek, A0273471A
+  test("admin can open an existing product from the list, update it, and see the new details persisted", async ({
+    page,
+  }) => {
+    const suffix = Date.now();
+    const categoryName = `UI Update Category ${suffix}`;
+    const productName = `UI Camera ${suffix}`;
+    const updatedProductName = `${productName} Pro`;
+    const description = "Starter camera listing for update flow";
+    const updatedDescription = "Updated camera listing with refreshed details";
+
+    await loginAsAdmin(page);
+    await createCategory(page, categoryName);
+    await createProduct(page, {
+      categoryName,
+      name: productName,
+      description,
+      price: 999,
+      quantity: 8,
+      imageName: "camera-update.png",
     });
 
-    await page.route("**/api/v1/product/create-product", async (route) => {
-      const requestBody = route.request().postDataBuffer().toString("utf8");
+    await page.getByRole("link", { name: new RegExp(productName, "i") }).click();
+    await expect(page).toHaveURL(/\/dashboard\/admin\/product\/.+/);
+    await expect(page.getByRole("heading", { name: /update product/i })).toBeVisible();
+    await expect(page.locator('input[placeholder="write a name"]')).toHaveValue(productName);
 
-      expect(requestBody).toContain("Camera");
-      expect(requestBody).toContain("Mirrorless test camera");
-      expect(requestBody).toContain("1299");
-      expect(requestBody).toContain("15");
-      expect(requestBody).toContain("cat-1");
-      expect(requestBody).toContain("1");
-      expect(requestBody).toContain("camera.png");
-
-      products.unshift({
-        _id: "product-1",
-        name: "Camera",
-        description: "Mirrorless test camera",
-        slug: "camera",
-      });
-
-      await route.fulfill({
-        status: 201,
-        contentType: "application/json",
-        body: JSON.stringify({
-          success: true,
-          message: "Product Created Successfully",
-          products: products[0],
-        }),
-      });
-    });
-
-    await page.route("**/api/v1/product/get-product", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          success: true,
-          products,
-        }),
-      });
-    });
-
-    await page.route("**/api/v1/product/product-photo/*", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "image/png",
-        body: Buffer.from(
-          "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9p0N8iAAAAAASUVORK5CYII=",
-          "base64"
-        ),
-      });
-    });
-
-    await page.goto("/dashboard/admin/create-product");
-
-    await expect(
-      page.getByRole("heading", { name: /create product/i })
-    ).toBeVisible();
-
-    await page.locator('input[placeholder="write a name"]').fill("Camera");
+    await page.locator('input[placeholder="write a name"]').fill(updatedProductName);
     await page
       .locator('textarea[placeholder="write a description"]')
-      .fill("Mirrorless test camera");
-    await page.locator('input[placeholder="write a Price"]').fill("1299");
-    await page.locator('input[placeholder="write a quantity"]').fill("15");
+      .fill(updatedDescription);
+    await page.locator('input[placeholder="write a Price"]').fill("1199");
+    await page.locator('input[placeholder="write a quantity"]').fill("11");
 
-    await page.locator(".ant-select").first().click();
-    await page
-      .locator(".ant-select-dropdown .ant-select-item-option-content", {
-        hasText: /^Electronics$/,
-      })
-      .click();
-
-    await page.locator(".ant-select").nth(1).click();
-    await page
-      .locator(".ant-select-dropdown .ant-select-item-option-content", {
-        hasText: /^Yes$/,
-      })
-      .click();
-
-    await page.setInputFiles('input[name="photo"]', {
-      name: "camera.png",
-      mimeType: "image/png",
-      buffer: Buffer.from("mock-image-content"),
-    });
-
-    await expect(page.getByText("camera.png")).toBeVisible();
-
-    await page.getByRole("button", { name: /create product/i }).click();
+    await page.getByRole("button", { name: /update product/i }).click();
 
     await expect(page).toHaveURL("/dashboard/admin/products");
+
+    const updatedCard = page.locator(".card").filter({
+      hasText: updatedProductName,
+    });
+    await expect(updatedCard).toHaveCount(1);
+    await expect(updatedCard.getByText(updatedDescription)).toBeVisible();
+
+    await page.getByRole("link", { name: new RegExp(updatedProductName, "i") }).click();
+    await expect(page.locator('input[placeholder="write a name"]')).toHaveValue(
+      updatedProductName
+    );
     await expect(
-      page.getByRole("heading", { name: /all products list/i })
-    ).toBeVisible();
-    await expect(page.getByText("Camera", { exact: true })).toBeVisible();
-    await expect(page.getByText("Mirrorless test camera", { exact: true })).toBeVisible();
+      page.locator('textarea[placeholder="write a description"]')
+    ).toHaveValue(updatedDescription);
   });
 });

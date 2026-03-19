@@ -170,3 +170,19 @@ To begin unit testing with Jest in your project, follow these steps:
      ```bash
      npm run test
      ```
+
+## 6. MS2 Contributions
+
+### Alek Kwek, A0273471A
+
+Integration Testing
+- Existing integration-testing contribution was left unchanged in this branch.
+
+UI Testing
+- Added Mongo-backed Playwright setup helpers for deterministic admin UI flows with a seeded admin account.
+- Added an end-to-end Playwright scenario for admin login, category creation, category edit, page reload, and category deletion.
+- Added end-to-end Playwright scenarios for admin login, category creation, product creation, products-page verification, and product update persistence.
+
+Bug Fixes / Notes
+- Updated the category-management modal to use Ant Design's current `open` prop and clear the create-category input after successful submission.
+- Fixed the product-update shipping selector so persisted shipping values map back to the correct option values during real UI edits.
