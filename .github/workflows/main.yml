@@ -5,13 +5,12 @@ name: Run Tests
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     strategy:
@@ -20,18 +19,40 @@ jobs:
         # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
     steps:
-    - uses: actions/checkout@v4
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ matrix.node-version }}
-        cache: 'npm'
+      - uses: actions/checkout@v4
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "npm"
 
-    - run: npm ci
-    - run: npm install
-    - name: Install Client Dependencies
-      run: |
-        cd client
-        npm install
-    - run: npm run test:frontend
-    - run: npm run test:backend
+      - run: npm ci
+      - run: npm install
+      - name: Install Client Dependencies
+        run: npm install --prefix ./client
+      - run: npm run test:frontend
+      - run: npm run test:backend
+      - name: Install Playwright Browser
+        run: npx playwright install --with-deps chromium
+      - name: Detect Playwright UI Tests
+        id: playwright-tests
+        shell: bash
+        run: |
+          if compgen -G "tests/*.ui.spec.js" > /dev/null; then
+            echo "found=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "found=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Run Playwright UI Tests
+        if: steps.playwright-tests.outputs.found == 'true'
+        run: npm run test:ui
+      - name: Skip Playwright UI Tests
+        if: steps.playwright-tests.outputs.found != 'true'
+        run: echo "No Playwright UI test files found under tests/. Skipping UI test run."
+      - name: Upload Playwright Report
+        if: always() && steps.playwright-tests.outputs.found == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          if-no-files-found: ignore
