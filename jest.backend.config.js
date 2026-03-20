@@ -12,6 +12,7 @@ export default {
     "**/middlewares/*.test.js",
     "**/helpers/*.test.js",
     "**/models/*.test.js",
+    "**/routes/*.test.js",
   ],
 
   // jest code coverage
