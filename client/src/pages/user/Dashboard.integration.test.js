@@ -15,7 +15,7 @@ jest.mock("axios");
 
 global.React = React;
 
-describe("Integrating Dashboard Page, UserMenu, PrivateRoute with the different Providers", () => {
+describe("Integrating Dashboard Page, UserMenu, PrivateRoute with the different Providers", () => { // Leong Soon Mun Stephane, A0273409B
 
     beforeEach(() => {
         jest.clearAllMocks();
@@ -35,7 +35,7 @@ describe("Integrating Dashboard Page, UserMenu, PrivateRoute with the different 
         localStorage.setItem("cart", JSON.stringify({}));
     });
 
-    it("should render all the UserMenu", async () => {
+    it("should render all the UserMenu", async () => { // Leong Soon Mun Stephane, A0273409B
         // Arrange
         axios.get.mockImplementation((url) => {
             if (url === "/api/v1/category/get-category") {
@@ -67,7 +67,7 @@ describe("Integrating Dashboard Page, UserMenu, PrivateRoute with the different 
         expect(screen.getByText('Orders')).toBeInTheDocument();
     });
 
-    it("should render Orders Page page on UserMenu click", async () => {
+    it("should render Orders Page page on UserMenu click", async () => { // Leong Soon Mun Stephane, A0273409B
         // Arrange
         axios.get.mockImplementation((url) => {
             if (url === "/api/v1/category/get-category") {
@@ -103,7 +103,7 @@ describe("Integrating Dashboard Page, UserMenu, PrivateRoute with the different 
         expect(screen.getByRole("heading", { level: 1, name: "All Orders" })).toBeInTheDocument();
     });
 
-    it("should render Profile Page page on UserMenu click", async () => {
+    it("should render Profile Page page on UserMenu click", async () => { // Leong Soon Mun Stephane, A0273409B
         // Arrange
         localStorage.setItem(
             "auth",
@@ -153,7 +153,7 @@ describe("Integrating Dashboard Page, UserMenu, PrivateRoute with the different 
         expect(screen.getByRole("heading", { level: 4, name: "USER PROFILE" })).toBeInTheDocument();
     });
 
-    it("should redirect to spinner if user is not authenticated", async () => {
+    it("should redirect to spinner if user is not authenticated", async () => { // Leong Soon Mun Stephane, A0273409B
         // Arrange
         axios.get.mockImplementation((url) => {
             if (url === "/api/v1/category/get-category") {
@@ -195,7 +195,7 @@ describe("Integrating Dashboard Page, UserMenu, PrivateRoute with the different 
     })
 
 
-    it("should render user auth information on dashboard", async () => {
+    it("should render user auth information on dashboard", async () => { // Leong Soon Mun Stephane, A0273409B
         // Arrange
         axios.get.mockImplementation((url) => {
             if (url === "/api/v1/category/get-category") {
