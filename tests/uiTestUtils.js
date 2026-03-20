@@ -15,6 +15,7 @@ import {
   PLAYWRIGHT_DB_NAME,
   PLAYWRIGHT_PREFIX,
   getBaseMongoUri,
+  getMongoHost,
   getPlaywrightMongoUri,
 } from "./playwrightDb.js";
 
@@ -40,7 +41,7 @@ export function getCleanupPlan(includeAdmin = false) {
   }
 
   return {
-    appMongoUri: getPlaywrightMongoUri(),
+    mongoHost: getMongoHost(getPlaywrightMongoUri()),
     appDbName: PLAYWRIGHT_DB_NAME,
     helperDbName: PLAYWRIGHT_DB_NAME,
     collections,
@@ -88,7 +89,7 @@ export async function cleanupPlaywrightData({ includeAdmin = false } = {}) {
     JSON.stringify(
       {
         cleanup: cleanupPlan,
-        baseMongoUri: getBaseMongoUri(),
+        mongoHost: getMongoHost(getBaseMongoUri()),
       },
       null,
       2
