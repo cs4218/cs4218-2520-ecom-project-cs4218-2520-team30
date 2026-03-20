@@ -26,24 +26,25 @@
 | **Payment** | Johannsen Lum | | - `controllers/productController.js`<br>  1. braintreeTokenController<br>  2. brainTreePaymentController |
 
 
-### UI Tests (Playwright) 
+### UI Tests (Playwright)
 
 
 
-| Feature | Team Member | Tests | Files Tested | Test Flow |
-|---------|-------------|-------|--------------|-----------|
-| **Registration** | Tay Kai Jun | 7 | `pages/Auth/Register.js` | Form display → Field validation (password length, phone format) → Successful registration → Duplicate email handling |
-| **Login** | Tay Kai Jun | 5 | `pages/Auth/Login.js` | Admin login → User login → Wrong password → Logout flow → Full user journey (register → login → cart) |
-| **Search** | Tay Kai Jun | 10 | `pages/Search.js`, `pages/ProductDetails.js`, `pages/CartPage.js` | Search products → View details → Add to cart → Cart persistence → Guest checkout |
+| Feature | Team Member | Test File | Files Tested | Test Flow |
+|---------|-------------|-----------|--------------|-----------|
+| **Registration** | Tay Kai Jun | `tests/ui/auth.spec.ts` | `pages/Auth/Register.js` | Form display → Field validation (password length, phone format) → Successful registration → Duplicate email handling |
+| **Login** | Tay Kai Jun | `tests/ui/auth.spec.ts` | `pages/Auth/Login.js` | Admin login → User login → Wrong password → Logout flow → Full user journey (register → login → cart) |
+| **Search** | Tay Kai Jun | `tests/ui/auth.spec.ts` | `pages/Search.js`, `pages/ProductDetails.js`, `pages/CartPage.js` | Search products → View details → Add to cart → Cart persistence → Guest checkout |
 
 
-### Integration Tests (Jest) 
+### Integration Tests (Jest)
 
 
-| Feature | Team Member | Tests | Components Tested | Test Flow |
-|---------|-------------|-------|-------------------|-----------|
-| **Login Controller** | Tay Kai Jun | 38 | `authController.loginController` ↔ `userModel` ↔ `authHelper` | User lookup (MongoDB) → Password comparison (bcrypt) → JWT token generation → Role-based response |
-| **Forgot Password** | Tay Kai Jun | 35 | `authController.forgotPasswordController` ↔ `userModel` ↔ `authHelper` | Email+answer validation → Password hashing → Database update → Multi-user isolation |
+| Feature | Team Member | Test File | Components Tested | Test Flow |
+|---------|-------------|-----------|-------------------|-----------|
+| **Register Controller** | Tay Kai Jun | `tests/integration/auth/register.integration.test.js` | `authController.registerController` ↔ `userModel` ↔ `authHelper` | Model validation → Password hashing → Database persistence → Duplicate email handling → Response formatting |
+| **Login Controller** | Tay Kai Jun | `tests/integration/auth/login.integration.test.js` | `authController.loginController` ↔ `userModel` ↔ `authHelper` | User lookup (MongoDB) → Password comparison (bcrypt) → JWT token generation → Role-based response |
+| **Forgot Password** | Tay Kai Jun | `tests/integration/auth/forgotPasswordController-userModel.integration.test.js` | `authController.forgotPasswordController` ↔ `userModel` ↔ `authHelper` | Email+answer validation → Password hashing → Database update → Multi-user isolation |
 
 
 ## 1. Project Introduction
