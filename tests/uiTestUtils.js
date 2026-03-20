@@ -7,6 +7,8 @@ import { fileURLToPath } from "url";
 
 export const PLAYWRIGHT_ADMIN_EMAIL = "playwright-admin@test.com";
 export const PLAYWRIGHT_ADMIN_PASSWORD = "adminpassword123";
+export const PLAYWRIGHT_USER_EMAIL = "playwright-user@test.com";
+export const PLAYWRIGHT_USER_PASSWORD = "userpassword123";
 
 const PLAYWRIGHT_PREFIX = "__playwright__";
 const DEFAULT_PLAYWRIGHT_MONGO_URL =
@@ -27,16 +29,9 @@ const cleanupTargets = [
     filter: { name: { $regex: `^${PLAYWRIGHT_PREFIX}` } },
     printableFilter: '{ "name": { "$regex": "^__playwright__" } }',
   },
-  {
-    collection: "users",
-    filter: { email: PLAYWRIGHT_ADMIN_EMAIL },
-    printableFilter: '{ "email": "playwright-admin@test.com" }',
-  },
 ];
 
-const artifactCleanupTargets = cleanupTargets.filter(
-  (target) => target.collection !== "users"
-);
+const artifactCleanupTargets = cleanupTargets;
 
 const addDatabaseNameToMongoUrl = (mongoUrl, databaseName) => {
   const [baseUrl, queryString] = mongoUrl.split("?");
@@ -139,20 +134,38 @@ export const cleanupPlaywrightArtifacts = async (label) =>
   cleanupTargetsInDatabase(label, artifactCleanupTargets);
 
 export const ensurePlaywrightAdmin = async () => {
+  await ensurePlaywrightUser({
+    name: "Playwright Admin",
+    email: PLAYWRIGHT_ADMIN_EMAIL,
+    password: PLAYWRIGHT_ADMIN_PASSWORD,
+    role: 1,
+  });
+};
+
+export const ensurePlaywrightRegularUser = async () => {
+  await ensurePlaywrightUser({
+    name: "Playwright User",
+    email: PLAYWRIGHT_USER_EMAIL,
+    password: PLAYWRIGHT_USER_PASSWORD,
+    role: 0,
+  });
+};
+
+const ensurePlaywrightUser = async ({ name, email, password, role }) => {
   await withDatabase(async (db) => {
-    const hashedPassword = await bcrypt.hash(PLAYWRIGHT_ADMIN_PASSWORD, 10);
+    const hashedPassword = await bcrypt.hash(password, 10);
 
     await db.collection("users").updateOne(
-      { email: PLAYWRIGHT_ADMIN_EMAIL },
+      { email },
       {
         $set: {
-          name: "Playwright Admin",
-          email: PLAYWRIGHT_ADMIN_EMAIL,
+          name,
+          email,
           password: hashedPassword,
           phone: "1234567890",
           address: "Playwright Address",
           answer: "Playwright Answer",
-          role: 1,
+          role,
         },
       },
       { upsert: true }

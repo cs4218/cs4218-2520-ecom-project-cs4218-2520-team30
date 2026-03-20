@@ -23,6 +23,7 @@ const UpdateProduct = () => {
   const navigate = useNavigate();
   const params = useParams();
   const [categories, setCategories] = useState([]);
+  const [isLoadingProduct, setIsLoadingProduct] = useState(true);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
@@ -34,6 +35,7 @@ const UpdateProduct = () => {
 
   //get single product
   const getSingleProduct = async () => {
+    setIsLoadingProduct(true);
     try {
       const { data } = await axios.get(
         `/api/v1/product/get-product/${params.slug}`
@@ -48,6 +50,9 @@ const UpdateProduct = () => {
       setCategory(data.product.category._id);
     } catch (error) {
       console.log(error);
+      toast.error("Something went wrong in getting product");
+    } finally {
+      setIsLoadingProduct(false);
     }
   };
   useEffect(() => {
@@ -74,6 +79,10 @@ const UpdateProduct = () => {
   //create product function
   const handleUpdate = async (e) => {
     e.preventDefault();
+    if (!id) {
+      toast.error("Product details are still loading");
+      return;
+    }
     try {
       const productData = new FormData();
       productData.append("name", name);
@@ -107,14 +116,22 @@ const UpdateProduct = () => {
 
   //delete a product
   const handleDelete = async () => {
+    if (!id) {
+      toast.error("Product details are still loading");
+      return;
+    }
     try {
       let answer = window.prompt("Are You Sure want to delete this product ? ");
       if (!answer) return;
       const { data } = await axios.delete(
         `/api/v1/product/delete-product/${id}`
       );
-      toast.success("Product DEleted Succfully");
-      navigate("/dashboard/admin/products");
+      if (data?.success) {
+        toast.success("Product DEleted Succfully");
+        navigate("/dashboard/admin/products");
+      } else {
+        toast.error(data?.message || "Something went wrong");
+      }
     } catch (error) {
       console.log(error);
       toast.error("Something went wrong");
@@ -169,7 +186,7 @@ const UpdateProduct = () => {
                       className="img img-responsive"
                     />
                   </div>
-                ) : (
+                ) : id ? (
                   <div className="text-center">
                     <img
                       src={`/api/v1/product/product-photo/${id}`}
@@ -178,7 +195,12 @@ const UpdateProduct = () => {
                       className="img img-responsive"
                     />
                   </div>
-                )}
+                ) : null}
+              </div>
+              <div className="mb-3">
+                {isLoadingProduct ? (
+                  <p className="text-muted mb-0">Loading product details...</p>
+                ) : null}
               </div>
               <div className="mb-3">
                 <input
@@ -234,12 +256,20 @@ const UpdateProduct = () => {
                 </Select>
               </div>
               <div className="mb-3">
-                <button className="btn btn-primary" onClick={handleUpdate}>
+                <button
+                  className="btn btn-primary"
+                  onClick={handleUpdate}
+                  disabled={!id || isLoadingProduct}
+                >
                   UPDATE PRODUCT
                 </button>
               </div>
               <div className="mb-3">
-                <button className="btn btn-danger" onClick={handleDelete}>
+                <button
+                  className="btn btn-danger"
+                  onClick={handleDelete}
+                  disabled={!id || isLoadingProduct}
+                >
                   DELETE PRODUCT
                 </button>
               </div>
