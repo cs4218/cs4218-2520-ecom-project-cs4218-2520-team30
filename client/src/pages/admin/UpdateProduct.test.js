@@ -204,6 +204,27 @@ describe('UpdateProduct Component', () => {
         expect(screen.getByTestId('select-shipping-')).toHaveValue('0');
     });
 
+    it('should default shipping to the empty option when the product has no shipping value', async () => {
+        axios.get
+            .mockResolvedValueOnce({
+                data: {
+                    product: {
+                        ...mockProduct,
+                        shipping: null,
+                    },
+                },
+            })
+            .mockResolvedValueOnce({ data: { success: true, category: mockCategories } });
+
+        renderUpdateProduct();
+
+        await waitFor(() => {
+            expect(screen.getByPlaceholderText(/write a name/i).value).toBe('Test Product');
+        });
+
+        expect(screen.getByTestId('select-shipping-')).toHaveValue('');
+    });
+
     // ----------------------------------------------------------
     // HAPPY PATH: Fetches product and categories on mount
     // ----------------------------------------------------------
