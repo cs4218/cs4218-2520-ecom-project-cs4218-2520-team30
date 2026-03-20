@@ -26,6 +26,27 @@
 | **Payment** | Johannsen Lum | | - `controllers/productController.js`<br>  1. braintreeTokenController<br>  2. brainTreePaymentController |
 
 
+### UI Tests (Playwright)
+
+
+
+| Feature | Team Member | Test File | Files Tested | Test Flow |
+|---------|-------------|-----------|--------------|-----------|
+| **Registration** | Tay Kai Jun | `tests/ui/auth.spec.ts` | `pages/Auth/Register.js` | Form display → Field validation (password length, phone format) → Successful registration → Duplicate email handling |
+| **Login** | Tay Kai Jun | `tests/ui/auth.spec.ts` | `pages/Auth/Login.js` | Admin login → User login → Wrong password → Logout flow → Full user journey (register → login → cart) |
+| **Search** | Tay Kai Jun | `tests/ui/auth.spec.ts` | `pages/Search.js`, `pages/ProductDetails.js`, `pages/CartPage.js` | Search products → View details → Add to cart → Cart persistence → Guest checkout |
+
+
+### Integration Tests (Jest)
+
+
+| Feature | Team Member | Test File | Components Tested | Test Flow |
+|---------|-------------|-----------|-------------------|-----------|
+| **Register Controller** | Tay Kai Jun | `tests/integration/auth/register.integration.test.js` | `authController.registerController` ↔ `userModel` ↔ `authHelper` | Model validation → Password hashing → Database persistence → Duplicate email handling → Response formatting |
+| **Login Controller** | Tay Kai Jun | `tests/integration/auth/login.integration.test.js` | `authController.loginController` ↔ `userModel` ↔ `authHelper` | User lookup (MongoDB) → Password comparison (bcrypt) → JWT token generation → Role-based response |
+| **Forgot Password** | Tay Kai Jun | `tests/integration/auth/forgotPasswordController-userModel.integration.test.js` | `authController.forgotPasswordController` ↔ `userModel` ↔ `authHelper` | Email+answer validation → Password hashing → Database update → Multi-user isolation |
+
+
 ## 1. Project Introduction
 
 Virtual Vault is a full-stack MERN (MongoDB, Express.js, React.js, Node.js) e-commerce website, offering seamless connectivity and user-friendly features. The platform provides a robust framework for online shopping. The website is designed to adapt to evolving business needs and can be efficiently extended.
@@ -176,13 +197,14 @@ To begin unit testing with Jest in your project, follow these steps:
 ### Alek Kwek, A0273471A
 
 Integration Testing
-- Existing integration-testing contribution was left unchanged in this branch.
+- Existing integration-testing contribution was left unchanged in this review.
 
 UI Testing
-- Added Mongo-backed Playwright setup helpers for deterministic admin UI flows with a seeded admin account.
-- Added an end-to-end Playwright scenario for admin login, category creation, category edit, page reload, and category deletion.
-- Added end-to-end Playwright scenarios for admin login, category creation, product creation, products-page verification, and product update persistence.
+- Replaced the mocked Playwright category test with black-box admin login, category CRUD, and product CRUD flows against the real frontend and backend.
+- Added Mongo-backed Playwright setup helpers for deterministic admin UI flows, seeded catalog data, and isolated app instances for Playwright runs.
+- Added end-to-end Playwright coverage for category creation, edit, reload persistence, deletion, product creation, products-page verification, and product update persistence.
 
 Bug Fixes / Notes
 - Updated the category-management modal to use Ant Design's current `open` prop and clear the create-category input after successful submission.
-- Fixed the product-update shipping selector so persisted shipping values map back to the correct option values during real UI edits.
+- UI-test startup now avoids reusing unknown existing servers and avoids inheriting the unsafe default `.env` Mongo target during Playwright runs.
+- The admin product delete route now requires authenticated admin access, and the product update shipping selector preserves the correct option value in real UI flows.

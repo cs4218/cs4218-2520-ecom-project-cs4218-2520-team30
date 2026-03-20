@@ -1,32 +1,37 @@
+// Alek Kwek, A0273471A
 import { test, expect } from "@playwright/test";
 
 import {
-  clearAdminTestData,
+  cleanupPlaywrightArtifacts,
+  cleanupPlaywrightData,
   createCategory,
+  ensurePlaywrightAdmin,
   loginAsAdmin,
-  PLAYWRIGHT_PREFIX,
-  resetAdminTestData,
-} from "./uiTestUtils";
+  makePlaywrightName,
+} from "./uiTestUtils.js";
 
 const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
-test.beforeEach(async () => {
-  await resetAdminTestData();
-});
+test.describe.serial("Admin UI flows", () => {
+  test.beforeAll(async () => {
+    await cleanupPlaywrightData("beforeAll");
+    await ensurePlaywrightAdmin();
+  });
 
-test.afterEach(async () => {
-  await clearAdminTestData();
-});
+  test.afterEach(async () => {
+    await cleanupPlaywrightArtifacts("afterEach");
+  });
 
-// Alek Kwek, A0273471A
-test.describe("Create Category UI flow", () => {
+  test.afterAll(async () => {
+    await cleanupPlaywrightData("afterAll");
+  });
+
   // Alek Kwek, A0273471A
   test("admin can create, edit, reload, and delete a category through the admin UI", async ({
     page,
   }) => {
-    const suffix = Date.now();
-    const createdCategoryName = `${PLAYWRIGHT_PREFIX} category ${suffix}`;
-    const updatedCategoryName = `${PLAYWRIGHT_PREFIX} renamed category ${suffix}`;
+    const createdCategoryName = makePlaywrightName("category");
+    const updatedCategoryName = makePlaywrightName("category updated");
 
     await loginAsAdmin(page);
     await createCategory(page, createdCategoryName);
@@ -53,7 +58,6 @@ test.describe("Create Category UI flow", () => {
 
     await page.reload();
     await expect(updatedRow).toHaveCount(1);
-
     await updatedRow.getByRole("button", { name: "Delete" }).click();
     await expect(updatedRow).toHaveCount(0);
   });

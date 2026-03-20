@@ -7,7 +7,7 @@ import {
   loginAsAdmin,
   PLAYWRIGHT_PREFIX,
   resetAdminTestData,
-} from "./uiTestUtils";
+} from "./uiTestUtils.js";
 
 test.beforeEach(async () => {
   await resetAdminTestData();
@@ -97,5 +97,10 @@ test.describe("Create Product UI flow", () => {
     await expect(
       page.locator('textarea[placeholder="write a description"]')
     ).toHaveValue(updatedDescription);
+
+    page.once("dialog", (dialog) => dialog.accept("delete"));
+    await page.getByRole("button", { name: /delete product/i }).click();
+    await expect(page).toHaveURL("/dashboard/admin/products");
+    await expect(updatedCard).toHaveCount(0);
   });
 });
