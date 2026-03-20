@@ -15,7 +15,7 @@ jest.mock("axios");
 
 global.React = React;
 
-describe("Integrating Dashboard Page, UserMenu, PrivateRoute and the different Providers", () => {
+describe("Integrating Dashboard Page, UserMenu, PrivateRoute with the different Providers", () => {
 
     beforeEach(() => {
         jest.clearAllMocks();
