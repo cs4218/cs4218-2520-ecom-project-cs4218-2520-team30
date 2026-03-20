@@ -26,6 +26,27 @@
 | **Payment** | Johannsen Lum | | - `controllers/productController.js`<br>  1. braintreeTokenController<br>  2. brainTreePaymentController |
 
 
+### UI Tests (Playwright)
+
+
+
+| Feature | Team Member | Test File | Files Tested | Test Flow |
+|---------|-------------|-----------|--------------|-----------|
+| **Registration** | Tay Kai Jun | `tests/ui/auth.spec.ts` | `pages/Auth/Register.js` | Form display → Field validation (password length, phone format) → Successful registration → Duplicate email handling |
+| **Login** | Tay Kai Jun | `tests/ui/auth.spec.ts` | `pages/Auth/Login.js` | Admin login → User login → Wrong password → Logout flow → Full user journey (register → login → cart) |
+| **Search** | Tay Kai Jun | `tests/ui/auth.spec.ts` | `pages/Search.js`, `pages/ProductDetails.js`, `pages/CartPage.js` | Search products → View details → Add to cart → Cart persistence → Guest checkout |
+
+
+### Integration Tests (Jest)
+
+
+| Feature | Team Member | Test File | Components Tested | Test Flow |
+|---------|-------------|-----------|-------------------|-----------|
+| **Register Controller** | Tay Kai Jun | `tests/integration/auth/register.integration.test.js` | `authController.registerController` ↔ `userModel` ↔ `authHelper` | Model validation → Password hashing → Database persistence → Duplicate email handling → Response formatting |
+| **Login Controller** | Tay Kai Jun | `tests/integration/auth/login.integration.test.js` | `authController.loginController` ↔ `userModel` ↔ `authHelper` | User lookup (MongoDB) → Password comparison (bcrypt) → JWT token generation → Role-based response |
+| **Forgot Password** | Tay Kai Jun | `tests/integration/auth/forgotPasswordController-userModel.integration.test.js` | `authController.forgotPasswordController` ↔ `userModel` ↔ `authHelper` | Email+answer validation → Password hashing → Database update → Multi-user isolation |
+
+
 ## 1. Project Introduction
 
 Virtual Vault is a full-stack MERN (MongoDB, Express.js, React.js, Node.js) e-commerce website, offering seamless connectivity and user-friendly features. The platform provides a robust framework for online shopping. The website is designed to adapt to evolving business needs and can be efficiently extended.
@@ -182,3 +203,4 @@ Playwright now launches isolated app instances for UI tests and uses strict Play
 Bug Fixes / Notes
 UI-test startup now avoids reusing unknown existing servers and avoids inheriting the unsafe default `.env` Mongo target during Playwright runs.
 The admin product delete route now requires authenticated admin access, and the product update shipping select now preserves the correct option value in real UI flows.
+
