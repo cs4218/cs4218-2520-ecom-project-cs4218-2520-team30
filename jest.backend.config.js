@@ -1,6 +1,9 @@
 export default {
   displayName: "backend",
   testEnvironment: "node",
+  transform: {
+    "^.+\\.js$": "babel-jest",
+  },
   testMatch: [
     "**/controllers/*.test.js",
     "**/config/*.test.js",

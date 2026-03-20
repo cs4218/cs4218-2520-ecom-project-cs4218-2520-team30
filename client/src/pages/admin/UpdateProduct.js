@@ -42,9 +42,8 @@ const UpdateProduct = () => {
       setId(data.product._id);
       setDescription(data.product.description);
       setPrice(data.product.price);
-      setPrice(data.product.price);
       setQuantity(data.product.quantity);
-      setShipping(data.product.shipping);
+      setShipping(getShippingSelectValue(data.product.shipping) ?? "");
       setCategory(data.product.category._id);
     } catch (error) {
       console.log(error);
@@ -128,7 +127,7 @@ const UpdateProduct = () => {
     }
   };
   return (
-    <Layout title={"Dashboard - Create Product"}>
+    <Layout title={"Dashboard - Update Product"}>
       <div className="container-fluid m-3 p-3">
         <div className="row">
           <div className="col-md-3">
@@ -142,6 +141,7 @@ const UpdateProduct = () => {
                 placeholder="Select a category"
                 size="large"
                 showSearch
+                optionFilterProp="children"
                 className="form-select mb-3"
                 onChange={(value) => {
                   setCategory(value);
