@@ -170,3 +170,17 @@ To begin unit testing with Jest in your project, follow these steps:
      ```bash
      npm run test
      ```
+
+### Alek Kwek, A0273471A
+
+Integration Testing
+
+No integration testing changes were made on this branch.
+
+UI Testing
+
+Added Playwright end-to-end admin flows for category create/edit/delete and product create/update/delete, with strict `__playwright__` data markers, dedicated Playwright database isolation, and targeted teardown for Playwright-owned records only.
+
+Bug Fixes / Notes
+
+Playwright now starts its own backend/frontend servers without reusing existing local servers, seeds a dedicated Playwright admin user into the isolated Playwright database, and enforces admin auth on the product delete route used by the admin product management flow.

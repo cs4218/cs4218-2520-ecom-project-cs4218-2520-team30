@@ -1,4 +1,8 @@
 import { defineConfig, devices } from "@playwright/test";
+import {
+  PLAYWRIGHT_APP_PORT,
+  PLAYWRIGHT_CLIENT_PORT,
+} from "./tests/playwrightDb.js";
 
 const isCI = process.env.CI === "true";
 
@@ -7,6 +11,8 @@ const isCI = process.env.CI === "true";
  */
 export default defineConfig({
   testDir: "./tests",
+  globalSetup: "./tests/globalSetup.js",
+  globalTeardown: "./tests/globalTeardown.js",
   /* CI/CD and worker configuration from branch */
   fullyParallel: false,
   forbidOnly: isCI,
@@ -19,21 +25,21 @@ export default defineConfig({
     timeout: 5_000,
   },
   use: {
-    baseURL: "http://localhost:3000",
+    baseURL: `http://127.0.0.1:${PLAYWRIGHT_CLIENT_PORT}`,
     trace: "on-first-retry",
   },
   /* webServer config from main */
   webServer: [
     {
-      command: "PORT=6060 npm start",
-      url: "http://localhost:6060",
-      reuseExistingServer: !isCI,
+      command: "node tests/startUiBackend.js",
+      url: `http://127.0.0.1:${PLAYWRIGHT_APP_PORT}`,
+      reuseExistingServer: false,
       timeout: 120_000,
     },
     {
-      command: "PORT=3000 BROWSER=none npm run client",
-      url: "http://localhost:3000",
-      reuseExistingServer: !isCI,
+      command: "node tests/startUiFrontend.js",
+      url: `http://127.0.0.1:${PLAYWRIGHT_CLIENT_PORT}`,
+      reuseExistingServer: false,
       timeout: 120_000,
     },
   ],

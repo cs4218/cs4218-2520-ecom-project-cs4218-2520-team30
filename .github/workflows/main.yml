@@ -16,6 +16,7 @@ jobs:
       PORT: 6060
       DEV_MODE: test
       MONGO_URL: mongodb://127.0.0.1:27017/ecom-playwright
+      PLAYWRIGHT_DB_NAME: ecom-playwright-ui
       JWT_SECRET: test-jwt-secret
       BRAINTREE_MERCHANT_ID: test-merchant-id
       BRAINTREE_PUBLIC_KEY: test-public-key
