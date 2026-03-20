@@ -79,10 +79,6 @@ const UpdateProduct = () => {
   //create product function
   const handleUpdate = async (e) => {
     e.preventDefault();
-    if (!id) {
-      toast.error("Product details are still loading");
-      return;
-    }
     try {
       const productData = new FormData();
       productData.append("name", name);
@@ -116,10 +112,6 @@ const UpdateProduct = () => {
 
   //delete a product
   const handleDelete = async () => {
-    if (!id) {
-      toast.error("Product details are still loading");
-      return;
-    }
     try {
       let answer = window.prompt("Are You Sure want to delete this product ? ");
       if (!answer) return;

@@ -93,6 +93,16 @@ const renderUpdateProduct = () => {
     );
 };
 
+const waitForProductToLoad = async () => {
+    await waitFor(() => {
+        expect(screen.getByPlaceholderText(/write a name/i).value).toBe('Test Product');
+    });
+    await waitFor(() => {
+        expect(screen.getByRole('button', { name: /update product/i })).not.toBeDisabled();
+        expect(screen.getByRole('button', { name: /delete product/i })).not.toBeDisabled();
+    });
+};
+
 // Mock product data
 const mockProduct = {
     _id: 'prod-123',
@@ -136,9 +146,7 @@ describe('UpdateProduct Component', () => {
         // Act
         renderUpdateProduct();
 
-        await waitFor(() => {
-            expect(screen.getByPlaceholderText(/write a name/i).value).toBe('Test Product');
-        });
+        await waitForProductToLoad();
 
         // Clear name field
         fireEvent.change(screen.getByPlaceholderText(/write a name/i), { target: { value: '' } });
@@ -209,9 +217,7 @@ describe('UpdateProduct Component', () => {
         // Act
         renderUpdateProduct();
 
-        await waitFor(() => {
-            expect(screen.getByPlaceholderText(/write a name/i)).toBeInTheDocument();
-        });
+        await waitForProductToLoad();
 
         // Update the product name
         fireEvent.change(screen.getByPlaceholderText(/write a name/i), {
@@ -244,9 +250,7 @@ describe('UpdateProduct Component', () => {
         // Act
         renderUpdateProduct();
 
-        await waitFor(() => {
-            expect(screen.getByRole('button', { name: /delete product/i })).toBeInTheDocument();
-        });
+        await waitForProductToLoad();
 
         // Click delete button
         fireEvent.click(screen.getByRole('button', { name: /delete product/i }));
@@ -276,9 +280,7 @@ describe('UpdateProduct Component', () => {
         // Act
         renderUpdateProduct();
 
-        await waitFor(() => {
-            expect(screen.getByPlaceholderText(/write a name/i)).toBeInTheDocument();
-        });
+        await waitForProductToLoad();
 
         // Click delete button
         fireEvent.click(screen.getByRole('button', { name: /delete product/i }));
@@ -392,9 +394,7 @@ describe('UpdateProduct Component', () => {
         renderUpdateProduct();
 
         // Wait for product data to be loaded (id is set)
-        await waitFor(() => {
-            expect(screen.getByPlaceholderText(/write a name/i).value).toBe('Test Product');
-        });
+        await waitForProductToLoad();
 
         // Click delete button
         fireEvent.click(screen.getByRole('button', { name: /delete product/i }));
@@ -405,6 +405,61 @@ describe('UpdateProduct Component', () => {
         });
         expect(toast.success).toHaveBeenCalledWith('Product DEleted Succfully');
         expect(mockNavigate).toHaveBeenCalledWith('/dashboard/admin/products');
+    });
+
+    it('should display error toast when delete returns success false', async () => {
+        axios.get.mockImplementation((url) => {
+            if (url.includes('/get-product/')) {
+                return Promise.resolve({ data: { product: mockProduct } });
+            }
+            if (url.includes('/get-category')) {
+                return Promise.resolve({ data: { success: true, category: mockCategories } });
+            }
+            return Promise.resolve({ data: {} });
+        });
+        axios.delete.mockResolvedValueOnce({
+            data: { success: false, message: 'Delete failed' }
+        });
+        window.prompt = jest.fn(() => 'yes');
+
+        renderUpdateProduct();
+
+        await waitForProductToLoad();
+
+        fireEvent.click(screen.getByRole('button', { name: /delete product/i }));
+
+        await waitFor(() => {
+            expect(axios.delete).toHaveBeenCalled();
+        });
+        expect(toast.error).toHaveBeenCalledWith('Delete failed');
+        expect(mockNavigate).not.toHaveBeenCalledWith('/dashboard/admin/products');
+    });
+
+    it('should display default error toast when delete returns success false without a message', async () => {
+        axios.get.mockImplementation((url) => {
+            if (url.includes('/get-product/')) {
+                return Promise.resolve({ data: { product: mockProduct } });
+            }
+            if (url.includes('/get-category')) {
+                return Promise.resolve({ data: { success: true, category: mockCategories } });
+            }
+            return Promise.resolve({ data: {} });
+        });
+        axios.delete.mockResolvedValueOnce({
+            data: { success: false }
+        });
+        window.prompt = jest.fn(() => 'yes');
+
+        renderUpdateProduct();
+
+        await waitForProductToLoad();
+
+        fireEvent.click(screen.getByRole('button', { name: /delete product/i }));
+
+        await waitFor(() => {
+            expect(axios.delete).toHaveBeenCalled();
+        });
+        expect(toast.error).toHaveBeenCalledWith('Something went wrong');
     });
 
     // ----------------------------------------------------------
@@ -420,9 +475,7 @@ describe('UpdateProduct Component', () => {
         renderUpdateProduct();
 
         // Wait for product data to be loaded first
-        await waitFor(() => {
-            expect(screen.getByPlaceholderText(/write a name/i).value).toBe('Test Product');
-        });
+        await waitForProductToLoad();
 
         // Select a different category
         const categorySelect = screen.getByTestId('select-a-category');
@@ -500,9 +553,7 @@ describe('UpdateProduct Component', () => {
         renderUpdateProduct();
 
         // Wait for product data to be loaded
-        await waitFor(() => {
-            expect(screen.getByPlaceholderText(/write a name/i).value).toBe('Test Product');
-        });
+        await waitForProductToLoad();
 
         // Select shipping option
         const shippingSelect = screen.getByTestId('select-shipping-');
@@ -533,9 +584,7 @@ describe('UpdateProduct Component', () => {
         // Act
         renderUpdateProduct();
 
-        await waitFor(() => {
-            expect(screen.getByPlaceholderText(/write a name/i).value).toBe('Test Product');
-        });
+        await waitForProductToLoad();
 
         // Click update button
         fireEvent.click(screen.getByRole('button', { name: /update product/i }));
@@ -567,9 +616,7 @@ describe('UpdateProduct Component', () => {
         // Act
         renderUpdateProduct();
 
-        await waitFor(() => {
-            expect(screen.getByPlaceholderText(/write a name/i).value).toBe('Test Product');
-        });
+        await waitForProductToLoad();
 
         // Click update button
         fireEvent.click(screen.getByRole('button', { name: /update product/i }));
@@ -601,9 +648,7 @@ describe('UpdateProduct Component', () => {
         // Act
         renderUpdateProduct();
 
-        await waitFor(() => {
-            expect(screen.getByPlaceholderText(/write a name/i).value).toBe('Test Product');
-        });
+        await waitForProductToLoad();
 
         // Click update button
         fireEvent.click(screen.getByRole('button', { name: /update product/i }));
@@ -660,9 +705,7 @@ describe('UpdateProduct Component', () => {
         // Act
         renderUpdateProduct();
 
-        await waitFor(() => {
-            expect(screen.getByPlaceholderText(/write a name/i).value).toBe('Test Product');
-        });
+        await waitForProductToLoad();
 
         // Update name without uploading photo
         fireEvent.change(screen.getByPlaceholderText(/write a name/i), {
@@ -704,9 +747,7 @@ describe('UpdateProduct Component', () => {
         // Act
         renderUpdateProduct();
 
-        await waitFor(() => {
-            expect(screen.getByPlaceholderText(/write a name/i).value).toBe('Test Product');
-        });
+        await waitForProductToLoad();
 
         // Upload a new photo
         const file = new File(['test'], 'newphoto.png', { type: 'image/png' });
