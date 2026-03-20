@@ -4,6 +4,7 @@ import { test, expect, type Page } from "@playwright/test";
 import {
   PLAYWRIGHT_ADMIN_EMAIL,
   PLAYWRIGHT_ADMIN_PASSWORD,
+  ensurePlaywrightCatalog,
   PLAYWRIGHT_USER_EMAIL,
   PLAYWRIGHT_USER_PASSWORD,
   ensurePlaywrightAdmin,
@@ -212,6 +213,7 @@ test.describe("Registration Page E2E Tests", () => {
 
 test.describe("Login Page E2E Tests", () => {
   test.beforeAll(async () => {
+    await ensurePlaywrightCatalog();
     await ensurePlaywrightAdmin();
     await ensurePlaywrightRegularUser();
   });

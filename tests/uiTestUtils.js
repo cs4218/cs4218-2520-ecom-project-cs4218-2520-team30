@@ -1,5 +1,6 @@
 // Alek Kwek, A0273471A
 import bcrypt from "bcrypt";
+import fs from "fs";
 import { expect } from "@playwright/test";
 import { MongoClient } from "mongodb";
 import path from "path";
@@ -14,6 +15,25 @@ const PLAYWRIGHT_PREFIX = "__playwright__";
 const DEFAULT_PLAYWRIGHT_MONGO_URL =
   "mongodb://127.0.0.1:27017/ecom-playwright";
 const PLAYWRIGHT_DB_NAME = "ecom-playwright";
+const PLAYWRIGHT_SEED_CATEGORY_SLUG = "playwright-seeded-category";
+const PLAYWRIGHT_SEED_PRODUCTS = [
+  {
+    slug: "playwright-alpha-product",
+    name: "Playwright Alpha Product",
+    description: "A seeded Playwright alpha catalog item for search and cart flows.",
+    price: 19,
+    quantity: 12,
+    shipping: true,
+  },
+  {
+    slug: "playwright-beta-product",
+    name: "Playwright Beta Product",
+    description: "A seeded Playwright beta catalog item for multi-result search coverage.",
+    price: 29,
+    quantity: 8,
+    shipping: false,
+  },
+];
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -148,6 +168,59 @@ export const ensurePlaywrightRegularUser = async () => {
     email: PLAYWRIGHT_USER_EMAIL,
     password: PLAYWRIGHT_USER_PASSWORD,
     role: 0,
+  });
+};
+
+export const ensurePlaywrightCatalog = async () => {
+  await withDatabase(async (db) => {
+    const now = new Date();
+    const fixturePath = getProductFixturePath();
+    const photoData = fs.readFileSync(fixturePath);
+
+    await db.collection("categories").updateOne(
+      { slug: PLAYWRIGHT_SEED_CATEGORY_SLUG },
+      {
+        $set: {
+          name: "Playwright Seeded Category",
+          slug: PLAYWRIGHT_SEED_CATEGORY_SLUG,
+        },
+      },
+      { upsert: true }
+    );
+
+    const seededCategory = await db
+      .collection("categories")
+      .findOne({ slug: PLAYWRIGHT_SEED_CATEGORY_SLUG });
+
+    if (!seededCategory?._id) {
+      throw new Error("Playwright could not seed the test category.");
+    }
+
+    for (const product of PLAYWRIGHT_SEED_PRODUCTS) {
+      await db.collection("products").updateOne(
+        { slug: product.slug },
+        {
+          $set: {
+            name: product.name,
+            slug: product.slug,
+            description: product.description,
+            price: product.price,
+            category: seededCategory._id,
+            quantity: product.quantity,
+            shipping: product.shipping,
+            photo: {
+              data: photoData,
+              contentType: "image/svg+xml",
+            },
+            updatedAt: now,
+          },
+          $setOnInsert: {
+            createdAt: now,
+          },
+        },
+        { upsert: true }
+      );
+    }
   });
 };
 
