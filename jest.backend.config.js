@@ -1,87 +1,30 @@
-# This workflow will do a clean installation of node dependencies, cache/restore them, build the source code and run tests across different versions of node
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-testing-nodejs
-
-name: Run Tests
-
-on:
-  push:
-    branches: ["main"]
-  pull_request:
-    branches: ["main"]
-
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    env:
-      PORT: 6060
-      DEV_MODE: test
-      MONGO_URL: mongodb://127.0.0.1:27017/ecom-playwright
-      JWT_SECRET: test-jwt-secret
-      BRAINTREE_MERCHANT_ID: test-merchant-id
-      BRAINTREE_PUBLIC_KEY: test-public-key
-      BRAINTREE_PRIVATE_KEY: test-private-key
-
-    services:
-      mongodb:
-        image: mongo:7
-        ports:
-          - 27017:27017
-        options: >-
-          --health-cmd "mongosh --eval 'db.adminCommand({ ping: 1 })'"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
-    strategy:
-      matrix:
-        node-version: [24.x]
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node-version }}
-          cache: "npm"
-
-      - run: npm ci
-
-      - name: Install Client Dependencies
-        run: npm install --prefix ./client
-
-      - run: npm run test:frontend
-      - run: npm run test:backend
-
-      - name: Install Playwright Browser
-        run: npx playwright install --with-deps chromium
-
-      - name: Detect Playwright UI Tests
-        id: playwright-tests
-        shell: bash
-        run: |
-          if compgen -G "tests/*.ui.spec.js" > /dev/null; then
-            echo "found=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "found=false" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Seed Playwright Admin User
-        if: steps.playwright-tests.outputs.found == 'true'
-        run: node setupAdmin.js
-
-      - name: Run Playwright UI Tests
-        if: steps.playwright-tests.outputs.found == 'true'
-        run: DEBUG=pw:webserver npm run test:ui
-
-      - name: Skip Playwright UI Tests
-        if: steps.playwright-tests.outputs.found != 'true'
-        run: echo "No Playwright UI test files found under tests/. Skipping UI test run."
-
-      - name: Upload Playwright Report
-        if: always() && steps.playwright-tests.outputs.found == 'true'
-        uses: actions/upload-artifact@v4
-        with:
-          name: playwright-report
-          path: playwright-report/
-          if-no-files-found: ignore
+export default {
+  displayName: "backend",
+  testEnvironment: "node",
+  testMatch: [
+    "**/controllers/*.test.js",
+    "**/config/*.test.js",
+    "**/middlewares/*.test.js",
+    "**/helpers/*.test.js",
+    "**/models/*.test.js",
+  ],
+  collectCoverage: true,
+  collectCoverageFrom: [
+    "models/orderModel.js",
+    "config/**",
+    "controllers/categoryController.js",
+    "controllers/authController.js",
+    "controllers/productController.js",
+    "middlewares/authMiddleware.js",
+    "helpers/authHelper.js",
+    "models/categoryModel.js",
+    "models/productModel.js",
+    "models/userModel.js",
+  ],
+  coverageThreshold: {
+    global: {
+      lines: 100,
+      functions: 100,
+    },
+  },
+};
