@@ -3,6 +3,7 @@ import { test, expect } from "@playwright/test";
 import {
   PLAYWRIGHT_ADMIN_EMAIL as ADMIN_EMAIL,
   PLAYWRIGHT_ADMIN_PASSWORD as ADMIN_PASSWORD,
+  ensurePlaywrightAdmin,
 } from "./uiTestUtils.js";
 const RUN_ID = `${Date.now()}-${Math.floor(Math.random() * 1000)}`;
 const TEST_DATA_PREFIX = "PW-MS2-";
@@ -18,8 +19,7 @@ function escapeRegExp(value) {
 function isUiTestEntityName(value) {
   return (
     typeof value === "string" &&
-    value.startsWith(TEST_DATA_PREFIX) &&
-    value.includes(RUN_ID)
+    value.startsWith(TEST_DATA_PREFIX)
   );
 }
 
@@ -336,6 +336,10 @@ async function openProduct(page, productName) {
 
 // Alek Kwek, A0273471A
 test.describe("Admin management UI end-to-end flows", () => {
+  test.beforeAll(async () => {
+    await ensurePlaywrightAdmin();
+  });
+
   test.afterEach(async ({ request }) => {
     await cleanupUiTestData(request);
   });

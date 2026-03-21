@@ -42,34 +42,13 @@ const __dirname = path.dirname(__filename);
 const cleanupTargets = [
   {
     collection: "products",
-    filter: {
-      $or: [
-        { name: { $regex: `^${PLAYWRIGHT_PREFIX}` } },
-        { slug: { $regex: "^playwright-" } },
-      ],
-    },
-    printableFilter: 'products matching __playwright__ prefix or playwright- slug',
+    filter: { name: { $regex: `^${PLAYWRIGHT_PREFIX}` } },
+    printableFilter: '{ "name": { "$regex": "^__playwright__" } }',
   },
   {
     collection: "categories",
-    filter: {
-      $or: [
-        { name: { $regex: `^${PLAYWRIGHT_PREFIX}` } },
-        { slug: { $regex: "^playwright-" } },
-      ],
-    },
-    printableFilter: 'categories matching __playwright__ prefix or playwright- slug',
-  },
-  {
-    collection: "users",
-    filter: {
-      $or: [
-        { email: PLAYWRIGHT_ADMIN_EMAIL },
-        { email: PLAYWRIGHT_USER_EMAIL },
-        { email: { $regex: "^testuser_" } },
-      ],
-    },
-    printableFilter: 'Playwright test users',
+    filter: { name: { $regex: `^${PLAYWRIGHT_PREFIX}` } },
+    printableFilter: '{ "name": { "$regex": "^__playwright__" } }',
   },
 ];
 
@@ -139,7 +118,7 @@ const withDatabase = async (callback) => {
   }
 };
 
-const cleanupTargetsInDatabase = async (label, targets) => {
+export const cleanupTargetsInDatabase = async (label, targets) => {
   const appMongoUrl = process.env.PLAYWRIGHT_APP_MONGO_URL || getPlaywrightMongoUrl();
 
   console.log(`[Playwright cleanup:${label}] app Mongo URI target: ${appMongoUrl}`);
@@ -293,9 +272,6 @@ export const resetAdminTestData = async () => {
 
 export const clearAdminTestData = async () =>
   cleanupPlaywrightArtifacts("clearAdminTestData");
-
-export const clearPlaywrightTestData = async () =>
-  cleanupPlaywrightData("clearPlaywrightTestData");
 
 export const loginAsAdmin = async (page) => {
   await loginAsPlaywrightAdmin(page);

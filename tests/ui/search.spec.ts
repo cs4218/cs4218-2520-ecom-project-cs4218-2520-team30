@@ -1,15 +1,11 @@
 // Tay Kai Jun A0283343E
 
 import { test, expect } from "@playwright/test";
-import { ensurePlaywrightCatalog, clearPlaywrightTestData } from "../uiTestUtils.js";
+import { ensurePlaywrightCatalog } from "../uiTestUtils.js";
 
 test.describe("Search Feature E2E Tests", () => {
   test.beforeAll(async () => {
     await ensurePlaywrightCatalog();
-  });
-
-  test.afterAll(async () => {
-    await clearPlaywrightTestData();
   });
 
   // Tay Kai Jun A0283343E
