@@ -124,25 +124,74 @@ jobs:
           path: playwright-report/
           if-no-files-found: ignore
 
-      # Trigger the n8n AI analysis agent with the run details
-      # n8n will fetch the artifacts, call Claude, and post findings to the PR
+      # Trigger the n8n AI analysis agent — sends results INLINE in the payload
+      # This avoids the GitHub artifact download S3 auth issue entirely
       - name: Trigger AI Analysis Agent (n8n)
         if: always() && vars.N8N_ENABLED == 'true'
         continue-on-error: true
         run: |
-          curl -s -X POST "${{ secrets.N8N_WEBHOOK_URL }}" \
-            -H "Content-Type: application/json" \
-            -d '{
-              "run_id": "${{ github.run_id }}",
-              "repo": "${{ github.repository }}",
-              "branch": "${{ github.ref_name }}",
-              "commit_sha": "${{ github.sha }}",
-              "pr_number": "${{ github.event.number }}",
-              "actor": "${{ github.actor }}",
-              "backend_outcome": "${{ steps.backend-tests.outcome }}",
-              "frontend_outcome": "${{ steps.frontend-tests.outcome }}",
-              "integration_outcome": "${{ steps.integration-tests.outcome }}",
-              "ui_outcome": "${{ steps.ui-tests.outcome }}"
-            }' \
-            --max-time 10
-          echo "AI analysis triggered (run_id=${{ github.run_id }})"
+          python3 - <<'PYEOF'
+          import json, os, sys
+
+          def load_json(path):
+              try:
+                  with open(path) as f:
+                      raw = json.load(f)
+                  tests = []
+                  for suite in raw.get("testResults", []):
+                      short = "/".join(suite.get("testFilePath","").replace("\\","/").split("/")[-2:])
+                      for t in suite.get("testResults", []):
+                          entry = {"name": t.get("fullName",""), "suite": short, "status": t.get("status","")}
+                          if t.get("status") != "passed":
+                              msgs = t.get("failureMessages", [])
+                              entry["error"] = msgs[0].split("\n")[0][:150] if msgs else ""
+                          tests.append(entry)
+                  return {
+                      "source": os.path.basename(path).replace("-results.json",""),
+                      "summary": {
+                          "total": raw.get("numTotalTests",0),
+                          "passed": raw.get("numPassedTests",0),
+                          "failed": raw.get("numFailedTests",0),
+                      },
+                      "tests": tests
+                  }
+              except Exception as e:
+                  print(f"Could not load {path}: {e}")
+                  return None
+
+          results = []
+          for f in ["reports/jest-backend-results.json",
+                    "reports/jest-frontend-results.json",
+                    "reports/jest-integration-results.json"]:
+              r = load_json(f)
+              if r: results.append(r)
+
+          if not results:
+              print("No test results found, skipping webhook")
+              sys.exit(0)
+
+          payload = {
+              "run_id": os.environ.get("GITHUB_RUN_ID",""),
+              "repo": os.environ.get("GITHUB_REPOSITORY",""),
+              "branch": os.environ.get("GITHUB_REF_NAME",""),
+              "commit_sha": os.environ.get("GITHUB_SHA",""),
+              "pr_number": os.environ.get("PR_NUMBER",""),
+              "actor": os.environ.get("GITHUB_ACTOR",""),
+              "test_results": results
+          }
+
+          import urllib.request
+          url = os.environ["N8N_WEBHOOK_URL"]
+          body = json.dumps(payload).encode()
+          req = urllib.request.Request(url, data=body,
+              headers={"Content-Type": "application/json"}, method="POST")
+          try:
+              with urllib.request.urlopen(req, timeout=15) as resp:
+                  print("AI analysis triggered:", resp.read().decode()[:200])
+          except Exception as e:
+              print(f"Webhook call failed (non-fatal): {e}")
+          PYEOF
+        env:
+          N8N_WEBHOOK_URL: ${{ secrets.N8N_WEBHOOK_URL }}
+          PR_NUMBER: ${{ github.event.number }}
+
