@@ -82,13 +82,9 @@ test.describe("Search Feature E2E Tests", () => {
     // Tay Kai Jun A0283343E
     await page.goto("/");
 
-    // Wait for products to load and get a product name
-    const firstProduct = page.locator(".card-title").first();
-    await expect(firstProduct).toBeVisible({ timeout: 10000 });
-    const productName = await firstProduct.textContent();
-
-    // Search for the product
-    await page.getByPlaceholder("Search").fill(productName!);
+    // Search for a seeded product that is guaranteed to persist during the entire test suite
+    const productName = "Playwright Alpha Product";
+    await page.getByPlaceholder("Search").fill(productName);
     await page.getByRole("button", { name: "Search" }).click();
 
     // Verify search results page

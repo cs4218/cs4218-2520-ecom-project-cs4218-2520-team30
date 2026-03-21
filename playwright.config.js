@@ -12,6 +12,7 @@ process.env.PLAYWRIGHT_MONGO_URL = playwrightMongoUrl;
 process.env.PLAYWRIGHT_APP_MONGO_URL = playwrightMongoUrl;
 
 export default defineConfig({
+  globalTeardown: './tests/globalTeardown.js',
   testDir: "./tests",
   fullyParallel: false,
   forbidOnly: isCI,
