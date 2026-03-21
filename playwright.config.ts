@@ -10,7 +10,10 @@ export default defineConfig({
   },
   fullyParallel: false,
   retries: 0,
-  reporter: "html",
+  reporter: [
+    ["html"],
+    ["json", { outputFile: "playwright-report/results.json" }],
+  ],
   globalTeardown: "./tests/setup/global-teardown.js",
   use: {
     baseURL: "http://localhost:3000",

@@ -5,9 +5,9 @@ name: Run Tests
 
 on:
   push:
-    branches: ["main"]
+    branches: ["main", "MS2-3-implement-ai-testing"]
   pull_request:
-    branches: ["main"]
+    branches: ["main", "MS2-3-implement-ai-testing"]
 
 jobs:
   build:

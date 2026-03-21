@@ -10,3 +10,8 @@ coverage/
 **/coverage-final.json
 **/lcov.info
 **/lcov-report/
+
+# AI testing — generated files, do not commit
+reports/
+venv/
+ai-testing/run_history.json

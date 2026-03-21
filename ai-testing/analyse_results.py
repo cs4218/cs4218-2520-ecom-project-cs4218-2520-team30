@@ -29,6 +29,16 @@ except ImportError:
     print("ERROR: anthropic library not installed. Run: pip install anthropic")
     sys.exit(1)
 
+# Auto-load .env from project root (same folder as this script's parent)
+_env_path = Path(__file__).parent.parent / ".env"
+if _env_path.exists():
+    with open(_env_path) as _f:
+        for _line in _f:
+            _line = _line.strip()
+            if _line and not _line.startswith("#") and "=" in _line:
+                _k, _v = _line.split("=", 1)
+                os.environ.setdefault(_k.strip(), _v.strip())
+
 
 # ─── Paths (relative to repo root) ─────────────────────────────────────────────
 REPO_ROOT = Path(__file__).parent.parent
@@ -169,25 +179,90 @@ def save_to_history(analysis: dict, sources: list[str]):
         json.dump(history, f, indent=2)
 
 
+def _trim_payload(payload: dict) -> dict:
+    """
+    Reduce payload size before sending to Claude.
+    - Failed/skipped tests: send full detail (name, suite, error messages)
+    - Passing tests: send only name + suite (needed for anti-pattern detection)
+    This keeps token usage low without losing analytical value.
+    """
+    trimmed_results = []
+    total_passed = total_failed = total_skipped = total_all = 0
+
+    for result in payload.get("results", []):
+        tests = result.get("tests", [])
+        failed_tests = [
+            {
+                "name": t["name"],
+                "suite": t["suite"],
+                "status": t["status"],
+                "duration_ms": t.get("duration_ms", 0),
+                # Trim error messages to first line, max 200 chars
+                "failure_messages": [
+                    m.split("\n")[0][:200] for m in t.get("failure_messages", []) if m
+                ][:2],  # at most 2 messages
+            }
+            for t in tests if t.get("status") in ("failed", "pending")
+        ]
+        # Passing tests: only name + suite for anti-pattern checking
+        passing_names = [
+            {"name": t["name"], "suite": t["suite"]}
+            for t in tests if t.get("status") == "passed"
+        ]
+
+        s = result.get("run_summary", {})
+        total_passed += s.get("passed", 0)
+        total_failed += s.get("failed", 0)
+        total_skipped += s.get("skipped", 0)
+        total_all += s.get("total_tests", 0)
+
+        trimmed_results.append({
+            "source": result.get("source", "unknown"),
+            "run_summary": s,
+            "failed_tests": failed_tests,
+            "passing_test_names": passing_names,
+        })
+
+    return {
+        "overall_summary": {
+            "total_tests": total_all,
+            "passed": total_passed,
+            "failed": total_failed,
+            "skipped": total_skipped,
+            "sources": [r["source"] for r in trimmed_results],
+        },
+        "results": trimmed_results,
+    }
+
+
 def call_claude(payload: dict, history: list) -> dict:
-    """Send test results to Claude and return the parsed JSON analysis."""
+    """Send trimmed test results to Claude and return the parsed JSON analysis."""
     api_key = os.environ.get("ANTHROPIC_API_KEY")
     if not api_key:
         print("ERROR: ANTHROPIC_API_KEY environment variable not set.")
-        print("Get a key at https://console.anthropic.com and then run:")
-        print("  export ANTHROPIC_API_KEY='sk-ant-...'")
+        print("Add ANTHROPIC_API_KEY=sk-ant-... to your .env file")
         sys.exit(1)
 
     client = anthropic.Anthropic(api_key=api_key)
     system_prompt = load_system_prompt()
 
-    user_content = f"Analyse these test results:\n\n{json.dumps(payload, indent=2)}"
-    if history:
-        user_content += f"\n\nHistorical data from last {len(history)} runs:\n{json.dumps(history, indent=2)}"
-    else:
-        user_content += "\n\nNo historical data available for flaky test detection yet."
+    # Trim payload to keep token usage low
+    trimmed = _trim_payload(payload)
+    total = trimmed["overall_summary"]["total_tests"]
+    failed = trimmed["overall_summary"]["failed"]
+    print(f"Payload trimmed: {total} tests ({failed} failed) across "
+          f"{len(trimmed['results'])} suite(s)")
 
-    print("Sending results to Claude for analysis...")
+    user_content = f"Analyse these test results:\n\n{json.dumps(trimmed, indent=2)}"
+    if history:
+        user_content += (
+            f"\n\nHistorical data from last {len(history)} runs "
+            f"(use for flaky detection):\n{json.dumps(history, indent=2)}"
+        )
+    else:
+        user_content += "\n\nNo historical data yet — leave flaky_tests as []."
+
+    print("Calling Claude API...")
     response = client.messages.create(
         model="claude-opus-4-5",
         max_tokens=4096,
@@ -196,7 +271,26 @@ def call_claude(payload: dict, history: list) -> dict:
     )
 
     raw_text = response.content[0].text.strip()
-    return json.loads(raw_text)
+
+    # Handle case where Claude wraps JSON in ```json ... ``` code fences
+    if raw_text.startswith("```"):
+        lines = raw_text.splitlines()
+        raw_text = "\n".join(
+            line for line in lines
+            if not line.strip().startswith("```")
+        ).strip()
+
+    if not raw_text:
+        print("ERROR: Claude returned an empty response.")
+        print("This usually means the payload is still too large or the API key is invalid.")
+        sys.exit(1)
+
+    try:
+        return json.loads(raw_text)
+    except json.JSONDecodeError as e:
+        print(f"ERROR: Claude returned invalid JSON: {e}")
+        print(f"First 500 chars of response: {raw_text[:500]}")
+        sys.exit(1)
 
 
 # ─── Pretty-print report ─────────────────────────────────────────────────────────
@@ -325,7 +419,7 @@ def main():
               python ai-testing/analyse_results.py --jest reports/jest-results.json --output reports/ai-analysis.json
         """),
     )
-    parser.add_argument("--jest", type=Path, help="Path to Jest JSON results file")
+    parser.add_argument("--jest", type=Path, nargs="+", help="Path(s) to Jest JSON results file(s) — can pass multiple")
     parser.add_argument("--playwright", type=Path, help="Path to Playwright JSON results file")
     parser.add_argument("--history", type=Path, help="Path to run history JSON (defaults to ai-testing/run_history.json)")
     parser.add_argument("--output", type=Path, help="Save analysis JSON to this file (optional)")
@@ -334,19 +428,24 @@ def main():
 
     # Auto-detect results if no args given
     if not args.jest and not args.playwright:
-        default_jest = REPORTS_DIR / "jest-results.json"
+        # Find all jest-*-results.json files in reports/
+        detected_jest = list(REPORTS_DIR.glob("jest-*-results.json")) + list(REPORTS_DIR.glob("jest-results.json"))
         default_pw = REPO_ROOT / "playwright-report" / "results.json"
-        if default_jest.exists():
-            args.jest = default_jest
-            print(f"Auto-detected Jest results: {default_jest}")
+        if detected_jest:
+            args.jest = detected_jest
+            for p in detected_jest:
+                print(f"Auto-detected Jest results: {p}")
         if default_pw.exists():
             args.playwright = default_pw
             print(f"Auto-detected Playwright results: {default_pw}")
 
     if not args.jest and not args.playwright:
         print("ERROR: No test result files found. Run your tests first, then try again.")
-        print("  Jest:       npm run test:backend -- --json --outputFile=reports/jest-results.json")
-        print("  Playwright: npx playwright test --reporter=json > playwright-report/results.json")
+        print("  Step 1: mkdir -p reports")
+        print("  Step 2: node --experimental-vm-modules node_modules/jest/bin/jest.js --config jest.backend.config.js --json --outputFile=reports/jest-backend-results.json")
+        print("  Step 3: node --experimental-vm-modules node_modules/jest/bin/jest.js --config jest.frontend.config.js --json --outputFile=reports/jest-frontend-results.json")
+        print("  Step 4: node --experimental-vm-modules node_modules/jest/bin/jest.js --config jest.integration.config.js --json --outputFile=reports/jest-integration-results.json")
+        print("  Step 5: npx playwright test")
         sys.exit(1)
 
     # Load results
@@ -354,11 +453,15 @@ def main():
     combined = {"results": []}
 
     if args.jest:
-        jest_data = load_jest_results(args.jest)
-        if jest_data:
-            combined["results"].append(jest_data)
-            sources.append("jest")
-            print(f"Loaded Jest results: {jest_data['run_summary']['total_tests']} tests from {args.jest}")
+        jest_paths = args.jest if isinstance(args.jest, list) else [args.jest]
+        for jest_path in jest_paths:
+            jest_data = load_jest_results(jest_path)
+            if jest_data:
+                # Label by filename so Claude knows which suite it is
+                jest_data["source"] = jest_path.stem.replace("-results", "").replace("jest-", "jest/")
+                combined["results"].append(jest_data)
+                sources.append(jest_data["source"])
+                print(f"Loaded {jest_data['run_summary']['total_tests']} tests from {jest_path.name}")
 
     if args.playwright:
         pw_data = load_playwright_results(args.playwright)
