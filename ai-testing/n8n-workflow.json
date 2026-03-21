@@ -13,8 +13,18 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 1,
       "position": [240, 300],
-      "webhookId": "cs4218-test-results",
-      "notes": "Receives POST from GitHub Actions. Payload now includes test_results array inline — no artifact download needed."
+      "webhookId": "cs4218-test-results"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Build the Claude API request body as a plain object\nconst webhookBody = $input.first().json.body;\nconst testResults = webhookBody.test_results || [];\n\nconst systemPrompt = `You are an expert software testing analyst. Analyse the provided Jest test results.\n\nReturn ONLY valid JSON - no markdown, no preamble - matching this exact schema:\n{\"run_summary\":{\"total_tests\":0,\"passed\":0,\"failed\":0,\"skipped\":0,\"duration_ms\":0,\"overall_health\":\"healthy|degraded|critical\",\"health_reason\":\"string\"},\"failed_tests\":[{\"name\":\"string\",\"suite\":\"string\",\"failure_type\":\"assertion_error|timeout|import_error|setup_teardown|unexpected_exception|unknown\",\"error_message\":\"string\",\"fix_hint\":\"string\"}],\"brittle_tests\":[{\"name\":\"string\",\"suite\":\"string\",\"reason\":\"string\",\"recommendation\":\"string\"}],\"anti_patterns\":[{\"suite\":\"string\",\"pattern\":\"string\",\"details\":\"string\"}],\"flaky_tests\":[],\"suggested_new_test\":{\"test_name\":\"string\",\"target_suite\":\"string\",\"what_to_assert\":\"string\",\"rationale\":\"string\"},\"top_priority_fixes\":[\"string\"]}`;\n\nconst userMessage = `Analyse these test results from branch ${webhookBody.branch} (actor: ${webhookBody.actor}):\\n\\n${JSON.stringify(testResults, null, 2)}`;\n\nconst claudeBody = {\n  model: 'claude-opus-4-5',\n  max_tokens: 4096,\n  system: systemPrompt,\n  messages: [{ role: 'user', content: userMessage }]\n};\n\nreturn [{\n  json: {\n    claudeBody: JSON.stringify(claudeBody),\n    webhookBody\n  }\n}];"
+      },
+      "id": "build-claude-payload",
+      "name": "Build Claude Payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 300],
+      "notes": "Builds the Claude API request body as a JSON string to avoid n8n expression-in-JSON issues."
     },
     {
       "parameters": {
@@ -24,49 +34,42 @@
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "anthropic-version", "value": "2023-06-01" }
+            { "name": "anthropic-version", "value": "2023-06-01" },
+            { "name": "content-type", "value": "application/json" }
           ]
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"model\": \"claude-opus-4-5\",\n  \"max_tokens\": 4096,\n  \"system\": \"You are an expert software testing analyst. You will be given Jest and/or Playwright test results in JSON format.\\n\\nAnalyse for: (1) Failed tests - classify by: assertion_error, timeout, import_error, setup_teardown, unexpected_exception, unknown. (2) Brittle tests - hard-coded IDs/timestamps, exact error message assertions, zero assertions, 8+ assertions per test, names with temp/todo/fix/skip. (3) Anti-patterns - duplicate test names, single-test suites, zero-test suites. (4) Flaky tests from history. (5) Suggest ONE valuable new test.\\n\\nReturn ONLY valid JSON matching this exact schema (no preamble):\\n{\\\"run_summary\\\":{\\\"total_tests\\\":0,\\\"passed\\\":0,\\\"failed\\\":0,\\\"skipped\\\":0,\\\"duration_ms\\\":0,\\\"overall_health\\\":\\\"healthy|degraded|critical\\\",\\\"health_reason\\\":\\\"string\\\"},\\\"failed_tests\\\":[{\\\"name\\\":\\\"string\\\",\\\"suite\\\":\\\"string\\\",\\\"failure_type\\\":\\\"string\\\",\\\"error_message\\\":\\\"string\\\",\\\"fix_hint\\\":\\\"string\\\"}],\\\"brittle_tests\\\":[{\\\"name\\\":\\\"string\\\",\\\"suite\\\":\\\"string\\\",\\\"reason\\\":\\\"string\\\",\\\"recommendation\\\":\\\"string\\\"}],\\\"anti_patterns\\\":[{\\\"suite\\\":\\\"string\\\",\\\"pattern\\\":\\\"string\\\",\\\"details\\\":\\\"string\\\"}],\\\"flaky_tests\\\":[{\\\"name\\\":\\\"string\\\",\\\"suite\\\":\\\"string\\\",\\\"fail_count_last_5\\\":0,\\\"recommendation\\\":\\\"string\\\"}],\\\"suggested_new_test\\\":{\\\"test_name\\\":\\\"string\\\",\\\"target_suite\\\":\\\"string\\\",\\\"what_to_assert\\\":\\\"string\\\",\\\"rationale\\\":\\\"string\\\"},\\\"top_priority_fixes\\\":[\\\"string\\\"]}\",\n  \"messages\": [{\n    \"role\": \"user\",\n    \"content\": \"Analyse these test results:\\n\\n{{ JSON.stringify($json.body.test_results) }}\\n\\nBranch: {{ $json.body.branch }}\\nCommit: {{ $json.body.commit_sha }}\\nActor: {{ $json.body.actor }}\"\n  }]\n}",
+        "jsonBody": "={{ $json.claudeBody }}",
         "options": {}
       },
       "id": "call-claude-api",
       "name": "Call Claude API",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
-      "position": [500, 300],
-      "notes": "Results are sent inline in the webhook body — no artifact download needed."
+      "position": [700, 300],
+      "notes": "Sends pre-built JSON body to Anthropic API. jsonBody is a simple expression referencing the string built by the Code node above."
     },
     {
       "parameters": {
-        "jsCode": "// Extract and parse the Claude response\nconst claudeResponse = $input.first().json;\nconst rawText = claudeResponse.content[0].text.trim();\nlet analysis;\ntry {\n  // Strip markdown code fences if present\n  const cleaned = rawText.replace(/^```[\\w]*\\n?/, '').replace(/\\n?```$/, '');\n  analysis = JSON.parse(cleaned);\n} catch(e) {\n  throw new Error(`Claude returned invalid JSON: ${rawText.substring(0, 200)}`);\n}\n\n// Build markdown PR comment\nconst s = analysis.run_summary;\nconst healthEmoji = s.overall_health === 'healthy' ? '✅' : s.overall_health === 'degraded' ? '⚠️' : '🔴';\nconst webhookBody = $('GitHub CI Webhook').first().json.body;\n\nlet comment = `## ${healthEmoji} AI Test Analysis — ${s.overall_health.toUpperCase()}\\n\\n`;\ncomment += `> ${s.health_reason}\\n\\n`;\ncomment += `| Metric | Value |\\n|--------|-------|\\n`;\ncomment += `| Total Tests | ${s.total_tests} |\\n`;\ncomment += `| ✅ Passed | ${s.passed} |\\n`;\ncomment += `| ❌ Failed | ${s.failed} |\\n`;\ncomment += `| ⏭ Skipped | ${s.skipped} |\\n\\n`;\n\nif (analysis.failed_tests && analysis.failed_tests.length > 0) {\n  comment += `### ❌ Failed Tests\\n\\n`;\n  for (const t of analysis.failed_tests) {\n    comment += `**${t.name}**\\n`;\n    comment += `- Suite: \\`${t.suite}\\`\\n`;\n    comment += `- Type: \\`${t.failure_type}\\`\\n`;\n    comment += `- Error: ${t.error_message}\\n`;\n    comment += `- 💡 Fix: ${t.fix_hint}\\n\\n`;\n  }\n}\n\nif (analysis.brittle_tests && analysis.brittle_tests.length > 0) {\n  comment += `### ⚠️ Brittle Tests\\n\\n`;\n  for (const t of analysis.brittle_tests) {\n    comment += `- **${t.name}** (\\`${t.suite}\\`) — ${t.reason}\\n`;\n  }\n  comment += `\\n`;\n}\n\nif (analysis.top_priority_fixes && analysis.top_priority_fixes.length > 0) {\n  comment += `### 🎯 Top Priority Fixes\\n\\n`;\n  analysis.top_priority_fixes.forEach((fix, i) => {\n    comment += `${i + 1}. ${fix}\\n`;\n  });\n  comment += `\\n`;\n}\n\nif (analysis.suggested_new_test && analysis.suggested_new_test.test_name) {\n  const sug = analysis.suggested_new_test;\n  comment += `### 💡 Suggested New Test\\n\\n`;\n  comment += `**${sug.test_name}**\\n`;\n  comment += `- File: \\`${sug.target_suite}\\`\\n`;\n  comment += `- What to assert: ${sug.what_to_assert}\\n`;\n  comment += `- Why: ${sug.rationale}\\n\\n`;\n}\n\ncomment += `---\\n*AI analysis powered by Claude. [View full results](https://github.com/${webhookBody.repo}/actions/runs/${webhookBody.run_id})*`;\n\nreturn [{\n  json: {\n    ...webhookBody,\n    analysis,\n    pr_comment: comment,\n    has_pr: !!(webhookBody.pr_number && webhookBody.pr_number !== ''),\n  }\n}];"
+        "jsCode": "const claudeResponse = $input.first().json;\nconst rawText = claudeResponse.content[0].text.trim();\nlet analysis;\ntry {\n  const cleaned = rawText.replace(/^```[\\w]*\\n?/, '').replace(/\\n?```$/, '').trim();\n  analysis = JSON.parse(cleaned);\n} catch(e) {\n  throw new Error(`Claude returned invalid JSON: ${rawText.substring(0, 300)}`);\n}\n\nconst s = analysis.run_summary;\nconst webhookBody = $('Build Claude Payload').first().json.webhookBody;\nconst healthEmoji = s.overall_health === 'healthy' ? '✅' : s.overall_health === 'degraded' ? '⚠️' : '🔴';\n\nlet comment = `## ${healthEmoji} AI Test Analysis — ${s.overall_health.toUpperCase()}\\n\\n`;\ncomment += `> ${s.health_reason}\\n\\n`;\ncomment += `| Metric | Value |\\n|--------|-------|\\n`;\ncomment += `| Total Tests | ${s.total_tests} |\\n| ✅ Passed | ${s.passed} |\\n| ❌ Failed | ${s.failed} |\\n| ⏭ Skipped | ${s.skipped} |\\n\\n`;\n\nif (analysis.failed_tests && analysis.failed_tests.length > 0) {\n  comment += `### ❌ Failed Tests\\n\\n`;\n  for (const t of analysis.failed_tests) {\n    comment += `**${t.name}** (\\`${t.suite}\\`)\\n- Type: \\`${t.failure_type}\\` | Error: ${t.error_message}\\n- 💡 ${t.fix_hint}\\n\\n`;\n  }\n}\n\nif (analysis.brittle_tests && analysis.brittle_tests.length > 0) {\n  comment += `### ⚠️ Brittle Tests\\n\\n`;\n  for (const t of analysis.brittle_tests) {\n    comment += `- **${t.name}** — ${t.reason}\\n`;\n  }\n  comment += '\\n';\n}\n\nif (analysis.top_priority_fixes && analysis.top_priority_fixes.length > 0) {\n  comment += `### 🎯 Top Priority Fixes\\n\\n`;\n  analysis.top_priority_fixes.forEach((fix, i) => { comment += `${i+1}. ${fix}\\n`; });\n  comment += '\\n';\n}\n\nif (analysis.suggested_new_test && analysis.suggested_new_test.test_name) {\n  const sug = analysis.suggested_new_test;\n  comment += `### 💡 Suggested New Test\\n**${sug.test_name}** — ${sug.what_to_assert}\\n\\n`;\n}\n\ncomment += `---\\n*Powered by Claude AI · [View CI run](https://github.com/${webhookBody.repo}/actions/runs/${webhookBody.run_id})*`;\n\nreturn [{\n  json: {\n    ...webhookBody,\n    analysis,\n    pr_comment: comment,\n    has_pr: !!(webhookBody.pr_number && webhookBody.pr_number !== '' && webhookBody.pr_number !== 'undefined')\n  }\n}];"
       },
       "id": "format-pr-comment",
       "name": "Format PR Comment",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [760, 300],
-      "notes": "Parses Claude's JSON response and formats it as a readable Markdown comment for the GitHub PR."
+      "position": [960, 300]
     },
     {
       "parameters": {
         "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "strict"
-          },
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
           "conditions": [
             {
               "id": "has-pr",
               "leftValue": "={{ $json.has_pr }}",
               "rightValue": true,
-              "operator": {
-                "type": "boolean",
-                "operation": "equals"
-              }
+              "operator": { "type": "boolean", "operation": "equals" }
             }
           ],
           "combinator": "and"
@@ -77,8 +80,7 @@
       "name": "Is this a PR?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
-      "position": [1020, 300],
-      "notes": "Only post a PR comment if this was triggered by a pull_request event."
+      "position": [1200, 300]
     },
     {
       "parameters": {
@@ -87,59 +89,44 @@
         "nodeCredentialType": "githubApi",
         "sendBody": true,
         "contentType": "json",
-        "body": {
-          "body": "={{ $json.pr_comment }}"
-        },
+        "body": { "body": "={{ $json.pr_comment }}" },
         "options": {}
       },
       "id": "post-github-comment",
       "name": "Post GitHub PR Comment",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
-      "position": [1280, 180],
-      "notes": "Posts the formatted analysis as a comment on the GitHub Pull Request."
+      "position": [1440, 180]
     },
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={ \"status\": \"analysis_complete\", \"health\": \"{{ $('Format PR Comment').first().json.analysis.run_summary.overall_health }}\" }"
+        "responseBody": "={{ JSON.stringify({ status: 'analysis_complete', health: $('Format PR Comment').first().json.analysis.run_summary.overall_health }) }}"
       },
       "id": "respond-to-webhook",
       "name": "Respond to Webhook",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
-      "position": [1280, 420],
-      "notes": "Sends a response back to CI so it doesn't time out."
+      "position": [1440, 420]
     }
   ],
   "connections": {
-    "GitHub CI Webhook": {
-      "main": [[{ "node": "Call Claude API", "type": "main", "index": 0 }]]
-    },
-    "Call Claude API": {
-      "main": [[{ "node": "Format PR Comment", "type": "main", "index": 0 }]]
-    },
-    "Format PR Comment": {
-      "main": [[{ "node": "Is this a PR?", "type": "main", "index": 0 }]]
-    },
+    "GitHub CI Webhook": { "main": [[{ "node": "Build Claude Payload", "type": "main", "index": 0 }]] },
+    "Build Claude Payload": { "main": [[{ "node": "Call Claude API", "type": "main", "index": 0 }]] },
+    "Call Claude API": { "main": [[{ "node": "Format PR Comment", "type": "main", "index": 0 }]] },
+    "Format PR Comment": { "main": [[{ "node": "Is this a PR?", "type": "main", "index": 0 }]] },
     "Is this a PR?": {
       "main": [
         [{ "node": "Post GitHub PR Comment", "type": "main", "index": 0 }],
         [{ "node": "Respond to Webhook", "type": "main", "index": 0 }]
       ]
     },
-    "Post GitHub PR Comment": {
-      "main": [[{ "node": "Respond to Webhook", "type": "main", "index": 0 }]]
-    }
+    "Post GitHub PR Comment": { "main": [[{ "node": "Respond to Webhook", "type": "main", "index": 0 }]] }
   },
-  "settings": {
-    "executionOrder": "v1",
-    "saveManualExecutions": true,
-    "errorWorkflow": ""
-  },
+  "settings": { "executionOrder": "v1", "saveManualExecutions": true },
   "staticData": null,
   "meta": {
-    "description": "CS4218 AI-driven testing: receives inline test results from GitHub Actions CI, calls Claude API for analysis, and posts findings as a PR comment.",
+    "description": "CS4218 AI-driven testing: receives inline test results from CI, calls Claude, posts analysis to PR comments.",
     "templateCredsSetupCompleted": false
   },
   "pinData": {}
