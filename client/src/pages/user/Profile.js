@@ -36,7 +36,6 @@ const Profile = () => {
         phone,
         address,
       });
-      console.log(data)
       if (data?.error) { // Leong Soon Mun Stephane, A0273409B
         toast.error(data?.error);
       } else {
