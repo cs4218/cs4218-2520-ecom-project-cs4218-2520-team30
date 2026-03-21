@@ -1,0 +1,247 @@
+{
+  "name": "CS4218 AI Test Result Analyser",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "cs4218-test-results",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "GitHub CI Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300],
+      "webhookId": "cs4218-test-results",
+      "notes": "Receives POST from GitHub Actions after each CI run. Payload includes run_id, repo, branch, commit_sha, pr_number."
+    },
+    {
+      "parameters": {
+        "url": "=https://api.github.com/repos/{{ $json.body.repo }}/actions/runs/{{ $json.body.run_id }}/artifacts",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "githubApi",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "id": "fetch-artifact-list",
+      "name": "List CI Artifacts",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [460, 300],
+      "notes": "Gets the list of artifacts from the GitHub API for this run. Looks for 'jest-results' artifact."
+    },
+    {
+      "parameters": {
+        "jsCode": "// Find the jest-results artifact\nconst artifacts = $input.first().json.artifacts || [];\nconst jestArtifact = artifacts.find(a => a.name === 'jest-results');\nconst playwrightArtifact = artifacts.find(a => a.name === 'playwright-report');\n\nif (!jestArtifact && !playwrightArtifact) {\n  throw new Error('No test result artifacts found in this CI run');\n}\n\nreturn [{\n  json: {\n    ...($input.first().json),\n    jest_artifact_id: jestArtifact?.id,\n    jest_artifact_url: jestArtifact?.archive_download_url,\n    playwright_artifact_id: playwrightArtifact?.id,\n    playwright_artifact_url: playwrightArtifact?.archive_download_url,\n    original_payload: $('GitHub CI Webhook').first().json.body,\n  }\n}];"
+      },
+      "id": "find-artifact-ids",
+      "name": "Find Artifact IDs",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 300],
+      "notes": "Extracts download URLs for jest-results and playwright-report artifacts."
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.jest_artifact_url }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "githubApi",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "id": "download-jest-artifact",
+      "name": "Download Jest Results (ZIP)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [900, 240],
+      "notes": "Downloads the jest-results artifact as a ZIP file. GitHub returns a ZIP even for single files."
+    },
+    {
+      "parameters": {
+        "operation": "decompress",
+        "binaryPropertyName": "data",
+        "outputFormat": "json"
+      },
+      "id": "extract-zip",
+      "name": "Extract ZIP Contents",
+      "type": "n8n-nodes-base.compression",
+      "typeVersion": 1,
+      "position": [1120, 240],
+      "notes": "Extracts jest-backend-results.json and jest-integration-results.json from the ZIP."
+    },
+    {
+      "parameters": {
+        "jsCode": "// Merge all test result JSON files into one payload for Claude\nconst items = $input.all();\nconst results = [];\n\nfor (const item of items) {\n  if (item.binary) {\n    for (const [key, binaryData] of Object.entries(item.binary)) {\n      try {\n        const text = Buffer.from(binaryData.data, 'base64').toString('utf-8');\n        const parsed = JSON.parse(text);\n        // Determine source type from filename\n        const source = key.includes('backend') ? 'jest-backend' :\n                       key.includes('frontend') ? 'jest-frontend' :\n                       key.includes('integration') ? 'jest-integration' : 'jest';\n        \n        // Flatten test results\n        const tests = [];\n        for (const suite of (parsed.testResults || [])) {\n          const shortPath = suite.testFilePath\n            .replace(/\\\\/g, '/')\n            .split('/')\n            .slice(-2)\n            .join('/');\n          for (const t of (suite.testResults || [])) {\n            tests.push({\n              name: t.fullName,\n              suite: shortPath,\n              status: t.status,\n              duration_ms: t.duration || 0,\n              failure_messages: (t.failureMessages || []).map(m => m.split('\\n')[0].substring(0, 120))\n            });\n          }\n        }\n        \n        results.push({\n          source,\n          run_summary: {\n            total_tests: parsed.numTotalTests,\n            passed: parsed.numPassedTests,\n            failed: parsed.numFailedTests,\n            skipped: parsed.numPendingTests,\n          },\n          tests\n        });\n      } catch(e) {\n        console.log(`Skipping non-JSON file: ${key}`);\n      }\n    }\n  }\n}\n\nconst originalPayload = $('Find Artifact IDs').first().json.original_payload;\n\nreturn [{\n  json: {\n    ...originalPayload,\n    test_results: results,\n    total_sources: results.length,\n  }\n}];"
+      },
+      "id": "parse-test-results",
+      "name": "Parse + Merge Test Results",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1340, 240],
+      "notes": "Flattens all Jest JSON files into a single clean payload to send to Claude."
+    },
+    {
+      "parameters": {
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "anthropic-version", "value": "2023-06-01" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "body": {
+          "model": "claude-opus-4-5",
+          "max_tokens": 4096,
+          "system": "You are an expert software testing analyst. You will be given Jest and/or Playwright test results in JSON format.\n\nAnalyse for: (1) Failed tests — classify by: assertion_error, timeout, import_error, setup_teardown, unexpected_exception, unknown. (2) Brittle tests — hard-coded IDs/timestamps, exact error message assertions, zero assertions, 8+ assertions per test, names with temp/todo/fix/skip. (3) Anti-patterns — duplicate test names, single-test suites, zero-test suites. (4) Flaky tests from history. (5) Suggest ONE valuable new test.\n\nReturn ONLY valid JSON matching this exact schema (no preamble):\n{\"run_summary\":{\"total_tests\":0,\"passed\":0,\"failed\":0,\"skipped\":0,\"duration_ms\":0,\"overall_health\":\"healthy|degraded|critical\",\"health_reason\":\"string\"},\"failed_tests\":[{\"name\":\"string\",\"suite\":\"string\",\"failure_type\":\"string\",\"error_message\":\"string\",\"fix_hint\":\"string\"}],\"brittle_tests\":[{\"name\":\"string\",\"suite\":\"string\",\"reason\":\"string\",\"recommendation\":\"string\"}],\"anti_patterns\":[{\"suite\":\"string\",\"pattern\":\"string\",\"details\":\"string\"}],\"flaky_tests\":[{\"name\":\"string\",\"suite\":\"string\",\"fail_count_last_5\":0,\"recommendation\":\"string\"}],\"suggested_new_test\":{\"test_name\":\"string\",\"target_suite\":\"string\",\"what_to_assert\":\"string\",\"rationale\":\"string\"},\"top_priority_fixes\":[\"string\"]}",
+          "messages": [
+            {
+              "role": "user",
+              "content": "=Analyse these test results:\n\n{{ JSON.stringify($json.test_results, null, 2) }}\n\nBranch: {{ $json.branch }}\nCommit: {{ $json.commit_sha }}\nActor: {{ $json.actor }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "call-claude-api",
+      "name": "Call Claude API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1560, 240],
+      "notes": "Sends flattened test results to Claude claude-opus-4-5. Response is structured JSON analysis."
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract and parse the Claude response\nconst claudeResponse = $input.first().json;\nconst rawText = claudeResponse.content[0].text.trim();\nlet analysis;\ntry {\n  analysis = JSON.parse(rawText);\n} catch(e) {\n  throw new Error(`Claude returned invalid JSON: ${rawText.substring(0, 200)}`);\n}\n\n// Build markdown PR comment\nconst s = analysis.run_summary;\nconst healthEmoji = s.overall_health === 'healthy' ? '✅' : s.overall_health === 'degraded' ? '⚠️' : '🔴';\nconst originalPayload = $('Find Artifact IDs').first().json.original_payload;\n\nlet comment = `## ${healthEmoji} AI Test Analysis — ${s.overall_health.toUpperCase()}\\n\\n`;\ncomment += `> ${s.health_reason}\\n\\n`;\ncomment += `| Metric | Value |\\n|--------|-------|\\n`;\ncomment += `| Total Tests | ${s.total_tests} |\\n`;\ncomment += `| ✅ Passed | ${s.passed} |\\n`;\ncomment += `| ❌ Failed | ${s.failed} |\\n`;\ncomment += `| ⏭ Skipped | ${s.skipped} |\\n\\n`;\n\nif (analysis.failed_tests && analysis.failed_tests.length > 0) {\n  comment += `### ❌ Failed Tests\\n\\n`;\n  for (const t of analysis.failed_tests) {\n    comment += `**${t.name}**\\n`;\n    comment += `- Suite: \\`${t.suite}\\`\\n`;\n    comment += `- Type: \\`${t.failure_type}\\`\\n`;\n    comment += `- Error: ${t.error_message}\\n`;\n    comment += `- 💡 Fix: ${t.fix_hint}\\n\\n`;\n  }\n}\n\nif (analysis.brittle_tests && analysis.brittle_tests.length > 0) {\n  comment += `### ⚠️ Brittle Tests\\n\\n`;\n  for (const t of analysis.brittle_tests) {\n    comment += `- **${t.name}** (\\`${t.suite}\\`) — ${t.reason}\\n`;\n  }\n  comment += `\\n`;\n}\n\nif (analysis.top_priority_fixes && analysis.top_priority_fixes.length > 0) {\n  comment += `### 🎯 Top Priority Fixes\\n\\n`;\n  analysis.top_priority_fixes.forEach((fix, i) => {\n    comment += `${i + 1}. ${fix}\\n`;\n  });\n  comment += `\\n`;\n}\n\nif (analysis.suggested_new_test && analysis.suggested_new_test.test_name) {\n  const sug = analysis.suggested_new_test;\n  comment += `### 💡 Suggested New Test\\n\\n`;\n  comment += `**${sug.test_name}**\\n`;\n  comment += `- File: \\`${sug.target_suite}\\`\\n`;\n  comment += `- What to assert: ${sug.what_to_assert}\\n`;\n  comment += `- Why: ${sug.rationale}\\n\\n`;\n}\n\ncomment += `---\\n*AI analysis powered by Claude. [View full results](https://github.com/${originalPayload.repo}/actions/runs/${originalPayload.run_id})*`;\n\nreturn [{\n  json: {\n    ...originalPayload,\n    analysis,\n    pr_comment: comment,\n    has_pr: !!(originalPayload.pr_number && originalPayload.pr_number !== ''),\n  }\n}];"
+      },
+      "id": "format-pr-comment",
+      "name": "Format PR Comment",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1780, 240],
+      "notes": "Parses Claude's JSON response and formats it as a readable Markdown comment for the GitHub PR."
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "has-pr",
+              "leftValue": "={{ $json.has_pr }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "check-is-pr",
+      "name": "Is this a PR?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [2000, 240],
+      "notes": "Only post a PR comment if this was triggered by a pull_request event (has a pr_number)."
+    },
+    {
+      "parameters": {
+        "url": "=https://api.github.com/repos/{{ $json.repo }}/issues/{{ $json.pr_number }}/comments",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "githubApi",
+        "sendBody": true,
+        "contentType": "json",
+        "body": {
+          "body": "={{ $json.pr_comment }}"
+        },
+        "options": {}
+      },
+      "id": "post-github-comment",
+      "name": "Post GitHub PR Comment",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [2220, 180],
+      "notes": "Posts the formatted analysis as a comment on the GitHub Pull Request."
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={ \"status\": \"analysis_complete\", \"health\": \"{{ $('Format PR Comment').first().json.analysis.run_summary.overall_health }}\" }"
+      },
+      "id": "respond-to-webhook",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [2220, 360],
+      "notes": "Sends a response back to the GitHub Actions curl call so it doesn't time out."
+    }
+  ],
+  "connections": {
+    "GitHub CI Webhook": {
+      "main": [[{ "node": "List CI Artifacts", "type": "main", "index": 0 }]]
+    },
+    "List CI Artifacts": {
+      "main": [[{ "node": "Find Artifact IDs", "type": "main", "index": 0 }]]
+    },
+    "Find Artifact IDs": {
+      "main": [[{ "node": "Download Jest Results (ZIP)", "type": "main", "index": 0 }]]
+    },
+    "Download Jest Results (ZIP)": {
+      "main": [[{ "node": "Extract ZIP Contents", "type": "main", "index": 0 }]]
+    },
+    "Extract ZIP Contents": {
+      "main": [[{ "node": "Parse + Merge Test Results", "type": "main", "index": 0 }]]
+    },
+    "Parse + Merge Test Results": {
+      "main": [[{ "node": "Call Claude API", "type": "main", "index": 0 }]]
+    },
+    "Call Claude API": {
+      "main": [[{ "node": "Format PR Comment", "type": "main", "index": 0 }]]
+    },
+    "Format PR Comment": {
+      "main": [[{ "node": "Is this a PR?", "type": "main", "index": 0 }]]
+    },
+    "Is this a PR?": {
+      "main": [
+        [{ "node": "Post GitHub PR Comment", "type": "main", "index": 0 }],
+        [{ "node": "Respond to Webhook", "type": "main", "index": 0 }]
+      ]
+    },
+    "Post GitHub PR Comment": {
+      "main": [[{ "node": "Respond to Webhook", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "errorWorkflow": ""
+  },
+  "staticData": null,
+  "meta": {
+    "description": "CS4218 AI-driven testing: analyses Jest + Playwright results from GitHub Actions using Claude, posts findings to PR comments.",
+    "templateCredsSetupCompleted": false
+  },
+  "pinData": {}
+}
