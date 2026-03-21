@@ -48,6 +48,7 @@ export default {
     "<rootDir>/client/src/context/search.test.js",
     "<rootDir>/client/src/components/AdminMenu.test.js",
     "<rootDir>/client/src/pages/admin/Users.test.js",
+    "<rootDir>/client/src/pages/admin/Users.integration.test.js",
     "<rootDir>/client/src/context/cart.test.js",
     "<rootDir>/client/src/pages/CartPage.test.js",
     "<rootDir>/client/src/pages/Contact.test.js",
