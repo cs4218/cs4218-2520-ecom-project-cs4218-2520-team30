@@ -16,11 +16,13 @@ const Profile = () => {
 
   //get user data
   useEffect(() => {
-    const { email, name, phone, address } = auth?.user;
-    setName(name);
-    setPhone(phone);
-    setEmail(email);
-    setAddress(address);
+    if (auth?.user) { // Leong Soon Mun Stephane, A0273409B, MS2 Fix
+      const { email, name, phone, address } = auth.user;
+      setName(name);
+      setPhone(phone);
+      setEmail(email);
+      setAddress(address);
+    }
   }, [auth?.user]);
 
   // form function
@@ -34,6 +36,7 @@ const Profile = () => {
         phone,
         address,
       });
+      console.log(data)
       if (data?.error) { // Leong Soon Mun Stephane, A0273409B
         toast.error(data?.error);
       } else {
