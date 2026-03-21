@@ -42,13 +42,34 @@ const __dirname = path.dirname(__filename);
 const cleanupTargets = [
   {
     collection: "products",
-    filter: { name: { $regex: `^${PLAYWRIGHT_PREFIX}` } },
-    printableFilter: '{ "name": { "$regex": "^__playwright__" } }',
+    filter: {
+      $or: [
+        { name: { $regex: `^${PLAYWRIGHT_PREFIX}` } },
+        { slug: { $regex: "^playwright-" } },
+      ],
+    },
+    printableFilter: 'products matching __playwright__ prefix or playwright- slug',
   },
   {
     collection: "categories",
-    filter: { name: { $regex: `^${PLAYWRIGHT_PREFIX}` } },
-    printableFilter: '{ "name": { "$regex": "^__playwright__" } }',
+    filter: {
+      $or: [
+        { name: { $regex: `^${PLAYWRIGHT_PREFIX}` } },
+        { slug: { $regex: "^playwright-" } },
+      ],
+    },
+    printableFilter: 'categories matching __playwright__ prefix or playwright- slug',
+  },
+  {
+    collection: "users",
+    filter: {
+      $or: [
+        { email: PLAYWRIGHT_ADMIN_EMAIL },
+        { email: PLAYWRIGHT_USER_EMAIL },
+        { email: { $regex: "^testuser_" } },
+      ],
+    },
+    printableFilter: 'Playwright test users',
   },
 ];
 
@@ -272,6 +293,9 @@ export const resetAdminTestData = async () => {
 
 export const clearAdminTestData = async () =>
   cleanupPlaywrightArtifacts("clearAdminTestData");
+
+export const clearPlaywrightTestData = async () =>
+  cleanupPlaywrightData("clearPlaywrightTestData");
 
 export const loginAsAdmin = async (page) => {
   await loginAsPlaywrightAdmin(page);

@@ -9,6 +9,7 @@ import {
   PLAYWRIGHT_USER_PASSWORD,
   ensurePlaywrightAdmin,
   ensurePlaywrightRegularUser,
+  clearPlaywrightTestData,
 } from "../uiTestUtils.js";
 
 interface TestUser {
@@ -54,6 +55,10 @@ test.describe("Registration Page E2E Tests", () => {
   test.beforeAll(async () => {
     await ensurePlaywrightAdmin();
     await ensurePlaywrightRegularUser();
+  });
+
+  test.afterAll(async () => {
+    await clearPlaywrightTestData();
   });
 
   // Tay Kai Jun A0283343E
@@ -216,6 +221,10 @@ test.describe("Login Page E2E Tests", () => {
     await ensurePlaywrightCatalog();
     await ensurePlaywrightAdmin();
     await ensurePlaywrightRegularUser();
+  });
+
+  test.afterAll(async () => {
+    await clearPlaywrightTestData();
   });
 
   // Tay Kai Jun A0283343E
