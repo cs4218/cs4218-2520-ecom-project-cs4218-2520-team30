@@ -24,23 +24,12 @@
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "anthropic-version", "value": "2023-06-01" },
-            { "name": "Content-Type", "value": "application/json" }
+            { "name": "anthropic-version", "value": "2023-06-01" }
           ]
         },
         "sendBody": true,
-        "contentType": "json",
-        "body": {
-          "model": "claude-opus-4-5",
-          "max_tokens": 4096,
-          "system": "You are an expert software testing analyst. You will be given Jest and/or Playwright test results in JSON format.\n\nAnalyse for: (1) Failed tests — classify by: assertion_error, timeout, import_error, setup_teardown, unexpected_exception, unknown. (2) Brittle tests — hard-coded IDs/timestamps, exact error message assertions, zero assertions, 8+ assertions per test, names with temp/todo/fix/skip. (3) Anti-patterns — duplicate test names, single-test suites, zero-test suites. (4) Flaky tests from history. (5) Suggest ONE valuable new test.\n\nReturn ONLY valid JSON matching this exact schema (no preamble):\n{\"run_summary\":{\"total_tests\":0,\"passed\":0,\"failed\":0,\"skipped\":0,\"duration_ms\":0,\"overall_health\":\"healthy|degraded|critical\",\"health_reason\":\"string\"},\"failed_tests\":[{\"name\":\"string\",\"suite\":\"string\",\"failure_type\":\"string\",\"error_message\":\"string\",\"fix_hint\":\"string\"}],\"brittle_tests\":[{\"name\":\"string\",\"suite\":\"string\",\"reason\":\"string\",\"recommendation\":\"string\"}],\"anti_patterns\":[{\"suite\":\"string\",\"pattern\":\"string\",\"details\":\"string\"}],\"flaky_tests\":[{\"name\":\"string\",\"suite\":\"string\",\"fail_count_last_5\":0,\"recommendation\":\"string\"}],\"suggested_new_test\":{\"test_name\":\"string\",\"target_suite\":\"string\",\"what_to_assert\":\"string\",\"rationale\":\"string\"},\"top_priority_fixes\":[\"string\"]}",
-          "messages": [
-            {
-              "role": "user",
-              "content": "=Analyse these test results:\n\n{{ JSON.stringify($json.body.test_results, null, 2) }}\n\nBranch: {{ $json.body.branch }}\nCommit: {{ $json.body.commit_sha }}\nActor: {{ $json.body.actor }}"
-            }
-          ]
-        },
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"claude-opus-4-5\",\n  \"max_tokens\": 4096,\n  \"system\": \"You are an expert software testing analyst. You will be given Jest and/or Playwright test results in JSON format.\\n\\nAnalyse for: (1) Failed tests - classify by: assertion_error, timeout, import_error, setup_teardown, unexpected_exception, unknown. (2) Brittle tests - hard-coded IDs/timestamps, exact error message assertions, zero assertions, 8+ assertions per test, names with temp/todo/fix/skip. (3) Anti-patterns - duplicate test names, single-test suites, zero-test suites. (4) Flaky tests from history. (5) Suggest ONE valuable new test.\\n\\nReturn ONLY valid JSON matching this exact schema (no preamble):\\n{\\\"run_summary\\\":{\\\"total_tests\\\":0,\\\"passed\\\":0,\\\"failed\\\":0,\\\"skipped\\\":0,\\\"duration_ms\\\":0,\\\"overall_health\\\":\\\"healthy|degraded|critical\\\",\\\"health_reason\\\":\\\"string\\\"},\\\"failed_tests\\\":[{\\\"name\\\":\\\"string\\\",\\\"suite\\\":\\\"string\\\",\\\"failure_type\\\":\\\"string\\\",\\\"error_message\\\":\\\"string\\\",\\\"fix_hint\\\":\\\"string\\\"}],\\\"brittle_tests\\\":[{\\\"name\\\":\\\"string\\\",\\\"suite\\\":\\\"string\\\",\\\"reason\\\":\\\"string\\\",\\\"recommendation\\\":\\\"string\\\"}],\\\"anti_patterns\\\":[{\\\"suite\\\":\\\"string\\\",\\\"pattern\\\":\\\"string\\\",\\\"details\\\":\\\"string\\\"}],\\\"flaky_tests\\\":[{\\\"name\\\":\\\"string\\\",\\\"suite\\\":\\\"string\\\",\\\"fail_count_last_5\\\":0,\\\"recommendation\\\":\\\"string\\\"}],\\\"suggested_new_test\\\":{\\\"test_name\\\":\\\"string\\\",\\\"target_suite\\\":\\\"string\\\",\\\"what_to_assert\\\":\\\"string\\\",\\\"rationale\\\":\\\"string\\\"},\\\"top_priority_fixes\\\":[\\\"string\\\"]}\",\n  \"messages\": [{\n    \"role\": \"user\",\n    \"content\": \"Analyse these test results:\\n\\n{{ JSON.stringify($json.body.test_results) }}\\n\\nBranch: {{ $json.body.branch }}\\nCommit: {{ $json.body.commit_sha }}\\nActor: {{ $json.body.actor }}\"\n  }]\n}",
         "options": {}
       },
       "id": "call-claude-api",
@@ -48,7 +37,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "position": [500, 300],
-      "notes": "Results are now sent inline in the webhook body — no artifact download step needed."
+      "notes": "Results are sent inline in the webhook body — no artifact download needed."
     },
     {
       "parameters": {
