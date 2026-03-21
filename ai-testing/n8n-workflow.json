@@ -88,13 +88,17 @@
         "method": "POST",
         "url": "=https://api.github.com/repos/{{ $json.repo }}/pulls/{{ $json.pr_number }}/reviews",
         "authentication": "predefinedCredentialType",
-        "nodeCredentialType": "githubApi",
-        "sendBody": true,
-        "contentType": "json",
-        "body": {
-          "body": "={{ $json.pr_comment }}",
-          "event": "COMMENT"
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Accept", "value": "application/vnd.github+json" },
+            { "name": "X-GitHub-Api-Version", "value": "2022-11-28" }
+          ]
         },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ body: $json.pr_comment, event: 'COMMENT' }) }}",
         "options": {}
       },
       "id": "post-github-comment",
