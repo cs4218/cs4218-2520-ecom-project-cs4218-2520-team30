@@ -28,6 +28,7 @@
     },
     {
       "parameters": {
+        "method": "POST",
         "url": "https://api.anthropic.com/v1/messages",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "httpHeaderAuth",
@@ -84,16 +85,20 @@
     },
     {
       "parameters": {
-        "url": "=https://api.github.com/repos/{{ $json.repo }}/issues/{{ $json.pr_number }}/comments",
+        "method": "POST",
+        "url": "=https://api.github.com/repos/{{ $json.repo }}/pulls/{{ $json.pr_number }}/reviews",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "githubApi",
         "sendBody": true,
         "contentType": "json",
-        "body": { "body": "={{ $json.pr_comment }}" },
+        "body": {
+          "body": "={{ $json.pr_comment }}",
+          "event": "COMMENT"
+        },
         "options": {}
       },
       "id": "post-github-comment",
-      "name": "Post GitHub PR Comment",
+      "name": "Post GitHub PR Review",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "position": [1440, 180]
