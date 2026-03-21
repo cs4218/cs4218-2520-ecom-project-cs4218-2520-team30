@@ -35,6 +35,8 @@
 | **Registration** | Tay Kai Jun | `tests/ui/auth.spec.ts` | `pages/Auth/Register.js` | Form display → Field validation (password length, phone format) → Successful registration → Duplicate email handling |
 | **Login** | Tay Kai Jun | `tests/ui/auth.spec.ts` | `pages/Auth/Login.js` | Admin login → User login → Wrong password → Logout flow → Full user journey (register → login → cart) |
 | **Search** | Tay Kai Jun | `tests/ui/auth.spec.ts` | `pages/Search.js`, `pages/ProductDetails.js`, `pages/CartPage.js` | Search products → View details → Add to cart → Cart persistence → Guest checkout |
+| **Contact** | Basil Boh | `tests/ui/contact.spec.ts` | `pages/Contact.js` | Page content, document title, hero image → Footer navigation from About |
+| **Policy** | Basil Boh | `tests/ui/policy.spec.ts` | `pages/Policy.js` | Title, policy text, hero image → Footer navigation from About |
 
 
 ### Integration Tests (Jest)
