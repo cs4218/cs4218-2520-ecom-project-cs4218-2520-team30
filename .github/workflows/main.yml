@@ -140,7 +140,7 @@ jobs:
                   tests = []
                   for suite in raw.get("testResults", []):
                       short = "/".join(suite.get("testFilePath","").replace("\\","/").split("/")[-2:])
-                      for t in suite.get("testResults", []):
+                      for t in suite.get("assertionResults", []):
                           entry = {"name": t.get("fullName",""), "suite": short, "status": t.get("status","")}
                           if t.get("status") != "passed":
                               msgs = t.get("failureMessages", [])
