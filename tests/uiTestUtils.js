@@ -10,7 +10,8 @@ export const PLAYWRIGHT_ADMIN_EMAIL = "playwright-admin@test.com";
 export const PLAYWRIGHT_ADMIN_PASSWORD = "adminpassword123";
 export const PLAYWRIGHT_USER_EMAIL = "playwright-user@test.com";
 export const PLAYWRIGHT_USER_PASSWORD = "userpassword123";
-export const PLAYWRIGHT_PREFIX = "__playwright__";
+const WORKER_ID = process.env.TEST_WORKER_INDEX || "0";
+export const PLAYWRIGHT_PREFIX = `__pw_w${WORKER_ID}__`;
 export const ADMIN_EMAIL = PLAYWRIGHT_ADMIN_EMAIL;
 export const ADMIN_PASSWORD = PLAYWRIGHT_ADMIN_PASSWORD;
 const DEFAULT_PLAYWRIGHT_MONGO_URL =
@@ -43,12 +44,12 @@ const cleanupTargets = [
   {
     collection: "products",
     filter: { name: { $regex: `^${PLAYWRIGHT_PREFIX}` } },
-    printableFilter: '{ "name": { "$regex": "^__playwright__" } }',
+    printableFilter: '{ "name": { "$regex": "^__pw_w" } }',
   },
   {
     collection: "categories",
     filter: { name: { $regex: `^${PLAYWRIGHT_PREFIX}` } },
-    printableFilter: '{ "name": { "$regex": "^__playwright__" } }',
+    printableFilter: '{ "name": { "$regex": "^__pw_w" } }',
   },
 ];
 
