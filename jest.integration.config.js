@@ -5,4 +5,5 @@ export default {
     "**/tests/integration/**/*.integration.test.js",
   ],
   collectCoverage: false,
+  setupFiles: ["<rootDir>/tests/integration/setup-braintree-mock.cjs"],
 };
