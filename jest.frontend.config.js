@@ -14,7 +14,7 @@ export default {
   // tells jest how to handle css/scss imports in your tests
   moduleNameMapper: {
     "\\.(css|scss)$": "identity-obj-proxy",
-    "^react-icons/(.*)$": "<rootDir>/client/node_modules/react-icons/$1",
+    "^react-icons/(.*)$": "<rootDir>/node_modules/react-icons/$1",
   },
 
   // ignore all node_modules except styleMock and axios (needed for css imports)
