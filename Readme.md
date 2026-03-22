@@ -74,7 +74,6 @@ UI Testing
 
 Bug Fixes / Notes
 
-- `client/src/components/Routes/AdminRoute.js`
 - `client/src/pages/user/Profile.js`
 - `controllers/authController.js`
 
