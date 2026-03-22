@@ -16,8 +16,6 @@ let playwrightMongoUrl;
 
 if (process.env.PLAYWRIGHT_MONGO_URL) {
   playwrightMongoUrl = process.env.PLAYWRIGHT_MONGO_URL;
-} else if (process.env.MONGO_URL) {
-  playwrightMongoUrl = process.env.MONGO_URL;
 } else if (fs.existsSync(MONGO_URI_FILE)) {
   playwrightMongoUrl = fs.readFileSync(MONGO_URI_FILE, "utf8");
 } else {

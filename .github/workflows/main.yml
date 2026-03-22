@@ -104,14 +104,14 @@ jobs:
       - name: Seed Playwright Admin User
         if: steps.playwright-tests.outputs.found == 'true'
         env:
-          MONGO_URL: ${{ secrets.MONGO_URL }}
+          PLAYWRIGHT_MONGO_URL: ${{ secrets.MONGO_URL }}
         run: node setupAdmin.js
 
       - name: Run Playwright UI Tests
         if: steps.playwright-tests.outputs.found == 'true'
         env:
           DEBUG: pw:webserver
-          MONGO_URL: ${{ secrets.MONGO_URL }}
+          PLAYWRIGHT_MONGO_URL: ${{ secrets.MONGO_URL }}
         run: npm run test:ui
 
       - name: Skip Playwright UI Tests
