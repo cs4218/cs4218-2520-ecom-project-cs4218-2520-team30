@@ -57,6 +57,7 @@ export default {
     "<rootDir>/client/src/pages/Contact.test.js",
     "<rootDir>/client/src/context/auth.test.js",
     "<rootDir>/client/src/pages/user/Profile.test.js",
+    "<rootDir>/client/src/pages/user/Profile.integration.test.js",
     "<rootDir>/client/src/components/Routes/Private.test.js",
     "<rootDir>/client/src/components/UserMenu.test.js",
     "<rootDir>/client/src/pages/user/Dashboard.test.js",
