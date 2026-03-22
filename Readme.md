@@ -265,17 +265,19 @@ To begin unit testing with Jest in your project, follow these steps:
      npm run test
      ```
 
-## MS2 Contributions
-
+<<<<<<< HEAD
 ### Alek Kwek, A0273471A
 
-Integration Testing
+**Integration Testing**
 - Added top-down Admin Product Management integration tests for `client/src/pages/admin/CreateProduct.js` and `client/src/pages/admin/UpdateProduct.js` in separate `.integration.test.js` files.
 - Verified backend route integration for admin product create, update, and delete flows in `controllers/productController.integration.test.js`, including authentication and admin-authorization checks on delete.
+- Admin Category Actions integration coverage in `controllers/categoryController.integration.test.js` and `client/src/pages/admin/CreateCategory.integration.test.js`.
 
-UI Testing
-- Admin Product Management UI testing remains in the existing Playwright/UI work for this scope.
+**UI Testing**
+- Added Playwright end-to-end admin flows for category create/edit/delete and product create/update/delete, with strict `__playwright__` data markers, dedicated Playwright database isolation, and targeted teardown for Playwright-owned records only.
 
-Bug Fixes / Notes
+**Bug Fixes / Notes**
+- Playwright now starts its own backend/frontend servers without reusing existing local servers, seeds a dedicated Playwright admin user into the isolated Playwright database, and enforces admin auth on the product delete route used by the admin product management flow.
 - Secured `DELETE /api/v1/product/delete-product/:pid` with `requireSignIn` and `isAdmin` so delete matches the protected admin-only behavior of create and update.
 - Fixed the Update Product page title to `Dashboard - Update Product` and corrected the shipping select binding so the loaded product state maps cleanly into the form.
+

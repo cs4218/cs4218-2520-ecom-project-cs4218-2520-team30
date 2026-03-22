@@ -10,3 +10,4 @@ coverage/
 **/coverage-final.json
 **/lcov.info
 **/lcov-report/
+.nvmrc

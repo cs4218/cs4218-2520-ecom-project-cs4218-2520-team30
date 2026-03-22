@@ -12,6 +12,26 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      PORT: 6060
+      DEV_MODE: test
+      MONGO_URL: mongodb://127.0.0.1:27017/ecom-playwright
+      PLAYWRIGHT_DB_NAME: ecom-playwright-ui
+      JWT_SECRET: test-jwt-secret
+      BRAINTREE_MERCHANT_ID: test-merchant-id
+      BRAINTREE_PUBLIC_KEY: test-public-key
+      BRAINTREE_PRIVATE_KEY: test-private-key
+
+    services:
+      mongodb:
+        image: mongo:7
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --eval 'db.adminCommand({ ping: 1 })'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
     strategy:
       matrix:
@@ -27,7 +47,6 @@ jobs:
           cache: "npm"
 
       - run: npm ci
-      - run: npm install
       - name: Install Client Dependencies
         run: npm install --prefix ./client
       - run: npm run test:frontend
@@ -38,13 +57,18 @@ jobs:
         id: playwright-tests
         shell: bash
         run: |
-          if compgen -G "tests/*.ui.spec.js" > /dev/null; then
+          if find tests -name "*.spec.js" -o -name "*.spec.ts" | grep . > /dev/null; then
             echo "found=true" >> "$GITHUB_OUTPUT"
           else
             echo "found=false" >> "$GITHUB_OUTPUT"
           fi
+      - name: Seed Playwright Admin User
+        if: steps.playwright-tests.outputs.found == 'true'
+        run: node setupAdmin.js
       - name: Run Playwright UI Tests
         if: steps.playwright-tests.outputs.found == 'true'
+        env:
+          BROWSER: none
         run: npm run test:ui
       - name: Skip Playwright UI Tests
         if: steps.playwright-tests.outputs.found != 'true'

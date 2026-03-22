@@ -241,6 +241,6 @@ describe("UpdateProduct integration", () => {
     });
 
     expect(await screen.findByText("Products Listing")).toBeInTheDocument();
-    expect(toast.success).toHaveBeenCalledWith("Product DEleted Succfully");
+    expect(toast.success).toHaveBeenCalledWith("Product Deleted Successfully");
   });
 });
