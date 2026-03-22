@@ -304,11 +304,7 @@ export const getAllUsersController = async (req, res) => { // Leong Soon Mun Ste
       .select('name email phone address role') 
       .sort({ createdAt: -1 });
 
-    res.status(200).send({
-      success: true,
-      message: "All users fetched successfully",
-      users,
-    });
+    res.json(users); // Leong Soon Mun Stephane, A0273409B, MS2 Fix
   } catch (error) {
     console.log(error);
     res.status(500).send({
