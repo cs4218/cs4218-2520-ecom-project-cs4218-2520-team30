@@ -86,7 +86,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "=https://api.github.com/repos/{{ $json.repo }}/pulls/{{ $json.pr_number }}/reviews",
+        "url": "=https://api.github.com/repos/{{ $json.repo }}/issues/{{ $json.pr_number }}/comments",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "httpHeaderAuth",
         "sendHeaders": true,
@@ -98,11 +98,11 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ body: $json.pr_comment, event: 'COMMENT' }) }}",
+        "jsonBody": "={{ JSON.stringify({ body: $json.pr_comment }) }}",
         "options": {}
       },
       "id": "post-github-comment",
-      "name": "Post GitHub PR Review",
+      "name": "Post GitHub PR Comment",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "position": [1440, 180]
