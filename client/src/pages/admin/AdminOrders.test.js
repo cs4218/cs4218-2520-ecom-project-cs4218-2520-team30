@@ -123,15 +123,15 @@ describe('AdminOrders Component', () => {
 
         renderComponent();
 
-        // Wait for potential async call
+        // Wait for potential async call and state update to settle
         await waitFor(() => expect(axios.get).toHaveBeenCalledWith('/api/v1/auth/all-orders'));
+        
+        // Wait for the heading to be sure rendering is done
+        expect(screen.getByText('All Orders')).toBeInTheDocument();
 
         // Assert no tables are rendered
         const tables = screen.queryAllByRole('table');
         expect(tables).toHaveLength(0);
-
-        // Assert Title is still there
-        expect(screen.getByText('All Orders')).toBeInTheDocument();
     });
 
     /**

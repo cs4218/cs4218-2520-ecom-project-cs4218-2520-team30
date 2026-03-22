@@ -215,7 +215,8 @@ const UpdateProduct = () => {
                   onChange={(value) => {
                     setShipping(value);
                   }}
-                  value={shipping === "1" ? "Yes" : "No"}
+                  // Alek Kwek, A0273471A
+                  value={shipping}
                 >
                   <Option value="0">No</Option>
                   <Option value="1">Yes</Option>
