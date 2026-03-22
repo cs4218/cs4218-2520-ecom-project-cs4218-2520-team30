@@ -29,22 +29,27 @@
 ### UI Tests (Playwright)
 
 
-
 | Feature | Team Member | Test File | Files Tested | Test Flow |
 |---------|-------------|-----------|--------------|-----------|
 | **Registration** | Tay Kai Jun | `tests/ui/auth.spec.ts` | `pages/Auth/Register.js` | Form display → Field validation (password length, phone format) → Successful registration → Duplicate email handling |
 | **Login** | Tay Kai Jun | `tests/ui/auth.spec.ts` | `pages/Auth/Login.js` | Admin login → User login → Wrong password → Logout flow → Full user journey (register → login → cart) |
-| **Search** | Tay Kai Jun | `tests/ui/auth.spec.ts` | `pages/Search.js`, `pages/ProductDetails.js`, `pages/CartPage.js` | Search products → View details → Add to cart → Cart persistence → Guest checkout |
-
+| **Search** | Tay Kai Jun | `tests/ui/search.spec.ts` | `pages/Search.js`, `pages/ProductDetails.js`, `pages/CartPage.js` | Search products → View details → Add to cart → Cart persistence → Guest checkout |
+| **Home Page Filtering** | Lum Yi Ren Johannsen | `tests/ui/HomePageFiltering.spec.ts` | `pages/HomePage.js`, `components/Prices.js` | Navigate to Home → Category filter → Price filter → Verify product grid updates → Reset filters → Restore default listing |
+| **General Navigation & Error** | Lum Yi Ren Johannsen | `tests/ui/GeneralNavigation.spec.ts` | `components/Header.js`, `components/Footer.js`, `pages/Pagenotfound.js` | Check Home → Header Cart link → Footer About link → Invalid URL (404) → “Go back” / recovery routing |
+| **Mobile Responsiveness** | Lum Yi Ren Johannsen | `tests/ui/ResponsiveMobile.spec.ts` | `pages/HomePage.js`, `components/Header.js` | Mobile viewport (375×812) → Open hamburger menu → Assert Home / Categories / Cart → Navigate to Cart → URL and cart page |
 
 ### Integration Tests (Jest)
 
+*Includes backend Jest integration tests and frontend integration-style tests; entries marked with unmerged work follow the same note as UI tests.*
 
 | Feature | Team Member | Test File | Components Tested | Test Flow |
 |---------|-------------|-----------|-------------------|-----------|
 | **Register Controller** | Tay Kai Jun | `tests/integration/auth/register.integration.test.js` | `authController.registerController` ↔ `userModel` ↔ `authHelper` | Model validation → Password hashing → Database persistence → Duplicate email handling → Response formatting |
 | **Login Controller** | Tay Kai Jun | `tests/integration/auth/login.integration.test.js` | `authController.loginController` ↔ `userModel` ↔ `authHelper` | User lookup (MongoDB) → Password comparison (bcrypt) → JWT token generation → Role-based response |
-| **Forgot Password** | Tay Kai Jun | `tests/integration/auth/forgotPasswordController-userModel.integration.test.js` | `authController.forgotPasswordController` ↔ `userModel` ↔ `authHelper` | Email+answer validation → Password hashing → Database update → Multi-user isolation |
+| **Forgot Password** | Tay Kai Jun | `tests/integration/auth/forgotPassword.integration.test.js` | `authController.forgotPasswordController` ↔ `userModel` ↔ `authHelper` | Email+answer validation → Password hashing → Database update → Multi-user isolation |
+| **Category Backend** | Lum Yi Ren Johannsen | `tests/integration/category/categoryIntegration.test.js` | `categoryController` ↔ `categoryModel` ↔ `mongodb-memory-server` | Validate input (BVA / EP) → Controller → Persist to in-memory MongoDB → Close connection to exercise error / 500 paths |
+| **Home Page Frontend** | Lum Yi Ren Johannsen | `client/src/pages/HomePageIntegration.test.js` | `HomePage.js` ↔ `useCategory.js` ↔ `axios` (stubbed) | Stub HTTP by URL → Render page → Hook loads mock data → Assert UI for valid vs empty / error states |
+| **Payment Backend** | Lum Yi Ren Johannsen | `tests/integration/payment/paymentIntegration.test.js` | `brainTreePaymentController` ↔ `orderModel` ↔ `mongodb-memory-server` | Nonce + cart → Stub `gateway.transaction.sale` → Poll DB for persisted order → Gateway failure → HTTP 500, no order |
 
 
 ## 1. Project Introduction
