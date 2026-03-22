@@ -214,6 +214,9 @@ export const updateProfileController = async (req, res) => {
       return res.json({ error: "Password is required and 6 character long" });
     }
     const hashedPassword = password ? await hashPassword(password) : undefined;
+    if (!req.user._id) { // Leong Soon Mun Stephane, A0273409B, MS2 Fix
+      throw new Error("User Id is Missing") 
+    }
     const updatedUser = await userModel.findByIdAndUpdate(
       req.user._id,
       {
@@ -304,11 +307,7 @@ export const getAllUsersController = async (req, res) => { // Leong Soon Mun Ste
       .select('name email phone address role') 
       .sort({ createdAt: -1 });
 
-    res.status(200).send({
-      success: true,
-      message: "All users fetched successfully",
-      users,
-    });
+    res.json(users); // Leong Soon Mun Stephane, A0273409B, MS2 Fix
   } catch (error) {
     console.log(error);
     res.status(500).send({

@@ -60,8 +60,7 @@ describe('Users Page', () => { // Leong Soon Mun Stephane, A0273409B
 
     it('should render header and table', async () => { // Leong Soon Mun Stephane, A0273409B
         // Arrange
-        res.data.success = true;
-        res.data.users = []
+        res.data = []
         axios.get.mockResolvedValueOnce(res);
 
         // Act
@@ -85,8 +84,7 @@ describe('Users Page', () => { // Leong Soon Mun Stephane, A0273409B
 
     it('should display admin role if role is 1', async () => { // Leong Soon Mun Stephane, A0273409B
         // Arrange
-        res.data.success = true;
-        res.data.users = [
+        res.data = [
             {
                 _id: 1,
                 name: 'johndoe',
@@ -128,8 +126,7 @@ describe('Users Page', () => { // Leong Soon Mun Stephane, A0273409B
 
     it('should display user role if role is not 1', async () => { // Leong Soon Mun Stephane, A0273409B
         // Arrange
-        res.data.success = true;
-        res.data.users = [
+        res.data = [
             {
                 _id: 2,
                 name: 'johndoe',
@@ -171,8 +168,7 @@ describe('Users Page', () => { // Leong Soon Mun Stephane, A0273409B
 
     it('should not display user information if success if false', async () => { // Leong Soon Mun Stephane, A0273409B
         // Arrange
-        res.data.success = false;
-        res.data.users = [
+        res.data = [
             {
                 _id: 2,
                 name: 'johndoe',
@@ -221,8 +217,7 @@ describe('Users Page', () => { // Leong Soon Mun Stephane, A0273409B
     
     it('should not display user information if res has no users', async () => { // Leong Soon Mun Stephane, A0273409B
         // Arrange
-        res.data.success = false;
-        res.data.users = []
+        res.data = []
         axios.get.mockResolvedValueOnce(res);
 
         // Act
@@ -241,8 +236,7 @@ describe('Users Page', () => { // Leong Soon Mun Stephane, A0273409B
 
     it('should display multiple users if 2 are given', async () => { // Leong Soon Mun Stephane, A0273409B
         // Arrange
-        res.data.success = true;
-        res.data.users = [
+        res.data = [
             {
                 _id: 1,
                 name: 'user1',

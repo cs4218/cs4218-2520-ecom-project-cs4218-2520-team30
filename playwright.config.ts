@@ -1,6 +1,8 @@
 import dotenv from "dotenv";
 import { defineConfig } from "@playwright/test";
 
+dotenv.config({ path: ".env" });
+
 dotenv.config();
 
 process.env.PLAYWRIGHT_MONGO_URL = process.env.MONGO_URL;
