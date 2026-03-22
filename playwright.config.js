@@ -11,8 +11,8 @@ const isCI = process.env.CI === "true";
  */
 export default defineConfig({
   testDir: "./tests",
-  testMatch: "**/*.ui.spec.js",
-  testIgnore: ["**/integration/**", "**/setup/**", "**/ui/**"],
+  testMatch: "**/*.spec.{js,ts}",
+  testIgnore: ["**/integration/**", "**/setup/**"],
   globalSetup: "./tests/globalSetup.js",
   globalTeardown: "./tests/globalTeardown.js",
   /* CI/CD and worker configuration from branch */
