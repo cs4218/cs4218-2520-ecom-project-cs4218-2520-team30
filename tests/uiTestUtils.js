@@ -3,7 +3,7 @@ require("dotenv").config();
 const bcrypt = require("bcrypt");
 const { MongoClient, ObjectId } = require("mongodb");
 
-const PLAYWRIGHT_DB_NAME = "playwright_ms2_ui";
+const PLAYWRIGHT_DB_NAME = "test";
 const PLAYWRIGHT_CATEGORY_ID = new ObjectId("65f000000000000000000001");
 const PLAYWRIGHT_PRODUCT_IDS = [
   new ObjectId("65f000000000000000000011"),
@@ -176,39 +176,54 @@ async function seedPlaywrightAdminOrdersData() {
       },
     ]);
 
-    await db.collection("users").insertMany([
-      {
-        _id: PLAYWRIGHT_ADMIN_ID,
+    // Users are now registered via API in the tests, but let's just insert here via API if possible.
+    // Wait, since we are inside uiTestUtils (Node environment), we can use fetch to register.
+    const resAdmin = await fetch("http://localhost:6060/api/v1/auth/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
         name: PLAYWRIGHT_ADMIN_NAME,
         email: PLAYWRIGHT_ADMIN_EMAIL,
-        password: passwordHash,
+        password: PLAYWRIGHT_ADMIN_PASSWORD,
         phone: "12345678",
         address: "Playwright Admin Address",
-        answer: "__playwright__ admin answer",
-        role: 1,
-        createdAt: new Date("2026-03-16T10:00:00.000Z"),
-        updatedAt: new Date("2026-03-16T10:00:00.000Z"),
-      },
-      {
-        _id: PLAYWRIGHT_BUYER_ID,
+        answer: "__playwright__ admin answer"
+      })
+    });
+    console.log("Admin Register Res:", await resAdmin.text());
+
+    const resBuyer = await fetch("http://localhost:6060/api/v1/auth/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
         name: PLAYWRIGHT_BUYER_NAME,
         email: "playwright-buyer@test.com",
-        password: passwordHash,
+        password: PLAYWRIGHT_ADMIN_PASSWORD,
         phone: "87654321",
         address: "Playwright Buyer Address",
-        answer: "__playwright__ buyer answer",
-        role: 0,
-        createdAt: new Date("2026-03-15T10:00:00.000Z"),
-        updatedAt: new Date("2026-03-15T10:00:00.000Z"),
-      },
-    ]);
+        answer: "__playwright__ buyer answer"
+      })
+    });
+
+    // We must update admin role to 1 manually because API defaults to 0
+    await db.collection("users").updateOne(
+      { email: PLAYWRIGHT_ADMIN_EMAIL },
+      { $set: { role: 1 } }
+    );
+
+    // Also get their ObjectIds to use for Orders array
+    const adminUserDoc = await db.collection("users").findOne({ email: PLAYWRIGHT_ADMIN_EMAIL });
+    console.log("AdminUserDoc after update:", adminUserDoc);
+    const buyerUserDoc = await db.collection("users").findOne({ email: "playwright-buyer@test.com" });
+    const actualAdminId = adminUserDoc ? adminUserDoc._id : PLAYWRIGHT_ADMIN_ID;
+    const actualBuyerId = buyerUserDoc ? buyerUserDoc._id : PLAYWRIGHT_BUYER_ID;
 
     await db.collection("orders").insertMany([
       {
         _id: PLAYWRIGHT_ORDER_IDS[0],
         products: [PLAYWRIGHT_PRODUCT_IDS[0]],
         payment: { success: true },
-        buyer: PLAYWRIGHT_BUYER_ID,
+        buyer: actualBuyerId,
         status: PLAYWRIGHT_ORDER_STATUSES[0],
         createdAt: new Date("2026-03-19T10:00:00.000Z"),
         updatedAt: new Date("2026-03-19T10:00:00.000Z"),
@@ -217,7 +232,7 @@ async function seedPlaywrightAdminOrdersData() {
         _id: PLAYWRIGHT_ORDER_IDS[1],
         products: [PLAYWRIGHT_PRODUCT_IDS[1]],
         payment: { success: false },
-        buyer: PLAYWRIGHT_BUYER_ID,
+        buyer: actualBuyerId,
         status: PLAYWRIGHT_ORDER_STATUSES[1],
         createdAt: new Date("2026-03-18T10:00:00.000Z"),
         updatedAt: new Date("2026-03-18T10:00:00.000Z"),
@@ -236,4 +251,5 @@ module.exports = {
   cleanupPlaywrightAdminOrdersData,
   getMongoTargets,
   seedPlaywrightAdminOrdersData,
+  withPlaywrightDb,
 };

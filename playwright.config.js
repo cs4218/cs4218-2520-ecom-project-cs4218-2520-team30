@@ -1,10 +1,12 @@
-require("dotenv").config();
+const path = require("path");
+require("dotenv").config({ path: path.resolve(__dirname, ".env") });
 
 const { defineConfig, devices } = require("@playwright/test");
 const { getMongoTargets } = require("./tests/uiTestUtils");
 
 const isCI = process.env.CI === "true";
 const mongoTargets = process.env.MONGO_URL ? getMongoTargets() : null;
+console.log("PLAYWRIGHT MONGOTARGETS:", mongoTargets);
 
 module.exports = defineConfig({
   testDir: "./tests",
@@ -34,6 +36,7 @@ module.exports = defineConfig({
         ...(mongoTargets
           ? { MONGO_URL: mongoTargets.playwrightMongoUrl }
           : {}),
+        PLAYWRIGHT_TEST_ENV: "true",
         JWT_SECRET: process.env.JWT_SECRET || "playwright-jwt-secret",
         BRAINTREE_MERCHANT_ID:
           process.env.BRAINTREE_MERCHANT_ID || "playwright-merchant-id",
@@ -42,6 +45,7 @@ module.exports = defineConfig({
         BRAINTREE_PRIVATE_KEY:
           process.env.BRAINTREE_PRIVATE_KEY || "playwright-private-key",
       },
+      stdout: "pipe",
     },
     {
       name: "frontend",

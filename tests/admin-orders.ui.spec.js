@@ -17,6 +17,12 @@ async function loginAsPlaywrightAdmin(page) {
   await page
     .getByPlaceholder("Enter Your Password")
     .fill(PLAYWRIGHT_ADMIN_PASSWORD);
+  page.on('response', async response => {
+    if (response.url().includes('login')) {
+      console.log('LOGIN RES STATUS:', response.status());
+      console.log('LOGIN RES BODY:', await response.text());
+    }
+  });
   await page.getByRole("button", { name: "LOGIN" }).click();
   await expect(page).toHaveURL("http://localhost:3000/");
 }
@@ -60,8 +66,8 @@ test.describe("Admin Orders UI", () => {
     await expect(
       page.getByText(PLAYWRIGHT_ORDER_PRODUCT_NAMES[1], { exact: true })
     ).toBeVisible();
-    await expect(page.getByText("Success")).toBeVisible();
-    await expect(page.getByText("Failed")).toBeVisible();
+    await expect(page.getByText("Success").first()).toBeVisible();
+    await expect(page.getByText("Failed").first()).toBeVisible();
     const keyboardOrderCard = page
       .locator(".border.shadow")
       .filter({ hasText: PLAYWRIGHT_ORDER_PRODUCT_NAMES[0] });
