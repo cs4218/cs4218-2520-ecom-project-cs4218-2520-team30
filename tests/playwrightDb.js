@@ -3,8 +3,7 @@ import dotenv from "dotenv";
 
 dotenv.config({ path: ".env" });
 
-export const PLAYWRIGHT_DB_NAME =
-  process.env.PLAYWRIGHT_DB_NAME || "ecom-playwright-ui";
+export const PLAYWRIGHT_DB_NAME = "test";
 export const PLAYWRIGHT_PREFIX = "__playwright__";
 export const PLAYWRIGHT_ADMIN_EMAIL = "playwright-admin@test.com";
 export const PLAYWRIGHT_ADMIN_PASSWORD = "adminpassword123";

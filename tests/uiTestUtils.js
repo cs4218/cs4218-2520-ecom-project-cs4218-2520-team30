@@ -48,11 +48,12 @@ export function getCleanupPlan(includeAdmin = false) {
   };
 }
 
+export const withPlaywrightDb = withPlaywrightConnection;
 async function withPlaywrightConnection(work) {
-  const connection = await mongoose.connect(getPlaywrightMongoUri());
+  await mongoose.connect(getPlaywrightMongoUri());
 
   try {
-    return await work(connection);
+    return await work(mongoose.connection.db);
   } finally {
     await mongoose.disconnect();
   }
