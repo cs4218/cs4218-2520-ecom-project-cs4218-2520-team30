@@ -134,6 +134,9 @@ describe('CreateCategory Component', () => {
         await waitFor(() => {
             expect(screen.getByRole('heading', { name: /manage category/i })).toBeInTheDocument();
         });
+        await waitFor(() => {
+            expect(axios.get).toHaveBeenCalled();
+        });
         expect(screen.getByPlaceholderText(/enter new category/i)).toBeInTheDocument();
         expect(screen.getByRole('button', { name: /submit/i })).toBeInTheDocument();
     });
@@ -613,6 +616,9 @@ describe('CreateCategory Component', () => {
         // Assert - component should still render, no error toast
         await waitFor(() => {
             expect(screen.getByRole('heading', { name: /manage category/i })).toBeInTheDocument();
+        });
+        await waitFor(() => {
+            expect(axios.get).toHaveBeenCalled();
         });
         // Categories should remain empty (no setCategories call)
     });

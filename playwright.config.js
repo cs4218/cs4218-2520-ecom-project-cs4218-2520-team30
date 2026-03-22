@@ -1,6 +1,9 @@
 import dotenv from "dotenv";
 import { defineConfig, devices } from "@playwright/test";
-
+import {
+  PLAYWRIGHT_APP_PORT,
+  PLAYWRIGHT_CLIENT_PORT,
+} from "./tests/playwrightDb.js";
 import { getPlaywrightMongoUrl } from "./tests/uiTestUtils.js";
 
 dotenv.config();
@@ -13,6 +16,10 @@ process.env.PLAYWRIGHT_APP_MONGO_URL = playwrightMongoUrl;
 
 export default defineConfig({
   testDir: "./tests",
+  testMatch: "**/*.spec.{js,ts}",
+  testIgnore: ["**/integration/**", "**/setup/**"],
+  globalSetup: "./tests/globalSetup.js",
+  globalTeardown: "./tests/globalTeardown.js",
   fullyParallel: false,
   forbidOnly: isCI,
   retries: isCI ? 2 : 0,
@@ -23,16 +30,16 @@ export default defineConfig({
     timeout: 5_000,
   },
   use: {
-    baseURL: "http://127.0.0.1:3000",
+    baseURL: `http://127.0.0.1:${PLAYWRIGHT_CLIENT_PORT}`,
     trace: "on-first-retry",
   },
   webServer: [
     {
       command: "npm start",
-      url: "http://127.0.0.1:6060",
+      url: `http://127.0.0.1:${PLAYWRIGHT_APP_PORT}`,
       env: {
         ...process.env,
-        PORT: "6060",
+        PORT: PLAYWRIGHT_APP_PORT,
         DEV_MODE: "test",
         MONGO_URL: playwrightMongoUrl,
         JWT_SECRET: process.env.JWT_SECRET || "playwright-jwt-secret",
@@ -48,12 +55,12 @@ export default defineConfig({
     },
     {
       command: "npm run client",
-      url: "http://127.0.0.1:3000",
+      url: `http://127.0.0.1:${PLAYWRIGHT_CLIENT_PORT}`,
       env: {
         ...process.env,
         HOST: "127.0.0.1",
         DANGEROUSLY_DISABLE_HOST_CHECK: "true",
-        PORT: "3000",
+        PORT: PLAYWRIGHT_CLIENT_PORT,
         BROWSER: "none",
       },
       reuseExistingServer: false,

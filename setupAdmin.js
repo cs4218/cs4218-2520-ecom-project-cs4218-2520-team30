@@ -1,52 +1,14 @@
-import bcrypt from "bcrypt";
-import dotenv from "dotenv";
-import mongoose from "mongoose";
+// Alek Kwek, A0273471A
+import { seedPlaywrightAdmin } from "./tests/uiTestUtils.js";
 
-import userModel from "./models/userModel.js";
-import { getPlaywrightMongoUrl } from "./tests/uiTestUtils.js";
+let exitCode = 0;
 
-dotenv.config({ path: ".env" });
-
-const mongoUrl = getPlaywrightMongoUrl();
-
-const createAdmin = async () => {
-  let exitCode = 0;
-
-  try {
-    await mongoose.connect(mongoUrl);
-
-    const email = "playwright-admin@test.com";
-    const password = "adminpassword123";
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    let user = await userModel.findOne({ email });
-    if (!user) {
-      user = new userModel({
-        name: "Playwright Admin",
-        email,
-        password: hashedPassword,
-        phone: "1234567890",
-        address: "Test Address",
-        answer: "Test Answer",
-        role: 1,
-      });
-      await user.save();
-      console.log("Admin user created successfully.");
-    } else {
-      user.role = 1;
-      user.password = hashedPassword;
-      await user.save();
-      console.log("Admin user updated successfully.");
-    }
-  } catch (error) {
-    console.error(error);
-    exitCode = 1;
-  } finally {
-    await mongoose.disconnect().catch(() => {
-      exitCode = 1;
-    });
-    process.exitCode = exitCode;
-  }
-};
-
-await createAdmin();
+try {
+  await seedPlaywrightAdmin();
+  console.log("Playwright admin user ensured successfully.");
+} catch (error) {
+  console.error(error);
+  exitCode = 1;
+} finally {
+  process.exitCode = exitCode;
+}

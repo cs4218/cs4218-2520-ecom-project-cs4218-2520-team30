@@ -44,9 +44,9 @@ const UpdateProduct = () => {
       setId(data.product._id);
       setDescription(data.product.description);
       setPrice(data.product.price);
-      setPrice(data.product.price);
       setQuantity(data.product.quantity);
-      setShipping(data.product.shipping);
+      // Alek Kwek, A0273471A
+      setShipping(data.product.shipping ? "1" : "0");
       setCategory(data.product.category._id);
     } catch (error) {
       console.log(error);
@@ -119,7 +119,7 @@ const UpdateProduct = () => {
         `/api/v1/product/delete-product/${id}`
       );
       if (data?.success) {
-        toast.success("Product DEleted Succfully");
+        toast.success("Product Deleted Successfully");
         navigate("/dashboard/admin/products");
       } else {
         toast.error(data?.message || "Something went wrong");

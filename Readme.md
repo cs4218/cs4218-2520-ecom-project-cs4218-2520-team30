@@ -25,6 +25,81 @@
 | **Category** | Johannsen Lum | - `hooks/useCategory.js`<br>- `pages/Categories.js` | - `controllers/categoryController.js`<br>  1. categoryController<br>  2. singleCategoryController<br>- `models/categoryModel.js` |
 | **Payment** | Johannsen Lum | | - `controllers/productController.js`<br>  1. braintreeTokenController<br>  2. brainTreePaymentController |
 
+### MS2 Integration Testing Contributions
+
+#### Alek Kwek (A0273471A)
+
+Integration Testing
+
+- Admin Category Actions
+   - `controllers/categoryController.integration.test.js`
+   - `client/src/pages/admin/CreateCategory.integration.test.js`
+- Admin Product Management
+   - `controllers/productController.integration.test.js`
+   - `client/src/pages/admin/CreateProduct.integration.test.js`
+   - `client/src/pages/admin/UpdateProduct.integration.test.js`
+
+UI Testing
+
+- Admin Category CRUD
+- Admin Product CRUD
+
+Bug Fixes / Notes
+
+- `client/src/pages/admin/CreateCategory.js`
+  - Added missing React `key` for category table rows
+- `client/src/pages/admin/UpdateProduct.js`
+  - Fixed page title to `Dashboard - Update Product`
+  - Corrected shipping select binding
+- `server.js` / API
+  - Secured `DELETE /api/v1/product/delete-product/:pid` with `requireSignIn` and `isAdmin`
+
+#### Leong Soon Mun Stephane (A0273409B)
+
+Integration Testing
+
+- Profile Feature
+   - `routes/authRoute.updateprofile.integration.test.js`
+   - `controllers/authController.updateprofile.integration.test.js`
+   - `client/src/pages/user/Profile.integration.test.js`
+- Order Feature
+   - `routes/authRoute.getorders.integration.test.js`
+   - `controllers/authController.getorders.integration.test.js`
+   - `client/src/pages/user/Orders.integration.test.js`
+
+- Admin View Users Feature
+   - `routes/authRoute.getallusers.integration.test.js`
+   - `controllers/authController.getallusers.integration.test.js`
+   - `client/src/pages/admin/Users.integration.test.js`
+- General Feature
+   - `routes/authRoute.userauth.integration.test.js`
+   - `client/src/pages/user/Dashboard.integration.test.js`
+
+UI Testing
+
+- `tests/ui/general.spec.ts`
+- `tests/ui/orders.spec.ts`
+- `tests/ui/profile.spec.ts`
+- `tests/ui/users.spec.ts`
+
+Bug Fixes / Notes
+
+- `client/src/pages/user/Profile.js`
+- `controllers/authController.js`
+
+#### Basil Boh
+
+Test cases Written
+
+- `tests/integration/product/product-details-category.integration.test.js`
+- `tests/integration/product/cart-product.integration.test.js`
+- `tests/integration/product/payment.integration.test.js`
+- `tests/ui/browsing.spec.ts`
+- `tests/ui/cart.spec.ts`
+- `tests/ui/contact.spec.ts`
+- `tests/ui/policy.spec.ts`
+
+#### Tay Kai Jun and Lum Yi Ren Johannsen
 
 ### UI Tests (Playwright)
 
@@ -55,6 +130,9 @@
 ## 1. Project Introduction
 
 Virtual Vault is a full-stack MERN (MongoDB, Express.js, React.js, Node.js) e-commerce website, offering seamless connectivity and user-friendly features. The platform provides a robust framework for online shopping. The website is designed to adapt to evolving business needs and can be efficiently extended.
+
+## Continuous Integration
+1. [MS1 CI](https://github.com/cs4218/cs4218-2520-ecom-project-cs4218-2520-team30/actions/runs/22283565578/job/64458019580)
 
 ## 2. Website Features
 
@@ -197,21 +275,4 @@ To begin unit testing with Jest in your project, follow these steps:
      npm run test
      ```
 
-## MS2 Contributions
 
-### Alek Kwek, A0273471A
-
-**Integration Testing**
-- **Admin Category Actions**: `controllers/categoryController.integration.test.js` and `client/src/pages/admin/CreateCategory.integration.test.js`.
-- **Admin Product Management**: Top-down integration tests for `client/src/pages/admin/CreateProduct.js` and `client/src/pages/admin/UpdateProduct.js`.
-- Verified backend route integration for admin product create, update, and delete flows in `controllers/productController.integration.test.js`, including authentication and admin-authorization checks on delete.
-
-**UI Testing**
-- Replaced the mocked Playwright category test with black-box admin login, category CRUD, and product CRUD flows against the real frontend and backend.
-- Playwright now launches isolated app instances for UI tests and uses strict Playwright-owned markers for setup and cleanup.
-
-**Bug Fixes / Notes**
-- Secured `DELETE /api/v1/product/delete-product/:pid` with `requireSignIn` and `isAdmin` so delete matches the protected admin-only behavior of create and update.
-- Fixed the Update Product page title to `Dashboard - Update Product` and corrected the shipping select binding so the loaded product state maps cleanly into the form.
-- UI-test startup now avoids reusing unknown existing servers and avoids inheriting the unsafe default `.env` Mongo target during Playwright runs.
-- Added missing React `key` for category table rows in `client/src/pages/admin/CreateCategory.js`.

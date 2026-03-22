@@ -16,7 +16,7 @@ jobs:
     env:
       PORT: 6060
       DEV_MODE: test
-      MONGO_URL: mongodb://127.0.0.1:27017/ecom-playwright
+      PLAYWRIGHT_DB_NAME: ecom-playwright-ui
       JWT_SECRET: test-jwt-secret
       BRAINTREE_MERCHANT_ID: test-merchant-id
       BRAINTREE_PUBLIC_KEY: test-public-key
@@ -61,7 +61,7 @@ jobs:
         id: playwright-tests
         shell: bash
         run: |
-          if compgen -G "tests/*.ui.spec.js" > /dev/null; then
+          if find tests -name "*.spec.js" -o -name "*.spec.ts" | grep . > /dev/null; then
             echo "found=true" >> "$GITHUB_OUTPUT"
           else
             echo "found=false" >> "$GITHUB_OUTPUT"
@@ -76,7 +76,6 @@ jobs:
         env:
           BROWSER: none
         run: DEBUG=pw:webserver npm run test:ui
-
       - name: Skip Playwright UI Tests
         if: steps.playwright-tests.outputs.found != 'true'
         run: echo "No Playwright UI test files found under tests/. Skipping UI test run."

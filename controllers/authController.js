@@ -245,6 +245,12 @@ export const updateProfileController = async (req, res) => {
 //orders
 export const getOrdersController = async (req, res) => {
   try {
+    if (!req.user) {
+      throw new Error("User field is empty");
+    }
+    if (!req.user._id) {
+      return res.json([]);
+    }
     const orders = await orderModel
       .find({ buyer: req.user._id })
       .populate("products", "-photo")

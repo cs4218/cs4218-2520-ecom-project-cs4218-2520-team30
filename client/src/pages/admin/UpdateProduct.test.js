@@ -184,6 +184,25 @@ describe('UpdateProduct Component', () => {
     });
 
     // ----------------------------------------------------------
+    // HAPPY PATH: Correctly sets shipping status
+    // ----------------------------------------------------------
+    it('should correctly set shipping to "No" when shipping is false', async () => {
+        // Arrange
+        const mockProductNoShipping = { ...mockProduct, shipping: false };
+        axios.get
+            .mockResolvedValueOnce({ data: { product: mockProductNoShipping } })
+            .mockResolvedValueOnce({ data: { success: true, category: mockCategories } });
+
+        // Act
+        renderUpdateProduct();
+
+        // Assert
+        await waitFor(() => {
+            expect(screen.getByTestId('select-shipping-')).toHaveValue('0');
+        });
+    });
+
+    // ----------------------------------------------------------
     // HAPPY PATH: Fetches product and categories on mount
     // ----------------------------------------------------------
     it('should fetch product and categories on component mount', async () => {
@@ -403,7 +422,7 @@ describe('UpdateProduct Component', () => {
         await waitFor(() => {
             expect(axios.delete).toHaveBeenCalled();
         });
-        expect(toast.success).toHaveBeenCalledWith('Product DEleted Succfully');
+        expect(toast.success).toHaveBeenCalledWith('Product Deleted Successfully');
         expect(mockNavigate).toHaveBeenCalledWith('/dashboard/admin/products');
     });
 
