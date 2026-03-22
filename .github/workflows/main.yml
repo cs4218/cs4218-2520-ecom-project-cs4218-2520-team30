@@ -104,14 +104,17 @@ jobs:
       - name: Seed Playwright Admin User
         if: steps.playwright-tests.outputs.found == 'true'
         env:
-          PLAYWRIGHT_MONGO_URL: ${{ secrets.MONGO_URL }}
+          PLAYWRIGHT_MONGO_URL: mongodb://localhost:27017/ecom-test
         run: node setupAdmin.js
 
       - name: Run Playwright UI Tests
         if: steps.playwright-tests.outputs.found == 'true'
         env:
           DEBUG: pw:webserver
-          PLAYWRIGHT_MONGO_URL: ${{ secrets.MONGO_URL }}
+          PLAYWRIGHT_MONGO_URL: mongodb://localhost:27017/ecom-test
+          BRAINTREE_MERCHANT_ID: ${{ secrets.BRAINTREE_MERCHANT_ID }}
+          BRAINTREE_PUBLIC_KEY: ${{ secrets.BRAINTREE_PUBLIC_KEY }}
+          BRAINTREE_PRIVATE_KEY: ${{ secrets.BRAINTREE_PRIVATE_KEY }}
         run: npm run test:ui
 
       - name: Skip Playwright UI Tests
