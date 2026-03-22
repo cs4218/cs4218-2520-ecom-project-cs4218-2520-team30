@@ -54,6 +54,9 @@ export function getPlaywrightMongoUrl() {
   return getPlaywrightMongoUri();
 }
 
+/**
+ * Shared logic for DB connections.
+ */
 export async function withPlaywrightConnection(work) {
   const uri = getPlaywrightMongoUri();
   // Ensure we are not already connected to a different DB
@@ -67,6 +70,11 @@ export async function withPlaywrightConnection(work) {
     await mongoose.disconnect();
   }
 }
+
+/**
+ * Alias used by some tests (e.g. auth.spec.ts).
+ */
+export const withPlaywrightDb = withPlaywrightConnection;
 
 export async function seedPlaywrightAdmin() {
   return withPlaywrightConnection(async () => {
@@ -132,6 +140,9 @@ export async function ensurePlaywrightRegularUser() {
   }
 }
 
+/**
+ * Cleanup function that removes all seeded playwright data.
+ */
 export async function cleanupPlaywrightData({ includeAdmin = false } = {}) {
   const uri = getPlaywrightMongoUri();
   if (mongoose.connection.readyState !== 0) await mongoose.disconnect();
@@ -148,6 +159,36 @@ export async function cleanupPlaywrightData({ includeAdmin = false } = {}) {
   } finally {
     await mongoose.disconnect();
   }
+}
+
+/**
+ * Alias used by some tests (e.g. create-category.ui.spec.js).
+ */
+export const cleanupPlaywrightArtifacts = cleanupPlaywrightData;
+
+export async function findResidualPlaywrightData() {
+  return withPlaywrightConnection(async () => {
+    const [categories, products, users] = await Promise.all([
+      categoryModel.find({ name: prefixRegex }).select("name slug").lean(),
+      productModel
+        .find({ name: prefixRegex })
+        .select("name slug category")
+        .lean(),
+      userModel
+        .find({
+          $or: [{ email: PLAYWRIGHT_ADMIN_EMAIL }, { name: prefixRegex }],
+        })
+        .select("email name role")
+        .lean(),
+    ]);
+
+    return {
+      dbName: PLAYWRIGHT_DB_NAME,
+      categories,
+      products,
+      users,
+    };
+  });
 }
 
 export async function ensurePlaywrightCatalog() {
