@@ -35,8 +35,8 @@ jest.mock('../../hooks/useCategory', () => jest.fn(() => []));
 jest.mock('antd', () => {
     const React = require('react');
     return {
-        Modal: ({ children, visible, onCancel }) => {
-            if (!visible) return null;
+        Modal: ({ children, visible, open, onCancel }) => {
+            if (!(open ?? visible)) return null;
             return React.createElement('div', { 'data-testid': 'modal' },
                 React.createElement('button', { onClick: onCancel, 'data-testid': 'modal-close' }, 'Close'),
                 children

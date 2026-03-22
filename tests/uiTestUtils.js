@@ -17,7 +17,7 @@ import {
   PLAYWRIGHT_ADMIN_PASSWORD,
   PLAYWRIGHT_ADMIN_PHONE,
   PLAYWRIGHT_DB_NAME,
-  PLAYWRIGHT_PREFIX,
+  PLAYWRIGHT_PREFIX as BASE_PLAYWRIGHT_PREFIX,
   getBaseMongoUri,
   getPlaywrightMongoUri,
 } from "./playwrightDb.js";
@@ -25,6 +25,9 @@ import {
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Parallel worker support
+const WORKER_ID = process.env.TEST_WORKER_INDEX || "0";
+export const PLAYWRIGHT_PREFIX = `${BASE_PLAYWRIGHT_PREFIX}_w${WORKER_ID}__`;
 const prefixRegex = new RegExp(`^${PLAYWRIGHT_PREFIX}`, "i");
 
 export const PLAYWRIGHT_USER_EMAIL = "playwright-user@test.com";
@@ -59,7 +62,6 @@ export function getPlaywrightMongoUrl() {
  */
 export async function withPlaywrightConnection(work) {
   const uri = getPlaywrightMongoUri();
-  // Ensure we are not already connected to a different DB
   if (mongoose.connection.readyState !== 0) {
     await mongoose.disconnect();
   }
@@ -71,9 +73,6 @@ export async function withPlaywrightConnection(work) {
   }
 }
 
-/**
- * Alias used by some tests (e.g. auth.spec.ts).
- */
 export const withPlaywrightDb = withPlaywrightConnection;
 
 export async function seedPlaywrightAdmin() {
@@ -94,7 +93,7 @@ export async function seedPlaywrightAdmin() {
       { upsert: true, new: true, setDefaultsOnInsert: true }
     );
 
-    // Legacy admin expected by some tests
+    // Legacy admin
     const hashedLegacyPassword = await bcrypt.hash("admin@test.sg", 10);
     await userModel.findOneAndUpdate(
       { email: "admin@test.sg" },
@@ -116,38 +115,20 @@ export async function ensurePlaywrightAdmin() {
   return seedPlaywrightAdmin();
 }
 
-export async function ensurePlaywrightRegularUser() {
-  const uri = getPlaywrightMongoUri();
-  if (mongoose.connection.readyState !== 0) await mongoose.disconnect();
-  await mongoose.connect(uri);
-  try {
-    const hashedPassword = await bcrypt.hash(PLAYWRIGHT_USER_PASSWORD, 10);
-    await userModel.findOneAndUpdate(
-      { email: PLAYWRIGHT_USER_EMAIL },
-      {
-        name: "Playwright User",
-        email: PLAYWRIGHT_USER_EMAIL,
-        password: hashedPassword,
-        phone: "1234567890",
-        address: "Playwright Address",
-        answer: "Playwright Answer",
-        role: 0,
-      },
-      { upsert: true }
-    );
-  } finally {
-    await mongoose.disconnect();
-  }
-}
-
 /**
- * Cleanup function that removes all seeded playwright data.
+ * Cleanup targets used by teardown.
  */
+export const cleanupTargetsInDatabase = async (label, targets) => {
+  return withPlaywrightConnection(async (db) => {
+    for (const target of targets) {
+      const result = await db.collection(target.collection).deleteMany(target.filter);
+      console.log(`[Playwright cleanup:${label}] deleted ${result.deletedCount} from ${target.collection}`);
+    }
+  });
+};
+
 export async function cleanupPlaywrightData({ includeAdmin = false } = {}) {
-  const uri = getPlaywrightMongoUri();
-  if (mongoose.connection.readyState !== 0) await mongoose.disconnect();
-  await mongoose.connect(uri);
-  try {
+  return withPlaywrightConnection(async () => {
     await productModel.deleteMany({ name: prefixRegex });
     await categoryModel.deleteMany({ name: prefixRegex });
 
@@ -156,62 +137,24 @@ export async function cleanupPlaywrightData({ includeAdmin = false } = {}) {
         email: { $in: [PLAYWRIGHT_ADMIN_EMAIL, "admin@test.sg", PLAYWRIGHT_USER_EMAIL] },
       });
     }
-  } finally {
-    await mongoose.disconnect();
-  }
-}
-
-/**
- * Alias used by some tests (e.g. create-category.ui.spec.js).
- */
-export const cleanupPlaywrightArtifacts = cleanupPlaywrightData;
-
-export async function findResidualPlaywrightData() {
-  return withPlaywrightConnection(async () => {
-    const [categories, products, users] = await Promise.all([
-      categoryModel.find({ name: prefixRegex }).select("name slug").lean(),
-      productModel
-        .find({ name: prefixRegex })
-        .select("name slug category")
-        .lean(),
-      userModel
-        .find({
-          $or: [{ email: PLAYWRIGHT_ADMIN_EMAIL }, { name: prefixRegex }],
-        })
-        .select("email name role")
-        .lean(),
-    ]);
-
-    return {
-      dbName: PLAYWRIGHT_DB_NAME,
-      categories,
-      products,
-      users,
-    };
   });
 }
 
+export const cleanupPlaywrightArtifacts = cleanupPlaywrightData;
+
 export async function ensurePlaywrightCatalog() {
-  const uri = getPlaywrightMongoUri();
-  if (mongoose.connection.readyState !== 0) await mongoose.disconnect();
-  await mongoose.connect(uri);
-  try {
+  return withPlaywrightConnection(async () => {
     const fixturePath = getProductFixturePath();
     const photoData = fs.readFileSync(fixturePath);
     const now = new Date();
 
     await categoryModel.findOneAndUpdate(
       { slug: PLAYWRIGHT_SEED_CATEGORY_SLUG },
-      {
-        name: "Playwright Seeded Category",
-        slug: PLAYWRIGHT_SEED_CATEGORY_SLUG,
-      },
+      { name: "Playwright Seeded Category", slug: PLAYWRIGHT_SEED_CATEGORY_SLUG },
       { upsert: true, new: true }
     );
 
-    const seededCategory = await categoryModel.findOne({
-      slug: PLAYWRIGHT_SEED_CATEGORY_SLUG,
-    });
+    const seededCategory = await categoryModel.findOne({ slug: PLAYWRIGHT_SEED_CATEGORY_SLUG });
 
     for (const product of PLAYWRIGHT_SEED_PRODUCTS) {
       await productModel.findOneAndUpdate(
@@ -224,18 +167,13 @@ export async function ensurePlaywrightCatalog() {
           category: seededCategory._id,
           quantity: product.quantity,
           shipping: product.shipping,
-          photo: {
-            data: photoData,
-            contentType: "image/svg+xml",
-          },
+          photo: { data: photoData, contentType: "image/svg+xml" },
           updatedAt: now,
         },
         { upsert: true }
       );
     }
-  } finally {
-    await mongoose.disconnect();
-  }
+  });
 }
 
 export const makePlaywrightName = (label) =>
@@ -247,11 +185,43 @@ export const getProductFixturePath = () =>
 export async function loginAsPlaywrightAdmin(page) {
   await page.goto("/login");
   await page.getByPlaceholder("Enter Your Email ").fill(PLAYWRIGHT_ADMIN_EMAIL);
-  await page.getByPlaceholder("Enter Your Password").fill(
-    PLAYWRIGHT_ADMIN_PASSWORD
-  );
+  await page.getByPlaceholder("Enter Your Password").fill(PLAYWRIGHT_ADMIN_PASSWORD);
   await page.getByRole("button", { name: "LOGIN" }).click();
   await page.waitForURL("**/");
   const authData = await page.evaluate(() => localStorage.getItem("auth"));
   expect(authData).not.toBeNull();
 }
+
+// Additional Remote-added Helpers
+export const loginAsAdmin = async (page) => {
+  await loginAsPlaywrightAdmin(page);
+  await expect(page.getByText(PLAYWRIGHT_ADMIN_NAME)).toBeVisible();
+};
+
+export const createCategory = async (page, categoryName) => {
+  await page.goto("/dashboard/admin/create-category");
+  await expect(page.getByRole("heading", { name: /manage category/i })).toBeVisible();
+  await page.getByPlaceholder("Enter new category").fill(categoryName);
+  await page.getByRole("button", { name: "Submit" }).first().click();
+  const createdRow = page.locator("tbody tr").filter({ hasText: categoryName });
+  await expect(createdRow).toHaveCount(1);
+};
+
+export const createProduct = async (page, productDetails) => {
+  const { categoryName, name, description, price, quantity, shippingLabel = "Yes" } = productDetails;
+  const productFixturePath = getProductFixturePath();
+
+  await page.getByRole("link", { name: "Create Product" }).click();
+  await expect(page).toHaveURL("/dashboard/admin/create-product");
+  await page.locator(".ant-select").first().click();
+  await page.locator(".ant-select-item-option-content", { hasText: categoryName }).click();
+  await page.locator('input[name="photo"]').setInputFiles(productFixturePath);
+  await page.locator('input[placeholder="write a name"]').fill(name);
+  await page.locator('textarea[placeholder="write a description"]').fill(description);
+  await page.locator('input[placeholder="write a Price"]').fill(String(price));
+  await page.locator('input[placeholder="write a quantity"]').fill(String(quantity));
+  await page.locator(".ant-select").nth(1).click();
+  await page.locator(".ant-select-item-option-content", { hasText: shippingLabel }).click();
+  await page.getByRole("button", { name: /create product/i }).click();
+  await expect(page).toHaveURL("/dashboard/admin/products");
+};

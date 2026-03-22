@@ -8,14 +8,12 @@ import { useNavigate, useParams } from "react-router-dom";
 const { Option } = Select;
 
 const getShippingSelectValue = (shipping) => {
-  if (shipping === true || shipping === "1") {
+  if (shipping === true || shipping === "1" || shipping === 1) {
     return "1";
   }
-
-  if (shipping === false || shipping === "0") {
+  if (shipping === false || shipping === "0" || shipping === 0) {
     return "0";
   }
-
   return undefined;
 };
 
@@ -45,8 +43,7 @@ const UpdateProduct = () => {
       setDescription(data.product.description);
       setPrice(data.product.price);
       setQuantity(data.product.quantity);
-      // Alek Kwek, A0273471A
-      setShipping(data.product.shipping ? "1" : "0");
+      setShipping(getShippingSelectValue(data.product.shipping) ?? "");
       setCategory(data.product.category._id);
     } catch (error) {
       console.log(error);
@@ -88,12 +85,10 @@ const UpdateProduct = () => {
       photo && productData.append("photo", photo);
       productData.append("category", category);
       productData.append("shipping", shipping);
-      // Alek Kwek, A0273471A
       const { data } = await axios.put(
         `/api/v1/product/update-product/${id}`,
         productData
       );
-      // Alek Kwek, A0273471A
       if (data?.success) {
         toast.success("Product Updated Successfully");
         navigate("/dashboard/admin/products");
@@ -144,6 +139,7 @@ const UpdateProduct = () => {
                 placeholder="Select a category"
                 size="large"
                 showSearch
+                optionFilterProp="children"
                 className="form-select mb-3"
                 onChange={(value) => {
                   setCategory(value);
