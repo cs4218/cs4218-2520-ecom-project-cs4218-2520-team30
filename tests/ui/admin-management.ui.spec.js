@@ -4,7 +4,7 @@ import {
   PLAYWRIGHT_ADMIN_EMAIL as ADMIN_EMAIL,
   PLAYWRIGHT_ADMIN_PASSWORD as ADMIN_PASSWORD,
   ensurePlaywrightAdmin,
-} from "./uiTestUtils.js";
+} from "../uiTestUtils.js";
 const RUN_ID = `${Date.now()}-${Math.floor(Math.random() * 1000)}`;
 const TEST_DATA_PREFIX = "PW-MS2-";
 

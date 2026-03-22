@@ -8,7 +8,7 @@ import {
   ensurePlaywrightAdmin,
   loginAsAdmin,
   makePlaywrightName,
-} from "./uiTestUtils.js";
+} from "../uiTestUtils.js";
 
 const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 

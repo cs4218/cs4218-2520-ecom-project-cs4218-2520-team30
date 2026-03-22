@@ -7,7 +7,7 @@ import {
   loginAsAdmin,
   PLAYWRIGHT_PREFIX,
   resetAdminTestData,
-} from "./uiTestUtils.js";
+} from "../uiTestUtils.js";
 
 test.beforeEach(async () => {
   await resetAdminTestData();
