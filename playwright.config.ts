@@ -9,7 +9,7 @@ export default defineConfig({
     timeout: 15000,
   },
   fullyParallel: false,
-  workers: 2,
+  workers: 1,
   retries: 1,
   reporter: "html",
   globalTeardown: "./tests/setup/global-teardown.js",

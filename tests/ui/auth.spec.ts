@@ -17,9 +17,10 @@ interface TestUser {
  */
 function generateTestUser(suffix = ""): TestUser {
   const timestamp = Date.now();
+  const random = Math.floor(Math.random() * 10000);
   return {
-    name: `TestUser_${timestamp}${suffix}`,
-    email: `testuser_${timestamp}${suffix}@test.com`,
+    name: `TestUser_${timestamp}_${random}${suffix}`,
+    email: `testuser_${timestamp}_${random}${suffix}@test.com`,
     password: "password123",
     phone: "1234567890",
     address: "123 Test Street",
