@@ -46,7 +46,8 @@ router.get("/get-product/:slug", getSingleProductController);
 //get photo
 router.get("/product-photo/:pid", productPhotoController);
 
-//delete rproduct
+//delete product
+//Alek Kwek, A0273471A
 router.delete(
   "/delete-product/:pid",
   requireSignIn,
