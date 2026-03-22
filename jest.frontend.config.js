@@ -59,6 +59,7 @@ export default {
     "<rootDir>/client/src/components/Routes/Private.test.js",
     "<rootDir>/client/src/components/UserMenu.test.js",
     "<rootDir>/client/src/pages/user/Dashboard.test.js",
+    "<rootDir>/client/src/pages/user/Dashboard.integration.test.js",
     "<rootDir>/client/src/pages/user/Orders.test.js",
     "<rootDir>/client/src/pages/user/Orders.integration.test.js",
   ],
