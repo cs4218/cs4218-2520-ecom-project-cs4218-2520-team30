@@ -38,6 +38,10 @@ export default defineConfig({
       port: 3000,
       timeout: 60000,
       reuseExistingServer: true,
+      env: {
+        ...process.env,
+        PORT: "3000",
+      }
     },
   ],
 });
