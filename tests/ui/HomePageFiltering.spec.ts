@@ -12,7 +12,7 @@ test("Home page: category filter, price filter, then reset restores default list
   // Lum Yi Ren Johannsen, A0273503L
 
   // ARRANGE
-  await page.goto("/");
+  await page.goto("/", { waitUntil: "domcontentloaded" });
   await expect(page.getByRole("heading", { name: "All Products" })).toBeVisible({
     timeout: 30_000,
   });

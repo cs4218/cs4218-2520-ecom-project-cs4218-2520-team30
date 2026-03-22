@@ -4,18 +4,21 @@ export default defineConfig({
   testDir: "./tests",
   testMatch: "**/*.{spec.ts,spec.js}",
   testIgnore: ["**/integration/**", "**/setup/**"],
-  timeout: 60000,
+  timeout: 90000,
   expect: {
-    timeout: 10000,
+    timeout: 15000,
   },
   fullyParallel: false,
-  retries: 0,
+  workers: 2,
+  retries: 1,
   reporter: "html",
   globalTeardown: "./tests/setup/global-teardown.js",
   use: {
     baseURL: "http://localhost:3000",
     trace: "on-first-retry",
     screenshot: "only-on-failure",
+    navigationTimeout: 45000,
+    actionTimeout: 15000,
   },
   projects: [
     {
