@@ -78,6 +78,20 @@ Bug Fixes / Notes
 - `client/src/pages/user/Profile.js`
 - `controllers/authController.js`
 
+#### Basil Boh
+
+Test cases Written
+
+- `tests/integration/product/product-details-category.integration.test.js`
+- `tests/integration/product/cart-product.integration.test.js`
+- `tests/integration/product/payment.integration.test.js`
+- `tests/ui/browsing.spec.ts`
+- `tests/ui/cart.spec.ts`
+- `tests/ui/contact.spec.ts`
+- `tests/ui/policy.spec.ts`
+
+#### Tay Kai Jun and Lum Yi Ren Johannsen
+
 ### UI Tests (Playwright)
 
 
