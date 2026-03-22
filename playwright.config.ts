@@ -1,8 +1,11 @@
 import { defineConfig } from "@playwright/test";
+import dotenv from "dotenv";
+
+dotenv.config({ path: ".env" });
 
 export default defineConfig({
   testDir: "./tests",
-  testMatch: "**/*.spec.ts",
+  testMatch: "**/*.{spec.ts,spec.js}",
   testIgnore: ["**/integration/**", "**/setup/**"],
   timeout: 60000,
   expect: {
