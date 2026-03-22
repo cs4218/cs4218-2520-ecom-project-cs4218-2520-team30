@@ -1,7 +1,8 @@
 /**
  * Hoisted Braintree mock for integration tests (CommonJS so jest.mock runs before ESM specs).
- * Basil Boh A0273232M
- * (Use global `jest` — setupFiles already inject it; @jest/globals would redeclare `jest`.)
+ * Use global `jest` — setupFiles inject it; requiring @jest/globals can redeclare `jest`.
+ *
+ * Basil Boh, A0273232M
  */
 
 jest.mock("braintree", () => {
