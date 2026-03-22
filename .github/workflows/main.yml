@@ -16,24 +16,31 @@ jobs:
     strategy:
       matrix:
         node-version: [24.x]
-        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
     steps:
       - uses: actions/checkout@v4
+
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
-          cache: "npm"
+          cache: npm
 
-      - run: npm ci
-      - run: npm install
-      - name: Install Client Dependencies
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: Install client dependencies
         run: npm install --prefix ./client
-      - run: npm run test:frontend
-      - run: npm run test:backend
-      - name: Install Playwright Browser
+
+      - name: Run frontend tests
+        run: npm run test:frontend
+
+      - name: Run backend tests
+        run: npm run test:backend
+
+      - name: Install Playwright browser
         run: npx playwright install --with-deps chromium
+
       - name: Detect Playwright UI Tests
         id: playwright-tests
         shell: bash
@@ -43,7 +50,8 @@ jobs:
           else
             echo "found=false" >> "$GITHUB_OUTPUT"
           fi
-      - name: Verify Playwright Mongo URL
+
+      - name: Verify Playwright secrets
         if: steps.playwright-tests.outputs.found == 'true'
         shell: bash
         env:
@@ -52,18 +60,45 @@ jobs:
           BRAINTREE_PUBLIC_KEY: ${{ secrets.BRAINTREE_PUBLIC_KEY }}
           BRAINTREE_PRIVATE_KEY: ${{ secrets.BRAINTREE_PRIVATE_KEY }}
         run: |
+          missing=0
+
           if [ -z "$MONGO_URL" ]; then
-            echo "MONGO_URL GitHub secret is required for Playwright UI tests."
+            echo "Missing MONGO_URL"
+            missing=1
+          fi
+
+          if [ -z "$BRAINTREE_MERCHANT_ID" ]; then
+            echo "Missing BRAINTREE_MERCHANT_ID"
+            missing=1
+          fi
+
+          if [ -z "$BRAINTREE_PUBLIC_KEY" ]; then
+            echo "Missing BRAINTREE_PUBLIC_KEY"
+            missing=1
+          fi
+
+          if [ -z "$BRAINTREE_PRIVATE_KEY" ]; then
+            echo "Missing BRAINTREE_PRIVATE_KEY"
+            missing=1
+          fi
+
+          if [ "$missing" -ne 0 ]; then
             exit 1
           fi
+
       - name: Run Playwright UI Tests
         if: steps.playwright-tests.outputs.found == 'true'
         env:
           MONGO_URL: ${{ secrets.MONGO_URL }}
+          BRAINTREE_MERCHANT_ID: ${{ secrets.BRAINTREE_MERCHANT_ID }}
+          BRAINTREE_PUBLIC_KEY: ${{ secrets.BRAINTREE_PUBLIC_KEY }}
+          BRAINTREE_PRIVATE_KEY: ${{ secrets.BRAINTREE_PRIVATE_KEY }}
         run: npm run test:ui
+
       - name: Skip Playwright UI Tests
         if: steps.playwright-tests.outputs.found != 'true'
         run: echo "No Playwright UI test files found under tests/. Skipping UI test run."
+
       - name: Upload Playwright Report
         if: always() && steps.playwright-tests.outputs.found == 'true'
         uses: actions/upload-artifact@v4
