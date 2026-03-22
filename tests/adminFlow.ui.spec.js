@@ -170,8 +170,16 @@ test.describe("Admin dashboard flows", () => {
     ).toBeVisible();
     await expect(page.getByText(updatedDescription, { exact: true })).toBeVisible();
 
+    await page.goto("/dashboard/admin/products");
+    await expect(page.getByRole("heading", { name: updatedProductName })).toBeVisible();
+
     page.once("dialog", (dialog) => dialog.accept("delete"));
     await page.getByRole("link", { name: updatedProductName }).click();
+
+    // Wait for the product name to be populated in the form before deleting
+    // This ensures that the id state in the component is already set.
+    await expect(page.getByPlaceholder("write a name")).toHaveValue(updatedProductName);
+
     await page.getByRole("button", { name: "DELETE PRODUCT" }).click();
 
     await expect(page).toHaveURL("/dashboard/admin/products");

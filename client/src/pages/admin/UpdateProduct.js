@@ -30,9 +30,9 @@ const UpdateProduct = () => {
       setId(data.product._id);
       setDescription(data.product.description);
       setPrice(data.product.price);
-      setPrice(data.product.price);
       setQuantity(data.product.quantity);
-      setShipping(data.product.shipping);
+      // Alek Kwek, A0273471A
+      setShipping(data.product.shipping ? "1" : "0");
       setCategory(data.product.category._id);
     } catch (error) {
       console.log(error);
@@ -101,7 +101,7 @@ const UpdateProduct = () => {
       const { data } = await axios.delete(
         `/api/v1/product/delete-product/${id}`
       );
-      toast.success("Product DEleted Succfully");
+      toast.success("Product Deleted Successfully");
       navigate("/dashboard/admin/products");
     } catch (error) {
       console.log(error);
@@ -215,19 +215,19 @@ const UpdateProduct = () => {
                   onChange={(value) => {
                     setShipping(value);
                   }}
-                  value={shipping ? "yes" : "No"}
+                  value={shipping === "1" ? "Yes" : "No"}
                 >
                   <Option value="0">No</Option>
                   <Option value="1">Yes</Option>
                 </Select>
               </div>
               <div className="mb-3">
-                <button className="btn btn-primary" onClick={handleUpdate}>
+                <button className="btn btn-primary" onClick={handleUpdate} disabled={!id}>
                   UPDATE PRODUCT
                 </button>
               </div>
               <div className="mb-3">
-                <button className="btn btn-danger" onClick={handleDelete}>
+                <button className="btn btn-danger" onClick={handleDelete} disabled={!id}>
                   DELETE PRODUCT
                 </button>
               </div>
