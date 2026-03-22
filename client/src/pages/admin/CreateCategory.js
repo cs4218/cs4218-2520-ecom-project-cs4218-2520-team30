@@ -24,6 +24,7 @@ const CreateCategory = () => {
       });
       if (data?.success) {
         toast.success(`${name} is created`);
+        setName("");
         getAllCategory();
       } else {
         toast.error(data.message);
@@ -145,7 +146,7 @@ const CreateCategory = () => {
             <Modal
               onCancel={() => setVisible(false)}
               footer={null}
-              visible={visible}
+              open={visible}
             >
               <CategoryForm
                 value={updatedName}

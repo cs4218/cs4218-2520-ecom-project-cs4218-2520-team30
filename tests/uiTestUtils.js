@@ -10,8 +10,10 @@ export const PLAYWRIGHT_ADMIN_EMAIL = "playwright-admin@test.com";
 export const PLAYWRIGHT_ADMIN_PASSWORD = "adminpassword123";
 export const PLAYWRIGHT_USER_EMAIL = "playwright-user@test.com";
 export const PLAYWRIGHT_USER_PASSWORD = "userpassword123";
-
-const PLAYWRIGHT_PREFIX = "__playwright__";
+const WORKER_ID = process.env.TEST_WORKER_INDEX || "0";
+export const PLAYWRIGHT_PREFIX = `__pw_w${WORKER_ID}__`;
+export const ADMIN_EMAIL = PLAYWRIGHT_ADMIN_EMAIL;
+export const ADMIN_PASSWORD = PLAYWRIGHT_ADMIN_PASSWORD;
 const DEFAULT_PLAYWRIGHT_MONGO_URL =
   "mongodb://127.0.0.1:27017/ecom-playwright";
 const PLAYWRIGHT_DB_NAME = "ecom-playwright";
@@ -42,12 +44,12 @@ const cleanupTargets = [
   {
     collection: "products",
     filter: { name: { $regex: `^${PLAYWRIGHT_PREFIX}` } },
-    printableFilter: '{ "name": { "$regex": "^__playwright__" } }',
+    printableFilter: '{ "name": { "$regex": "^__pw_w" } }',
   },
   {
     collection: "categories",
     filter: { name: { $regex: `^${PLAYWRIGHT_PREFIX}` } },
-    printableFilter: '{ "name": { "$regex": "^__playwright__" } }',
+    printableFilter: '{ "name": { "$regex": "^__pw_w" } }',
   },
 ];
 
@@ -117,7 +119,7 @@ const withDatabase = async (callback) => {
   }
 };
 
-const cleanupTargetsInDatabase = async (label, targets) => {
+export const cleanupTargetsInDatabase = async (label, targets) => {
   const appMongoUrl = process.env.PLAYWRIGHT_APP_MONGO_URL || getPlaywrightMongoUrl();
 
   console.log(`[Playwright cleanup:${label}] app Mongo URI target: ${appMongoUrl}`);
@@ -262,4 +264,73 @@ export const loginAsPlaywrightAdmin = async (page) => {
   await page.waitForURL("**/");
   const authData = await page.evaluate(() => localStorage.getItem("auth"));
   expect(authData).not.toBeNull();
+};
+
+export const resetAdminTestData = async () => {
+  await cleanupPlaywrightData("resetAdminTestData");
+  await ensurePlaywrightAdmin();
+};
+
+export const clearAdminTestData = async () =>
+  cleanupPlaywrightArtifacts("clearAdminTestData");
+
+export const loginAsAdmin = async (page) => {
+  await loginAsPlaywrightAdmin(page);
+  await expect(page.getByText("Playwright Admin")).toBeVisible();
+};
+
+export const createCategory = async (page, categoryName) => {
+  await page.goto("/dashboard/admin/create-category");
+  await expect(
+    page.getByRole("heading", { name: /manage category/i })
+  ).toBeVisible();
+
+  await page.getByPlaceholder("Enter new category").fill(categoryName);
+  await page.getByRole("button", { name: "Submit" }).first().click();
+
+  const createdRow = page.locator("tbody tr").filter({ hasText: categoryName });
+  await expect(createdRow).toHaveCount(1);
+};
+
+export const createProduct = async (page, productDetails) => {
+  const {
+    categoryName,
+    name,
+    description,
+    price,
+    quantity,
+    shippingLabel = "Yes",
+  } = productDetails;
+
+  const productFixturePath = getProductFixturePath();
+
+  await page.getByRole("link", { name: "Create Product" }).click();
+  await expect(page).toHaveURL("/dashboard/admin/create-product");
+  await expect(
+    page.getByRole("heading", { name: /create product/i })
+  ).toBeVisible();
+
+  await page.locator(".ant-select").first().click();
+  await page
+    .locator(".ant-select-item-option-content", { hasText: categoryName })
+    .click();
+  await page.locator('input[name="photo"]').setInputFiles(productFixturePath);
+  await page.locator('input[placeholder="write a name"]').fill(name);
+  await page
+    .locator('textarea[placeholder="write a description"]')
+    .fill(description);
+  await page.locator('input[placeholder="write a Price"]').fill(String(price));
+  await page
+    .locator('input[placeholder="write a quantity"]')
+    .fill(String(quantity));
+  await page.locator(".ant-select").nth(1).click();
+  await page
+    .locator(".ant-select-item-option-content", { hasText: shippingLabel })
+    .click();
+  await page.getByRole("button", { name: /create product/i }).click();
+
+  await expect(page).toHaveURL("/dashboard/admin/products");
+  await expect(
+    page.getByRole("heading", { name: /all products list/i })
+  ).toBeVisible();
 };

@@ -197,9 +197,25 @@ To begin unit testing with Jest in your project, follow these steps:
      npm run test
      ```
 
-## MS2 Contributions
+## 6. MS2 Contributions
 
 ### Alek Kwek, A0273471A
+
+Integration Testing
+- Added top-down Admin Product Management integration tests for `client/src/pages/admin/CreateProduct.js` and `client/src/pages/admin/UpdateProduct.js` in separate `.integration.test.js` files.
+- Verified backend route integration for admin product create, update, and delete flows in `controllers/productController.integration.test.js`, including authentication and admin-authorization checks on delete.
+
+UI Testing
+- Replaced the mocked Playwright category test with black-box admin login, category CRUD, and product CRUD flows against the real frontend and backend.
+- Added Mongo-backed Playwright setup helpers for deterministic admin UI flows, seeded catalog data, and isolated app instances for Playwright runs.
+- Added end-to-end Playwright coverage for category creation, edit, reload persistence, deletion, product creation, products-page verification, and product update persistence.
+- Added live admin management UI coverage for category CRUD, product create/update flows, shipping and category changes, and final product deletion.
+
+Bug Fixes / Notes
+- Updated the category-management modal to use Ant Design's current `open` prop and clear the create-category input after successful submission.
+- UI-test startup now avoids reusing unknown existing servers and avoids inheriting the unsafe default `.env` Mongo target during Playwright runs.
+- The admin product delete route now requires authenticated admin access, and the product update shipping selector preserves the correct option value in real UI flows.
+- Fixed the Update Product page title to `Dashboard - Update Product` so the page metadata matches the actual admin flow.
 
 **Integration Testing**
 - **Admin Category Actions**: `controllers/categoryController.integration.test.js` and `client/src/pages/admin/CreateCategory.integration.test.js`.

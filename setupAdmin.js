@@ -3,11 +3,17 @@ import dotenv from "dotenv";
 import mongoose from "mongoose";
 
 import userModel from "./models/userModel.js";
-import { getPlaywrightMongoUrl } from "./tests/uiTestUtils.js";
+import {
+  getPlaywrightMongoUrl,
+  PLAYWRIGHT_ADMIN_EMAIL,
+  PLAYWRIGHT_ADMIN_PASSWORD,
+} from "./tests/uiTestUtils.js";
 
 dotenv.config({ path: ".env" });
 
 const mongoUrl = getPlaywrightMongoUrl();
+const email = PLAYWRIGHT_ADMIN_EMAIL;
+const password = PLAYWRIGHT_ADMIN_PASSWORD;
 
 const createAdmin = async () => {
   let exitCode = 0;
@@ -15,11 +21,9 @@ const createAdmin = async () => {
   try {
     await mongoose.connect(mongoUrl);
 
-    const email = "playwright-admin@test.com";
-    const password = "adminpassword123";
     const hashedPassword = await bcrypt.hash(password, 10);
-
     let user = await userModel.findOne({ email });
+
     if (!user) {
       user = new userModel({
         name: "Playwright Admin",
@@ -42,9 +46,15 @@ const createAdmin = async () => {
     console.error(error);
     exitCode = 1;
   } finally {
-    await mongoose.disconnect().catch(() => {
-      exitCode = 1;
-    });
+    if (mongoose.connection.readyState !== 0) {
+      try {
+        await mongoose.disconnect();
+      } catch (disconnectError) {
+        console.error(disconnectError);
+        exitCode = 1;
+      }
+    }
+
     process.exitCode = exitCode;
   }
 };

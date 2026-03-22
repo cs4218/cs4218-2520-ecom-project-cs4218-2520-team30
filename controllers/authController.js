@@ -208,15 +208,15 @@ export const testController = (req, res) => {
 export const updateProfileController = async (req, res) => {
   try {
     const { name, email, password, address, phone } = req.body;
+    if (!req.user || !req.user._id) {
+      throw new Error("User Id is Missing");
+    }
     const user = await userModel.findById(req.user._id);
     //password
     if (password && password.length < 6) {
       return res.json({ error: "Password is required and 6 character long" });
     }
     const hashedPassword = password ? await hashPassword(password) : undefined;
-    if (!req.user._id) { // Leong Soon Mun Stephane, A0273409B, MS2 Fix
-      throw new Error("User Id is Missing") 
-    }
     const updatedUser = await userModel.findByIdAndUpdate(
       req.user._id,
       {

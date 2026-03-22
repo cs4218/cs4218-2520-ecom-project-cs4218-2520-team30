@@ -8,14 +8,12 @@ import { useNavigate, useParams } from "react-router-dom";
 const { Option } = Select;
 
 const getShippingSelectValue = (shipping) => {
-  if (shipping === true || shipping === "1") {
+  if (shipping === true || shipping === "1" || shipping === 1) {
     return "1";
   }
-
-  if (shipping === false || shipping === "0") {
+  if (shipping === false || shipping === "0" || shipping === 0) {
     return "0";
   }
-
   return undefined;
 };
 
@@ -44,9 +42,8 @@ const UpdateProduct = () => {
       setId(data.product._id);
       setDescription(data.product.description);
       setPrice(data.product.price);
-      setPrice(data.product.price);
       setQuantity(data.product.quantity);
-      setShipping(data.product.shipping);
+      setShipping(getShippingSelectValue(data.product.shipping) ?? "");
       setCategory(data.product.category._id);
     } catch (error) {
       console.log(error);
@@ -144,6 +141,7 @@ const UpdateProduct = () => {
                 placeholder="Select a category"
                 size="large"
                 showSearch
+                optionFilterProp="children"
                 className="form-select mb-3"
                 onChange={(value) => {
                   setCategory(value);

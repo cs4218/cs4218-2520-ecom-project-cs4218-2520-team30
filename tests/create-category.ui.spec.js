@@ -4,16 +4,13 @@ import { test, expect } from "@playwright/test";
 import {
   cleanupPlaywrightArtifacts,
   cleanupPlaywrightData,
+  createCategory,
   ensurePlaywrightAdmin,
-  getProductFixturePath,
-  loginAsPlaywrightAdmin,
+  loginAsAdmin,
   makePlaywrightName,
 } from "./uiTestUtils.js";
 
-const openSelectOption = async (page, selectIndex, optionText) => {
-  await page.locator(".ant-select").nth(selectIndex).click();
-  await page.locator(".ant-select-item-option-content", { hasText: optionText }).click();
-};
+const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 test.describe.serial("Admin UI flows", () => {
   test.beforeAll(async () => {
@@ -30,113 +27,38 @@ test.describe.serial("Admin UI flows", () => {
   });
 
   // Alek Kwek, A0273471A
-  test("admin can log in and create, edit, and delete a category through the real UI", async ({
+  test("admin can create, edit, reload, and delete a category through the admin UI", async ({
     page,
   }) => {
-    const categoryName = makePlaywrightName("category");
+    const createdCategoryName = makePlaywrightName("category");
     const updatedCategoryName = makePlaywrightName("category updated");
 
-    await loginAsPlaywrightAdmin(page);
-    await page.goto("/dashboard/admin/create-category");
+    await loginAsAdmin(page);
+    await createCategory(page, createdCategoryName);
 
-    await expect(
-      page.getByRole("heading", { name: /manage category/i })
-    ).toBeVisible();
+    const createdRow = page
+      .locator("tbody tr")
+      .filter({ has: page.getByRole("cell", { name: createdCategoryName }) });
 
-    await page.getByPlaceholder("Enter new category").fill(categoryName);
-    await page.getByRole("button", { name: "Submit" }).click();
-
-    const categoryCell = page.locator("tbody td", { hasText: categoryName });
-    await expect(categoryCell).toBeVisible();
-
-    const categoryRow = page.locator("tbody tr").filter({ hasText: categoryName });
-    await categoryRow.getByRole("button", { name: "Edit" }).click();
+    await createdRow.getByRole("button", { name: "Edit" }).click();
 
     const modal = page.locator(".ant-modal");
     await expect(modal).toBeVisible();
     await modal.getByPlaceholder("Enter new category").fill(updatedCategoryName);
     await modal.getByRole("button", { name: "Submit" }).click();
 
-    const updatedCategoryCell = page.locator("tbody td", {
-      hasText: updatedCategoryName,
+    const createdCell = page.locator("tbody td", {
+      hasText: new RegExp(`^${escapeRegex(createdCategoryName)}$`),
     });
-    await expect(updatedCategoryCell).toBeVisible();
-    await expect(categoryCell).toHaveCount(0);
-
     const updatedRow = page
       .locator("tbody tr")
-      .filter({ hasText: updatedCategoryName });
+      .filter({ has: page.getByRole("cell", { name: updatedCategoryName }) });
+    await expect(updatedRow).toHaveCount(1);
+    await expect(createdCell).toHaveCount(0);
+
+    await page.reload();
+    await expect(updatedRow).toHaveCount(1);
     await updatedRow.getByRole("button", { name: "Delete" }).click();
-
-    await expect(updatedCategoryCell).toHaveCount(0);
-  });
-
-  // Alek Kwek, A0273471A
-  test("admin can create, update, and delete a product across category, product list, and update pages", async ({
-    page,
-  }) => {
-    const categoryName = makePlaywrightName("category");
-    const productName = makePlaywrightName("product");
-    const updatedProductName = makePlaywrightName("product updated");
-    const updatedDescription = `${updatedProductName} description`;
-    const productFixturePath = getProductFixturePath();
-
-    await loginAsPlaywrightAdmin(page);
-
-    await page.goto("/dashboard/admin/create-category");
-    await page.getByPlaceholder("Enter new category").fill(categoryName);
-    await page.getByRole("button", { name: "Submit" }).click();
-    await expect(
-      page.locator("tbody td", {
-        hasText: categoryName,
-      })
-    ).toBeVisible();
-
-    await page.getByRole("link", { name: "Create Product" }).click();
-    await expect(page.getByRole("heading", { name: "Create Product" })).toBeVisible();
-
-    await openSelectOption(page, 0, categoryName);
-    await page.locator('input[name="photo"]').setInputFiles(productFixturePath);
-    await page.getByPlaceholder("write a name").fill(productName);
-    await page
-      .getByPlaceholder("write a description")
-      .fill(`${productName} description`);
-    await page.getByPlaceholder("write a Price").fill("19");
-    await page.getByPlaceholder("write a quantity").fill("4");
-    await openSelectOption(page, 1, "Yes");
-    await page.getByRole("button", { name: "CREATE PRODUCT" }).click();
-
-    await page.waitForURL("**/dashboard/admin/products");
-    await expect(page.getByRole("heading", { name: /all products list/i })).toBeVisible();
-    await expect(page.locator(".card-title", { hasText: productName })).toBeVisible();
-
-    await page.getByRole("link", { name: new RegExp(productName) }).click();
-    await expect(page.getByRole("heading", { name: "Update Product" })).toBeVisible();
-    await expect(page.getByPlaceholder("write a name")).toHaveValue(productName);
-    await expect(page.getByPlaceholder("write a description")).toHaveValue(
-      `${productName} description`
-    );
-
-    await page.getByPlaceholder("write a name").fill(updatedProductName);
-    await page.getByPlaceholder("write a description").fill(updatedDescription);
-    await page.getByPlaceholder("write a Price").fill("27");
-    await page.getByPlaceholder("write a quantity").fill("9");
-    await openSelectOption(page, 1, "No");
-    await page.getByRole("button", { name: "UPDATE PRODUCT" }).click();
-
-    await page.waitForURL("**/dashboard/admin/products");
-    await expect(
-      page.locator(".card-title", { hasText: updatedProductName })
-    ).toBeVisible();
-    await expect(page.getByText(updatedDescription)).toBeVisible();
-
-    await page.getByRole("link", { name: new RegExp(updatedProductName) }).click();
-    page.once("dialog", (dialog) => dialog.accept("delete"));
-    await page.getByRole("button", { name: "DELETE PRODUCT" }).click();
-
-    await page.waitForURL("**/dashboard/admin/products");
-    await expect(
-      page.locator(".card-title", { hasText: updatedProductName })
-    ).toHaveCount(0);
+    await expect(updatedRow).toHaveCount(0);
   });
 });

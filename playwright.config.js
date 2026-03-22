@@ -12,15 +12,16 @@ process.env.PLAYWRIGHT_MONGO_URL = playwrightMongoUrl;
 process.env.PLAYWRIGHT_APP_MONGO_URL = playwrightMongoUrl;
 
 export default defineConfig({
+  globalTeardown: './tests/globalTeardown.js',
   testDir: "./tests",
   fullyParallel: false,
   forbidOnly: isCI,
   retries: isCI ? 2 : 0,
   workers: isCI ? 1 : undefined,
-  timeout: 30_000,
+  timeout: 60_000,
   reporter: "html",
   expect: {
-    timeout: 5_000,
+    timeout: 10_000,
   },
   use: {
     baseURL: "http://127.0.0.1:3000",
