@@ -87,13 +87,13 @@
       "parameters": {
         "method": "POST",
         "url": "=https://api.github.com/repos/{{ $json.repo }}/issues/{{ $json.pr_number }}/comments",
-        "authentication": "predefinedCredentialType",
-        "nodeCredentialType": "httpHeaderAuth",
+        "authentication": "none",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             { "name": "Accept", "value": "application/vnd.github+json" },
-            { "name": "X-GitHub-Api-Version", "value": "2022-11-28" }
+            { "name": "X-GitHub-Api-Version", "value": "2022-11-28" },
+            { "name": "Authorization", "value": "={{ 'Bearer ' + $('GitHub CI Webhook').first().json.body.github_token }}" }
           ]
         },
         "sendBody": true,

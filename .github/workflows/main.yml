@@ -177,6 +177,7 @@ jobs:
               "commit_sha": os.environ.get("GITHUB_SHA",""),
               "pr_number": os.environ.get("PR_NUMBER",""),
               "actor": os.environ.get("GITHUB_ACTOR",""),
+              "github_token": os.environ.get("GITHUB_TOKEN",""),
               "test_results": results
           }
 
@@ -194,4 +195,5 @@ jobs:
         env:
           N8N_WEBHOOK_URL: ${{ secrets.N8N_WEBHOOK_URL }}
           PR_NUMBER: ${{ github.event.number }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
