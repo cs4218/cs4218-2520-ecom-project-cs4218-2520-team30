@@ -7,10 +7,21 @@ import { Select } from "antd";
 import { useNavigate, useParams } from "react-router-dom";
 const { Option } = Select;
 
+const getShippingSelectValue = (shipping) => {
+  if (shipping === true || shipping === "1" || shipping === 1) {
+    return "1";
+  }
+  if (shipping === false || shipping === "0" || shipping === 0) {
+    return "0";
+  }
+  return undefined;
+};
+
 const UpdateProduct = () => {
   const navigate = useNavigate();
   const params = useParams();
   const [categories, setCategories] = useState([]);
+  const [isLoadingProduct, setIsLoadingProduct] = useState(true);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
@@ -19,16 +30,10 @@ const UpdateProduct = () => {
   const [shipping, setShipping] = useState("");
   const [photo, setPhoto] = useState("");
   const [id, setId] = useState("");
-  // Alek Kwek, A0273471A
-  const shippingValue =
-    shipping === true || shipping === "1"
-      ? "1"
-      : shipping === false || shipping === "0"
-        ? "0"
-        : "";
 
   //get single product
   const getSingleProduct = async () => {
+    setIsLoadingProduct(true);
     try {
       const { data } = await axios.get(
         `/api/v1/product/get-product/${params.slug}`
@@ -37,12 +42,14 @@ const UpdateProduct = () => {
       setId(data.product._id);
       setDescription(data.product.description);
       setPrice(data.product.price);
-      setPrice(data.product.price);
       setQuantity(data.product.quantity);
-      setShipping(data.product.shipping);
+      setShipping(getShippingSelectValue(data.product.shipping) ?? "");
       setCategory(data.product.category._id);
     } catch (error) {
       console.log(error);
+      toast.error("Something went wrong in getting product");
+    } finally {
+      setIsLoadingProduct(false);
     }
   };
   useEffect(() => {
@@ -78,12 +85,10 @@ const UpdateProduct = () => {
       photo && productData.append("photo", photo);
       productData.append("category", category);
       productData.append("shipping", shipping);
-      // Alek Kwek, A0273471A
       const { data } = await axios.put(
         `/api/v1/product/update-product/${id}`,
         productData
       );
-      // Alek Kwek, A0273471A
       if (data?.success) {
         toast.success("Product Updated Successfully");
         navigate("/dashboard/admin/products");
@@ -108,8 +113,12 @@ const UpdateProduct = () => {
       const { data } = await axios.delete(
         `/api/v1/product/delete-product/${id}`
       );
-      toast.success("Product DEleted Succfully");
-      navigate("/dashboard/admin/products");
+      if (data?.success) {
+        toast.success("Product Deleted Successfully");
+        navigate("/dashboard/admin/products");
+      } else {
+        toast.error(data?.message || "Something went wrong");
+      }
     } catch (error) {
       console.log(error);
       toast.error("Something went wrong");
@@ -130,6 +139,7 @@ const UpdateProduct = () => {
                 placeholder="Select a category"
                 size="large"
                 showSearch
+                optionFilterProp="children"
                 className="form-select mb-3"
                 onChange={(value) => {
                   setCategory(value);
@@ -164,7 +174,7 @@ const UpdateProduct = () => {
                       className="img img-responsive"
                     />
                   </div>
-                ) : (
+                ) : id ? (
                   <div className="text-center">
                     <img
                       src={`/api/v1/product/product-photo/${id}`}
@@ -173,7 +183,12 @@ const UpdateProduct = () => {
                       className="img img-responsive"
                     />
                   </div>
-                )}
+                ) : null}
+              </div>
+              <div className="mb-3">
+                {isLoadingProduct ? (
+                  <p className="text-muted mb-0">Loading product details...</p>
+                ) : null}
               </div>
               <div className="mb-3">
                 <input
@@ -222,19 +237,27 @@ const UpdateProduct = () => {
                   onChange={(value) => {
                     setShipping(value);
                   }}
-                  value={shippingValue}
+                  value={getShippingSelectValue(shipping)}
                 >
                   <Option value="0">No</Option>
                   <Option value="1">Yes</Option>
                 </Select>
               </div>
               <div className="mb-3">
-                <button className="btn btn-primary" onClick={handleUpdate}>
+                <button
+                  className="btn btn-primary"
+                  onClick={handleUpdate}
+                  disabled={!id || isLoadingProduct}
+                >
                   UPDATE PRODUCT
                 </button>
               </div>
               <div className="mb-3">
-                <button className="btn btn-danger" onClick={handleDelete}>
+                <button
+                  className="btn btn-danger"
+                  onClick={handleDelete}
+                  disabled={!id || isLoadingProduct}
+                >
                   DELETE PRODUCT
                 </button>
               </div>

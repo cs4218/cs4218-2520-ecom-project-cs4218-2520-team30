@@ -1,6 +1,6 @@
 // Alek Kwek, A0273471A
-const { test, expect } = require("@playwright/test");
-const {
+import { test, expect } from "@playwright/test";
+import {
   PLAYWRIGHT_ADMIN_EMAIL,
   PLAYWRIGHT_ADMIN_NAME,
   PLAYWRIGHT_ADMIN_PASSWORD,
@@ -9,7 +9,7 @@ const {
   PLAYWRIGHT_ORDER_STATUSES,
   cleanupPlaywrightAdminOrdersData,
   seedPlaywrightAdminOrdersData,
-} = require("./uiTestUtils");
+} from "../uiTestUtils.js";
 
 async function loginAsPlaywrightAdmin(page) {
   await page.goto("/login");
@@ -20,7 +20,7 @@ async function loginAsPlaywrightAdmin(page) {
   page.on('response', async response => {
     if (response.url().includes('login')) {
       console.log('LOGIN RES STATUS:', response.status());
-      console.log('LOGIN RES BODY:', await response.text());
+      // console.log('LOGIN RES BODY:', await response.text());
     }
   });
   await page.getByRole("button", { name: "LOGIN" }).click();
@@ -59,6 +59,7 @@ test.describe("Admin Orders UI", () => {
     await loginAsPlaywrightAdmin(page);
     await openAdminOrdersFromDashboard(page);
 
+    await expect(page.getByText(PLAYWRIGHT_BUYER_NAME).first()).toBeVisible();
     await expect(page.getByText(PLAYWRIGHT_BUYER_NAME)).toHaveCount(2);
     await expect(
       page.getByText(PLAYWRIGHT_ORDER_PRODUCT_NAMES[0], { exact: true })
@@ -104,7 +105,7 @@ test.describe("Admin Orders UI", () => {
 
     await page.goto("/dashboard/admin");
     await expect(
-      page.getByText(`Admin Email : ${PLAYWRIGHT_ADMIN_EMAIL}`)
+      page.getByText(`Admin Name : ${PLAYWRIGHT_ADMIN_NAME}`)
     ).toBeVisible();
     await page.getByRole("link", { name: "Orders" }).click();
 

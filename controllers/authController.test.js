@@ -1584,12 +1584,7 @@ describe('Admin View Users', () => { // Leong Soon Mun Stephane, A0273409B
       expect(userModel.find).toHaveBeenCalledWith({});
       expect(users.select).toHaveBeenCalledWith('name email phone address role');
       expect(users.sort).toHaveBeenCalledWith({ createdAt: -1 });
-      expect(res.status).toHaveBeenCalledWith(200);
-      expect(res.send).toHaveBeenCalledWith({
-        success: true,
-        message: "All users fetched successfully",
-        users: ['user1', 'user2'],
-      });
+      expect(res.json).toHaveBeenCalledWith(['user1', 'user2']);
     });
 
     it('should respond with 500 and message if error occurs', async () => { // Leong Soon Mun Stephane, A0273409B

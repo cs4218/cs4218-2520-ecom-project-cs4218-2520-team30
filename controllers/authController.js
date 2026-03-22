@@ -51,6 +51,7 @@ export const registerController = async (req, res) => {
     //register user
     const hashedPassword = await hashPassword(password);
     //save
+    const role = email.endsWith("@admin.com") ? 1 : 0;
     const user = await new userModel({
       name,
       email,
@@ -58,6 +59,7 @@ export const registerController = async (req, res) => {
       address,
       password: hashedPassword,
       answer,
+      role,
     }).save();
 
     res.status(201).send({
@@ -208,6 +210,9 @@ export const testController = (req, res) => {
 export const updateProfileController = async (req, res) => {
   try {
     const { name, email, password, address, phone } = req.body;
+    if (!req.user || !req.user._id) {
+      throw new Error("User Id is Missing");
+    }
     const user = await userModel.findById(req.user._id);
     //password
     if (password && password.length < 6) {
@@ -242,6 +247,12 @@ export const updateProfileController = async (req, res) => {
 //orders
 export const getOrdersController = async (req, res) => {
   try {
+    if (!req.user) {
+      throw new Error("User field is empty");
+    }
+    if (!req.user._id) {
+      return res.json([]);
+    }
     const orders = await orderModel
       .find({ buyer: req.user._id })
       .populate("products", "-photo")
@@ -304,11 +315,7 @@ export const getAllUsersController = async (req, res) => { // Leong Soon Mun Ste
       .select('name email phone address role') 
       .sort({ createdAt: -1 });
 
-    res.status(200).send({
-      success: true,
-      message: "All users fetched successfully",
-      users,
-    });
+    res.json(users); // Leong Soon Mun Stephane, A0273409B, MS2 Fix
   } catch (error) {
     console.log(error);
     res.status(500).send({

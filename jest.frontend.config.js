@@ -14,11 +14,11 @@ export default {
   // tells jest how to handle css/scss imports in your tests
   moduleNameMapper: {
     "\\.(css|scss)$": "identity-obj-proxy",
-    "^react-icons/(.*)$": "<rootDir>/client/node_modules/react-icons/$1",
+    "^react-icons/(.*)$": "<rootDir>/node_modules/react-icons/$1",
   },
 
   // ignore all node_modules except styleMock and axios (needed for css imports)
-  transformIgnorePatterns: ["/node_modules/(?!(styleMock\\.js)$)"],
+  transformIgnorePatterns: ["/node_modules/(?!(styleMock\\.js|axios)$)"],
 
   // only run these tests
   testMatch: [
@@ -51,15 +51,19 @@ export default {
     "<rootDir>/client/src/context/search.test.js",
     "<rootDir>/client/src/components/AdminMenu.test.js",
     "<rootDir>/client/src/pages/admin/Users.test.js",
+    "<rootDir>/client/src/pages/admin/Users.integration.test.js",
     "<rootDir>/client/src/context/cart.test.js",
     "<rootDir>/client/src/pages/CartPage.test.js",
     "<rootDir>/client/src/pages/Contact.test.js",
     "<rootDir>/client/src/context/auth.test.js",
     "<rootDir>/client/src/pages/user/Profile.test.js",
+    "<rootDir>/client/src/pages/user/Profile.integration.test.js",
     "<rootDir>/client/src/components/Routes/Private.test.js",
     "<rootDir>/client/src/components/UserMenu.test.js",
     "<rootDir>/client/src/pages/user/Dashboard.test.js",
+    "<rootDir>/client/src/pages/user/Dashboard.integration.test.js",
     "<rootDir>/client/src/pages/user/Orders.test.js",
+    "<rootDir>/client/src/pages/user/Orders.integration.test.js",
   ],
 
   // jest code coverage

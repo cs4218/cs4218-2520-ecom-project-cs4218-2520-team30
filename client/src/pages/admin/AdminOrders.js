@@ -51,6 +51,7 @@ const AdminOrders = () => {
           <h1 className="text-center">All Orders</h1>
           {orders?.map((o, i) => {
             return (
+              // Alek Kwek, A0273471A
               <div className="border shadow" key={o._id}>
                 <table className="table">
                   <thead>
@@ -100,7 +101,8 @@ const AdminOrders = () => {
                       </div>
                       <div className="col-md-8">
                         <p>{p.name}</p>
-                        <p>{p.description.substring(0, 30)}</p>
+                        {/*Alek Kwek, A0273471A*/}
+                        <p>{p.description?.substring(0, 30)}</p>
                         <p>Price : {p.price}</p>
                       </div>
                     </div>
