@@ -1,15 +1,6 @@
 // Tay Kai Jun A0283343E
 
 import { test, expect, type Page } from "@playwright/test";
-import {
-  PLAYWRIGHT_ADMIN_EMAIL,
-  PLAYWRIGHT_ADMIN_PASSWORD,
-  ensurePlaywrightCatalog,
-  PLAYWRIGHT_USER_EMAIL,
-  PLAYWRIGHT_USER_PASSWORD,
-  ensurePlaywrightAdmin,
-  ensurePlaywrightRegularUser,
-} from "../uiTestUtils.js";
 
 interface TestUser {
   name: string;
@@ -51,11 +42,6 @@ async function loginUser(page: Page, email: string, password: string) {
 }
 
 test.describe("Registration Page E2E Tests", () => {
-  test.beforeAll(async () => {
-    await ensurePlaywrightAdmin();
-    await ensurePlaywrightRegularUser();
-  });
-
   // Tay Kai Jun A0283343E
   test("TC1: should display the registration page with all form fields", async ({
     page,
@@ -212,19 +198,13 @@ test.describe("Registration Page E2E Tests", () => {
 });
 
 test.describe("Login Page E2E Tests", () => {
-  test.beforeAll(async () => {
-    await ensurePlaywrightCatalog();
-    await ensurePlaywrightAdmin();
-    await ensurePlaywrightRegularUser();
-  });
-
   // Tay Kai Jun A0283343E
   test("TC1: should login as admin and navigate to admin dashboard", async ({
     page,
   }) => {
     // Tay Kai Jun A0283343E
     await page.goto("/login");
-    await loginUser(page, PLAYWRIGHT_ADMIN_EMAIL, PLAYWRIGHT_ADMIN_PASSWORD);
+    await loginUser(page, "admin@admin.com", "password123");
 
     // Verify success toast
     await expect(
@@ -243,7 +223,7 @@ test.describe("Login Page E2E Tests", () => {
 
     await expect(page).toHaveURL(/\/dashboard\/admin/);
     await expect(
-      page.locator(".card").getByText("Playwright Admin").first()
+      page.locator(".card").getByText("MyAdmin").first()
     ).toBeVisible();
   });
 
@@ -253,7 +233,7 @@ test.describe("Login Page E2E Tests", () => {
   }) => {
     // Tay Kai Jun A0283343E
     await page.goto("/login");
-    await loginUser(page, PLAYWRIGHT_USER_EMAIL, PLAYWRIGHT_USER_PASSWORD);
+    await loginUser(page, "user@test.com", "password123");
 
     // Verify success toast
     await expect(
@@ -269,7 +249,7 @@ test.describe("Login Page E2E Tests", () => {
 
     await expect(page).toHaveURL(/\/dashboard\/user/);
     await expect(
-      page.locator(".card").getByText(PLAYWRIGHT_USER_EMAIL).first()
+      page.locator(".card").getByText("user@test.com").first()
     ).toBeVisible();
   });
 
@@ -279,7 +259,7 @@ test.describe("Login Page E2E Tests", () => {
   }) => {
     // Tay Kai Jun A0283343E
     await page.goto("/login");
-    await loginUser(page, PLAYWRIGHT_USER_EMAIL, "wrongpassword");
+    await loginUser(page, "user@test.com", "wrongpassword");
 
     // Verify error toast
     await expect(
@@ -294,7 +274,7 @@ test.describe("Login Page E2E Tests", () => {
   test("TC4: should login and then logout successfully", async ({ page }) => {
     // Tay Kai Jun A0283343E
     await page.goto("/login");
-    await loginUser(page, PLAYWRIGHT_USER_EMAIL, PLAYWRIGHT_USER_PASSWORD);
+    await loginUser(page, "user@test.com", "password123");
 
     // Wait for login to complete
     await expect(
