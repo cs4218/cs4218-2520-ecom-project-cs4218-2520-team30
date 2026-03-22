@@ -9,7 +9,7 @@
 | **Login** | Tay Kai Jun | - `pages/Auth/Login.js` | - `controllers/authController.js`<br>  1. loginController<br>  2. testController |
 | **Forgot Password** | Tay Kai Jun | - `pages/Auth/ForgotPassword.js` | - `controllers/authController.js`<br>  1. forgotPasswordController |
 | **Search** | Tay Kai Jun | - `components/Form/SearchInput.js`<br>- `context/search.js`<br>- `pages/Search.js` | | **Admin Dashboard** | Alek Kwek | - `components/AdminMenu.js`<br>- `pages/admin/AdminDashboard.js` | |
-| **Admin Actions** | Alek Kwek |- `components/Form/CategoryForm.js`<br>- `pages/admin/CreateCategory.js`<br>- `pages/admin/CreateProduct.js`<br>- `pages/admin/UpdateProduct.js` | - `controllers/categoryController.js`<br>  1. createCategoryController<br>  2. updateCategoryController<br>  3. deleteCategoryController |
+| **Admin Actions** | Alek Kwek | - `components/Form/CategoryForm.js`<br>- `pages/admin/CreateCategory.js`<br>- `pages/admin/CreateProduct.js`<br>- `pages/admin/UpdateProduct.js` | - `controllers/categoryController.js`<br>  1. createCategoryController<br>  2. updateCategoryController<br>  3. deleteCategoryController |
 | **Admin View Orders** | Alek Kwek | - `pages/admin/AdminOrders.js` | |
 | **Admin View Products** | Alek Kwek | - `pages/admin/Products.js` | - `controllers/productController.js`<br>  1. createProductController<br>  2. deleteProductController<br>  3. updateProductController |
 | **General** | Leong Soon Mun Stephane | - `components/Routes/Private.js`<br>- `components/UserMenu.js`<br>- `pages/user/Dashboard.js` | - `models/userModel.js` |
@@ -35,16 +35,19 @@
 - Verified backend route integration for admin product create, update, and delete flows in `controllers/productController.integration.test.js`, including authentication and admin-authorization checks on delete.
 
 **UI Testing**
-- Replaced mocked Playwright tests with black-box admin login, category CRUD, and product CRUD flows against the real frontend and backend.
-- Playwright now launches isolated app instances for UI tests and uses strict Playwright-owned markers for setup and cleanup.
-- Added live admin management UI coverage for category CRUD, product create/update flows, shipping and category changes, and final product deletion.
+- Developed and organized a comprehensive Playwright UI test suite, including `admin-management.ui.spec.js`, `adminFlow.ui.spec.js`, `create-category.ui.spec.js`, and `create-product.ui.spec.js`.
+- Replaced mocked Playwright tests with black-box flows against real frontend and backend instances.
+- Reorganized the test directory by moving all UI specification files to the `tests/ui/` folder and updating all internal paths, imports, and asset resolutions.
+- Standardized UI-test setup to use isolated MongoDB instances and strict ownership markers for reliable data cleanup.
 
 **Bug Fixes / Notes**
-- Secured `DELETE /api/v1/product/delete-product/:pid` with `requireSignIn` and `isAdmin` so delete matches the protected admin-only behavior of create and update.
-- Fixed the Update Product page title to `Dashboard - Update Product` and corrected the shipping select binding so the loaded product state maps cleanly into the form.
-- UI-test startup now avoids reusing unknown existing servers and avoids inheriting the unsafe default `.env` Mongo target during Playwright runs.
-- Added missing React `key` for category table rows in `client/src/pages/admin/CreateCategory.js`.
-- Updated the category-management modal to use Ant Design's current `open` prop and clear the create-category input after successful submission.
+- Resolved a critical race condition in Admin Login UI tests by implementing an auto-admin policy in `authController.js` for `@admin.com` accounts.
+- Fixed a module mismatch (ESM/CommonJS) in Playwright configuration that was preventing test execution.
+- Fixed missing product catalog items ("NUS T-shirt") in `uiTestUtils.js` that was causing `orders.spec.ts` failures.
+- Implemented serialized test execution (`workers: 1`) in `playwright.config.mjs` to eliminate database collisions in tests using shared accounts.
+- Secured the product deletion API with proper authentication and admin middleware to match create/update permissions.
+- Fixed UI bugs in `UpdateProduct.js` including incorrect page titles and shipping selection bindings.
+- Resolved React rendering warnings by adding missing `key` props and updating Ant Design modal properties.
 
 ### Leong Soon Mun Stephane (A0273409B)
 
