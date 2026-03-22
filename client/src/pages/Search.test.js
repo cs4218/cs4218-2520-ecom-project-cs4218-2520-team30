@@ -1,12 +1,32 @@
 import React from "react";
-import { render, screen } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import Search from "./Search";
 import { useSearch } from "../context/search";
+import { useCart } from "../context/cart";
 import { BrowserRouter } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
+
 //Tay Kai Jun, A0283343E
 jest.mock("../context/search", () => ({
   useSearch: jest.fn(),
+}));
+
+//Tay Kai Jun, A0283343E
+jest.mock("../context/cart", () => ({
+  useCart: jest.fn(),
+}));
+
+//Tay Kai Jun, A0283343E
+jest.mock("react-router-dom", () => ({
+  ...jest.requireActual("react-router-dom"),
+  useNavigate: jest.fn(),
+}));
+
+//Tay Kai Jun, A0283343E
+jest.mock("react-hot-toast", () => ({
+  success: jest.fn(),
 }));
 
 //Tay Kai Jun, A0283343E
@@ -23,9 +43,26 @@ jest.mock("./../components/Layout", () => {
 //Tay Kai Jun, A0283343E
 describe("Search Page Component", () => {
   let mockSetValues;
+  let mockSetCart;
+  let mockNavigate;
 
   beforeEach(() => {
     mockSetValues = jest.fn();
+    mockSetCart = jest.fn();
+    mockNavigate = jest.fn();
+    // Mock useCart to return [cart, setCart]
+    useCart.mockReturnValue([[], mockSetCart]);
+    // Mock useNavigate
+    useNavigate.mockReturnValue(mockNavigate);
+    // Mock localStorage
+    Object.defineProperty(window, "localStorage", {
+      value: {
+        setItem: jest.fn(),
+        getItem: jest.fn(),
+        removeItem: jest.fn(),
+      },
+      writable: true,
+    });
   });
 
   afterEach(() => {
@@ -48,7 +85,7 @@ describe("Search Page Component", () => {
       renderWithRouter(<Search />);
 
       // Assert
-      expect(screen.getByText("Search Resuts")).toBeInTheDocument();
+      expect(screen.getByText("Search Results")).toBeInTheDocument();
       expect(screen.getByText("No Products Found")).toBeInTheDocument();
     });
 
@@ -237,7 +274,7 @@ describe("Search Page Component", () => {
       renderWithRouter(<Search />);
 
       // Assert
-      expect(screen.getByText("ADD TO CART")).toBeInTheDocument();
+      expect(screen.getByText("Add To Cart")).toBeInTheDocument();
     });
   });
 
@@ -369,6 +406,62 @@ describe("Search Page Component", () => {
       expect(screen.getByText("Found 50")).toBeInTheDocument();
       expect(screen.getByText("Product 0")).toBeInTheDocument();
       expect(screen.getByText("Product 49")).toBeInTheDocument();
+    });
+  });
+
+  //Tay Kai Jun, A0283343E
+  describe("Button Click Handlers", () => {
+    //Tay Kai Jun, A0283343E
+    test("should navigate to product details when 'More Details' button is clicked", () => {
+      // Arrange
+      const mockProducts = [
+        {
+          _id: "1",
+          name: "Test Product",
+          description: "Test description for product",
+          price: 100,
+          slug: "test-product",
+        },
+      ];
+      const mockValues = { keyword: "test", results: mockProducts };
+      useSearch.mockReturnValue([mockValues, mockSetValues]);
+
+      // Act
+      renderWithRouter(<Search />);
+      const moreDetailsButton = screen.getByText("More Details");
+      fireEvent.click(moreDetailsButton);
+
+      // Assert
+      expect(mockNavigate).toHaveBeenCalledWith("/product/test-product");
+    });
+
+    //Tay Kai Jun, A0283343E
+    test("should add product to cart when 'Add To Cart' button is clicked", () => {
+      // Arrange
+      const mockProducts = [
+        {
+          _id: "1",
+          name: "Test Product",
+          description: "Test description for product",
+          price: 100,
+          slug: "test-product",
+        },
+      ];
+      const mockValues = { keyword: "test", results: mockProducts };
+      useSearch.mockReturnValue([mockValues, mockSetValues]);
+
+      // Act
+      renderWithRouter(<Search />);
+      const addToCartButton = screen.getByText("Add To Cart");
+      fireEvent.click(addToCartButton);
+
+      // Assert
+      expect(mockSetCart).toHaveBeenCalledWith([mockProducts[0]]);
+      expect(window.localStorage.setItem).toHaveBeenCalledWith(
+        "cart",
+        JSON.stringify([mockProducts[0]])
+      );
+      expect(toast.success).toHaveBeenCalledWith("Item Added to cart");
     });
   });
 });

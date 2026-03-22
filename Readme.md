@@ -25,6 +25,51 @@
 | **Category** | Johannsen Lum | - `hooks/useCategory.js`<br>- `pages/Categories.js` | - `controllers/categoryController.js`<br>  1. categoryController<br>  2. singleCategoryController<br>- `models/categoryModel.js` |
 | **Payment** | Johannsen Lum | | - `controllers/productController.js`<br>  1. braintreeTokenController<br>  2. brainTreePaymentController |
 
+### MS2 Integration Testing Contributions
+
+#### Alek Kwek (A0273471A)
+
+Integration Testing
+
+- Admin Category Actions
+- `controllers/categoryController.integration.test.js`
+- `client/src/pages/admin/CreateCategory.integration.test.js`
+
+UI Testing
+
+- To be updated
+
+Bug Fixes / Notes
+
+- `client/src/pages/admin/CreateCategory.js`
+- Added missing React `key` for category table rows
+
+
+### UI Tests (Playwright)
+
+
+| Feature | Team Member | Test File | Files Tested | Test Flow |
+|---------|-------------|-----------|--------------|-----------|
+| **Registration** | Tay Kai Jun | `tests/ui/auth.spec.ts` | `pages/Auth/Register.js` | Form display → Field validation (password length, phone format) → Successful registration → Duplicate email handling |
+| **Login** | Tay Kai Jun | `tests/ui/auth.spec.ts` | `pages/Auth/Login.js` | Admin login → User login → Wrong password → Logout flow → Full user journey (register → login → cart) |
+| **Search** | Tay Kai Jun | `tests/ui/search.spec.ts` | `pages/Search.js`, `pages/ProductDetails.js`, `pages/CartPage.js` | Search products → View details → Add to cart → Cart persistence → Guest checkout |
+| **Home Page Filtering** | Lum Yi Ren Johannsen | `tests/ui/HomePageFiltering.spec.ts` | `pages/HomePage.js`, `components/Prices.js` | Navigate to Home → Category filter → Price filter → Verify product grid updates → Reset filters → Restore default listing |
+| **General Navigation & Error** | Lum Yi Ren Johannsen | `tests/ui/GeneralNavigation.spec.ts` | `components/Header.js`, `components/Footer.js`, `pages/Pagenotfound.js` | Check Home → Header Cart link → Footer About link → Invalid URL (404) → “Go back” / recovery routing |
+| **Mobile Responsiveness** | Lum Yi Ren Johannsen | `tests/ui/ResponsiveMobile.spec.ts` | `pages/HomePage.js`, `components/Header.js` | Mobile viewport (375×812) → Open hamburger menu → Assert Home / Categories / Cart → Navigate to Cart → URL and cart page |
+
+### Integration Tests (Jest)
+
+*Includes backend Jest integration tests and frontend integration-style tests; entries marked with unmerged work follow the same note as UI tests.*
+
+| Feature | Team Member | Test File | Components Tested | Test Flow |
+|---------|-------------|-----------|-------------------|-----------|
+| **Register Controller** | Tay Kai Jun | `tests/integration/auth/register.integration.test.js` | `authController.registerController` ↔ `userModel` ↔ `authHelper` | Model validation → Password hashing → Database persistence → Duplicate email handling → Response formatting |
+| **Login Controller** | Tay Kai Jun | `tests/integration/auth/login.integration.test.js` | `authController.loginController` ↔ `userModel` ↔ `authHelper` | User lookup (MongoDB) → Password comparison (bcrypt) → JWT token generation → Role-based response |
+| **Forgot Password** | Tay Kai Jun | `tests/integration/auth/forgotPassword.integration.test.js` | `authController.forgotPasswordController` ↔ `userModel` ↔ `authHelper` | Email+answer validation → Password hashing → Database update → Multi-user isolation |
+| **Category Backend** | Lum Yi Ren Johannsen | `tests/integration/category/categoryIntegration.test.js` | `categoryController` ↔ `categoryModel` ↔ `mongodb-memory-server` | Validate input (BVA / EP) → Controller → Persist to in-memory MongoDB → Close connection to exercise error / 500 paths |
+| **Home Page Frontend** | Lum Yi Ren Johannsen | `client/src/pages/HomePageIntegration.test.js` | `HomePage.js` ↔ `useCategory.js` ↔ `axios` (stubbed) | Stub HTTP by URL → Render page → Hook loads mock data → Assert UI for valid vs empty / error states |
+| **Payment Backend** | Lum Yi Ren Johannsen | `tests/integration/payment/paymentIntegration.test.js` | `brainTreePaymentController` ↔ `orderModel` ↔ `mongodb-memory-server` | Nonce + cart → Stub `gateway.transaction.sale` → Poll DB for persisted order → Gateway failure → HTTP 500, no order |
+
 
 ## 1. Project Introduction
 
@@ -181,3 +226,18 @@ To begin unit testing with Jest in your project, follow these steps:
      ```bash
      npm run test
      ```
+
+## MS2 Contributions
+
+### Alek Kwek, A0273471A
+
+Integration Testing
+- Added top-down Admin Product Management integration tests for `client/src/pages/admin/CreateProduct.js` and `client/src/pages/admin/UpdateProduct.js` in separate `.integration.test.js` files.
+- Verified backend route integration for admin product create, update, and delete flows in `controllers/productController.integration.test.js`, including authentication and admin-authorization checks on delete.
+
+UI Testing
+- Admin Product Management UI testing remains in the existing Playwright/UI work for this scope.
+
+Bug Fixes / Notes
+- Secured `DELETE /api/v1/product/delete-product/:pid` with `requireSignIn` and `isAdmin` so delete matches the protected admin-only behavior of create and update.
+- Fixed the Update Product page title to `Dashboard - Update Product` and corrected the shipping select binding so the loaded product state maps cleanly into the form.
