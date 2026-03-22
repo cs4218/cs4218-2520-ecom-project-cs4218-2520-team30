@@ -115,8 +115,8 @@ const CreateCategory = () => {
                 </thead>
                 <tbody>
                   {categories?.map((c) => (
+                    // Alek Kwek, A0273471A
                     <tr key={c._id}>
-                      {/* Alek Kwek, A0273471A */}
                       <td>{c.name}</td>
                       <td>
                         <button
