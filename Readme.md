@@ -25,25 +25,6 @@
 | **Category** | Johannsen Lum | - `hooks/useCategory.js`<br>- `pages/Categories.js` | - `controllers/categoryController.js`<br>  1. categoryController<br>  2. singleCategoryController<br>- `models/categoryModel.js` |
 | **Payment** | Johannsen Lum | | - `controllers/productController.js`<br>  1. braintreeTokenController<br>  2. brainTreePaymentController |
 
-### MS2 Integration Testing Contributions
-
-#### Alek Kwek (A0273471A)
-
-Integration Testing
-
-- Admin Category Actions
-- `controllers/categoryController.integration.test.js`
-- `client/src/pages/admin/CreateCategory.integration.test.js`
-
-UI Testing
-
-- To be updated
-
-Bug Fixes / Notes
-
-- `client/src/pages/admin/CreateCategory.js`
-- Added missing React `key` for category table rows
-
 
 ### UI Tests (Playwright)
 
@@ -221,7 +202,8 @@ To begin unit testing with Jest in your project, follow these steps:
 ### Alek Kwek, A0273471A
 
 **Integration Testing**
-- Added top-down Admin Product Management integration tests for `client/src/pages/admin/CreateProduct.js` and `client/src/pages/admin/UpdateProduct.js` in separate `.integration.test.js` files.
+- **Admin Category Actions**: `controllers/categoryController.integration.test.js` and `client/src/pages/admin/CreateCategory.integration.test.js`.
+- **Admin Product Management**: Top-down integration tests for `client/src/pages/admin/CreateProduct.js` and `client/src/pages/admin/UpdateProduct.js`.
 - Verified backend route integration for admin product create, update, and delete flows in `controllers/productController.integration.test.js`, including authentication and admin-authorization checks on delete.
 
 **UI Testing**
@@ -232,3 +214,4 @@ To begin unit testing with Jest in your project, follow these steps:
 - Secured `DELETE /api/v1/product/delete-product/:pid` with `requireSignIn` and `isAdmin` so delete matches the protected admin-only behavior of create and update.
 - Fixed the Update Product page title to `Dashboard - Update Product` and corrected the shipping select binding so the loaded product state maps cleanly into the form.
 - UI-test startup now avoids reusing unknown existing servers and avoids inheriting the unsafe default `.env` Mongo target during Playwright runs.
+- Added missing React `key` for category table rows in `client/src/pages/admin/CreateCategory.js`.
