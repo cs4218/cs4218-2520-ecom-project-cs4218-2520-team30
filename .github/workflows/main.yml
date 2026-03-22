@@ -57,7 +57,7 @@ jobs:
         id: playwright-tests
         shell: bash
         run: |
-          if compgen -G "tests/*.ui.spec.js" > /dev/null; then
+          if find tests -name "*.spec.js" -o -name "*.spec.ts" | grep . > /dev/null; then
             echo "found=true" >> "$GITHUB_OUTPUT"
           else
             echo "found=false" >> "$GITHUB_OUTPUT"
@@ -69,7 +69,7 @@ jobs:
         if: steps.playwright-tests.outputs.found == 'true'
         env:
           BROWSER: none
-        run: DEBUG=pw:webserver npm run test:ui
+        run: npm run test:ui
       - name: Skip Playwright UI Tests
         if: steps.playwright-tests.outputs.found != 'true'
         run: echo "No Playwright UI test files found under tests/. Skipping UI test run."

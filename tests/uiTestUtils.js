@@ -61,24 +61,36 @@ async function withPlaywrightConnection(work) {
 
 export async function seedPlaywrightAdmin() {
   return withPlaywrightConnection(async () => {
-    const hashedPassword = await bcrypt.hash(PLAYWRIGHT_ADMIN_PASSWORD, 10);
-
+    // Standard admin from playwrightDb.js
+    const hashedStandardPassword = await bcrypt.hash(PLAYWRIGHT_ADMIN_PASSWORD, 10);
     await userModel.findOneAndUpdate(
       { email: PLAYWRIGHT_ADMIN_EMAIL },
       {
         name: PLAYWRIGHT_ADMIN_NAME,
         email: PLAYWRIGHT_ADMIN_EMAIL,
-        password: hashedPassword,
+        password: hashedStandardPassword,
         phone: PLAYWRIGHT_ADMIN_PHONE,
         address: PLAYWRIGHT_ADMIN_ADDRESS,
         answer: PLAYWRIGHT_ADMIN_ANSWER,
         role: 1,
       },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
+
+    // Legacy admin expected by users.spec.ts
+    const hashedLegacyPassword = await bcrypt.hash("admin@test.sg", 10);
+    await userModel.findOneAndUpdate(
+      { email: "admin@test.sg" },
       {
-        upsert: true,
-        new: true,
-        setDefaultsOnInsert: true,
-      }
+        name: "admin@test.sg",
+        email: "admin@test.sg",
+        password: hashedLegacyPassword,
+        phone: "admin@test.sg", // Expected by users.spec.ts which checks nth(2)
+        address: "admin@test.sg", // Expected by users.spec.ts which checks nth(3)
+        answer: "Admin Answer",
+        role: 1,
+      },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
     );
   });
 }
@@ -102,7 +114,7 @@ export async function cleanupPlaywrightData({ includeAdmin = false } = {}) {
     await categoryModel.deleteMany({ name: prefixRegex });
 
     if (includeAdmin) {
-      await userModel.deleteMany({ email: PLAYWRIGHT_ADMIN_EMAIL });
+      await userModel.deleteMany({ email: { $in: [PLAYWRIGHT_ADMIN_EMAIL, "admin@test.sg"] } });
     }
   });
 }
