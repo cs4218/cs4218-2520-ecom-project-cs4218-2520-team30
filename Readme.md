@@ -44,6 +44,52 @@ Bug Fixes / Notes
 - `client/src/pages/admin/CreateCategory.js`
 - Added missing React `key` for category table rows
 
+#### Leong Soon Mun Steephane (A0273409B)
+
+Integration Testing
+
+- Profile Feature
+   - `routes/authRoute.updateprofile.integration.test.js`
+   - `controllers/authController.updateprofile.integration.test.js`
+   - `client/src/pages/user/Profile.integration.test.js`
+- Order Feature
+   - `routes/authRoute.getorders.integration.test.js`
+   - `controllers/authController.getorders.integration.test.js`
+   - `client/src/pages/user/Orders.integration.test.js`
+
+- Admin View Users Feature
+   - `routes/authRoute.getallusers.integration.test.js`
+   - `controllers/authController.getallusers.integration.test.js`
+   - `client/src/pages/admin/Users.integration.test.js`
+- General Feature
+   - `routes/authRoute.userauth.integration.test.js`
+   - `client/src/pages/user/Dashboard.integration.test.js`
+
+UI Testing
+
+- `tests/ui/general.spec.ts`
+- `tests/ui/orders.spec.ts`
+- `tests/ui/profile.spec.ts`
+- `tests/ui/users.spec.ts`
+
+Bug Fixes / Notes
+
+- `client/src/pages/user/Profile.js`
+- `controllers/authController.js`
+
+#### Basil Boh
+
+Test cases Written
+
+- `tests/integration/product/product-details-category.integration.test.js`
+- `tests/integration/product/cart-product.integration.test.js`
+- `tests/integration/product/payment.integration.test.js`
+- `tests/ui/browsing.spec.ts`
+- `tests/ui/cart.spec.ts`
+- `tests/ui/contact.spec.ts`
+- `tests/ui/policy.spec.ts`
+
+#### Tay Kai Jun and Lum Yi Ren Johannsen
 
 ### UI Tests (Playwright)
 
