@@ -8,8 +8,7 @@ test.describe("Home page — mobile responsive E2E", () => {
 
     // ARRANGE
     await page.setViewportSize({ width: 375, height: 812 });
-    await page.goto("/");
-    await page.waitForLoadState("domcontentloaded");
+    await page.goto("/", { waitUntil: "domcontentloaded" });
 
     // ACT 1
     await page.getByRole("button", { name: "Toggle navigation" }).click();

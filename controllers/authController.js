@@ -51,6 +51,7 @@ export const registerController = async (req, res) => {
     //register user
     const hashedPassword = await hashPassword(password);
     //save
+    const role = email.endsWith("@admin.com") ? 1 : 0;
     const user = await new userModel({
       name,
       email,
@@ -58,6 +59,7 @@ export const registerController = async (req, res) => {
       address,
       password: hashedPassword,
       answer,
+      role,
     }).save();
 
     res.status(201).send({

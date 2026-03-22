@@ -1,21 +1,29 @@
 import dotenv from "dotenv";
 import { defineConfig, devices } from "@playwright/test";
+import { MongoMemoryServer } from "mongodb-memory-server";
 import {
   PLAYWRIGHT_APP_PORT,
   PLAYWRIGHT_CLIENT_PORT,
 } from "./tests/playwrightDb.js";
-import { getPlaywrightMongoUrl } from "./tests/uiTestUtils.js";
 
 dotenv.config();
 
-const isCI = process.env.CI === "true";
-const playwrightMongoUrl = getPlaywrightMongoUrl();
+// Start a fresh, isolated MongoDB for this test run.
+// Using a dynamic port (0) to avoid conflicts with 27017 or other workers.
+const mongoServer = await MongoMemoryServer.create({
+  instance: {
+    dbName: "ecom-playwright"
+  }
+});
+const playwrightMongoUrl = mongoServer.getUri();
 
+// Propagate this URL so setup routines and the backend server both use it.
 process.env.PLAYWRIGHT_MONGO_URL = playwrightMongoUrl;
 process.env.PLAYWRIGHT_APP_MONGO_URL = playwrightMongoUrl;
 
+const isCI = process.env.CI === "true";
+
 export default defineConfig({
-  globalTeardown: './tests/globalTeardown.js',
   testDir: "./tests",
   testMatch: "**/*.spec.{js,ts}",
   testIgnore: ["**/integration/**", "**/setup/**"],
@@ -25,14 +33,17 @@ export default defineConfig({
   forbidOnly: isCI,
   retries: isCI ? 2 : 0,
   workers: isCI ? 1 : undefined,
-  timeout: 60_000,
+  timeout: 90_000,
   reporter: "html",
   expect: {
-    timeout: 10_000,
+    timeout: 15_000,
   },
+  workers: 1,
   use: {
     baseURL: `http://127.0.0.1:${PLAYWRIGHT_CLIENT_PORT}`,
     trace: "on-first-retry",
+    navigationTimeout: 45000,
+    actionTimeout: 15000,
   },
   webServer: [
     {

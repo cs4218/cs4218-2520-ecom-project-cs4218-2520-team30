@@ -22,6 +22,17 @@ import {
   getPlaywrightMongoUri,
 } from "./playwrightDb.js";
 
+// Re-export constants for tests
+export {
+  PLAYWRIGHT_ADMIN_ADDRESS,
+  PLAYWRIGHT_ADMIN_ANSWER,
+  PLAYWRIGHT_ADMIN_EMAIL,
+  PLAYWRIGHT_ADMIN_NAME,
+  PLAYWRIGHT_ADMIN_PASSWORD,
+  PLAYWRIGHT_ADMIN_PHONE,
+  PLAYWRIGHT_DB_NAME,
+};
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -34,6 +45,8 @@ export const PLAYWRIGHT_USER_EMAIL = "playwright-user@test.com";
 export const PLAYWRIGHT_USER_PASSWORD = "userpassword123";
 
 const PLAYWRIGHT_SEED_CATEGORY_SLUG = "playwright-seeded-category";
+const PLAYWRIGHT_SEED_ALT_CATEGORY_SLUG = "playwright-alt-category";
+
 const PLAYWRIGHT_SEED_PRODUCTS = [
   {
     slug: "playwright-alpha-product",
@@ -42,6 +55,7 @@ const PLAYWRIGHT_SEED_PRODUCTS = [
     price: 19,
     quantity: 12,
     shipping: true,
+    categorySlug: PLAYWRIGHT_SEED_CATEGORY_SLUG
   },
   {
     slug: "playwright-beta-product",
@@ -50,6 +64,25 @@ const PLAYWRIGHT_SEED_PRODUCTS = [
     price: 29,
     quantity: 8,
     shipping: false,
+    categorySlug: PLAYWRIGHT_SEED_CATEGORY_SLUG
+  },
+  {
+    slug: "playwright-gamma-product",
+    name: "Playwright Gamma Product",
+    description: "A seeded Playwright high-price item for filtering tests.",
+    price: 150,
+    quantity: 5,
+    shipping: true,
+    categorySlug: PLAYWRIGHT_SEED_ALT_CATEGORY_SLUG
+  },
+  {
+    slug: "nus-t-shirt",
+    name: "NUS T-shirt",
+    description: "Plain NUS T-shirt for sale",
+    price: 20,
+    quantity: 10,
+    shipping: true,
+    categorySlug: PLAYWRIGHT_SEED_CATEGORY_SLUG
   },
 ];
 
@@ -148,13 +181,28 @@ export async function ensurePlaywrightCatalog() {
     const photoData = fs.readFileSync(fixturePath);
     const now = new Date();
 
+    // Default category
     await categoryModel.findOneAndUpdate(
       { slug: PLAYWRIGHT_SEED_CATEGORY_SLUG },
       { name: "Playwright Seeded Category", slug: PLAYWRIGHT_SEED_CATEGORY_SLUG },
       { upsert: true, new: true }
     );
+    
+    // Alt category
+    await categoryModel.findOneAndUpdate(
+      { slug: PLAYWRIGHT_SEED_ALT_CATEGORY_SLUG },
+      { name: "Playwright Alt Category", slug: PLAYWRIGHT_SEED_ALT_CATEGORY_SLUG },
+      { upsert: true, new: true }
+    );
 
-    const seededCategory = await categoryModel.findOne({ slug: PLAYWRIGHT_SEED_CATEGORY_SLUG });
+    const categories = await categoryModel.find({ 
+      slug: { $in: [PLAYWRIGHT_SEED_CATEGORY_SLUG, PLAYWRIGHT_SEED_ALT_CATEGORY_SLUG] } 
+    }).lean();
+    
+    const catMap = categories.reduce((acc, c) => {
+      acc[c.slug] = c._id;
+      return acc;
+    }, {});
 
     for (const product of PLAYWRIGHT_SEED_PRODUCTS) {
       await productModel.findOneAndUpdate(
@@ -164,7 +212,7 @@ export async function ensurePlaywrightCatalog() {
           slug: product.slug,
           description: product.description,
           price: product.price,
-          category: seededCategory._id,
+          category: catMap[product.categorySlug],
           quantity: product.quantity,
           shipping: product.shipping,
           photo: { data: photoData, contentType: "image/svg+xml" },
@@ -197,6 +245,14 @@ export const loginAsAdmin = async (page) => {
   await loginAsPlaywrightAdmin(page);
   await expect(page.getByText(PLAYWRIGHT_ADMIN_NAME)).toBeVisible();
 };
+
+export const resetAdminTestData = async () => {
+  await cleanupPlaywrightData({ includeAdmin: true });
+  await ensurePlaywrightAdmin();
+};
+
+export const clearAdminTestData = async () =>
+  cleanupPlaywrightArtifacts("clearAdminTestData");
 
 export const createCategory = async (page, categoryName) => {
   await page.goto("/dashboard/admin/create-category");
