@@ -19,12 +19,13 @@ const UpdateProduct = () => {
   const [shipping, setShipping] = useState("");
   const [photo, setPhoto] = useState("");
   const [id, setId] = useState("");
+  // Alek Kwek, A0273471A
   const shippingValue =
     shipping === true || shipping === "1"
       ? "1"
       : shipping === false || shipping === "0"
-      ? "0"
-      : "";
+        ? "0"
+        : "";
 
   //get single product
   const getSingleProduct = async () => {
