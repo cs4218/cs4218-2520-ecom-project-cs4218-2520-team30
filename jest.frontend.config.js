@@ -14,6 +14,7 @@ export default {
   // tells jest how to handle css/scss imports in your tests
   moduleNameMapper: {
     "\\.(css|scss)$": "identity-obj-proxy",
+    "^react-icons/(.*)$": "<rootDir>/node_modules/react-icons/$1",
   },
 
   // ignore all node_modules except styleMock and axios (needed for css imports)
@@ -24,7 +25,9 @@ export default {
     "<rootDir>/client/src/pages/Auth/*.test.js",
     "<rootDir>/client/src/pages/Search.test.js",
     "<rootDir>/client/src/pages/HomePage.test.js",
+    "<rootDir>/client/src/pages/HomePageIntegration.test.js",
     "<rootDir>/client/src/pages/Categories.test.js",
+    "<rootDir>/client/src/pages/admin/*.integration.test.js",
     "<rootDir>/client/src/hooks/useCategory.test.js",
     "<rootDir>/client/src/pages/admin/Products.test.js",
     "<rootDir>/client/src/pages/admin/AdminOrders.test.js",
@@ -57,6 +60,7 @@ export default {
     "<rootDir>/client/src/components/UserMenu.test.js",
     "<rootDir>/client/src/pages/user/Dashboard.test.js",
     "<rootDir>/client/src/pages/user/Orders.test.js",
+    "<rootDir>/client/src/pages/user/Orders.integration.test.js",
   ],
 
   // jest code coverage

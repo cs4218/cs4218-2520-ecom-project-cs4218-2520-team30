@@ -1,6 +1,6 @@
 /**
- * Hoisted Braintree mock for integration tests that mount productRoutes (productController loads gateway at import).
- * Use global `jest` from setupFiles — not @jest/globals (redeclares `jest`).
+ * Hoisted Braintree mock for integration tests (CommonJS so jest.mock runs before ESM specs).
+ * Use global `jest` — setupFiles inject it; requiring @jest/globals can redeclare `jest`.
  *
  * Basil Boh, A0273232M
  */
