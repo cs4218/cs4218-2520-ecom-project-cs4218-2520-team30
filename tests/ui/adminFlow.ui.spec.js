@@ -7,15 +7,15 @@ import {
   PLAYWRIGHT_ADMIN_EMAIL,
   PLAYWRIGHT_ADMIN_PASSWORD,
   PLAYWRIGHT_PREFIX,
-} from "./playwrightDb.js";
-import { cleanupPlaywrightData } from "./uiTestUtils.js";
+} from "../playwrightDb.js";
+import { cleanupPlaywrightData } from "../uiTestUtils.js";
 
 // Alek Kwek, A0273471A
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const productPhotoPath = path.resolve(
   __dirname,
-  "../client/public/logo192.png"
+  "../../client/public/logo192.png"
 );
 
 async function loginAsAdmin(page) {

@@ -1,16 +1,9 @@
 export default {
-  // display name
   displayName: "backend",
-
-  // when testing backend
   testEnvironment: "node",
-
-  // transpile backend ESM to the format Jest expects consistently across Node versions
   transform: {
     "^.+\\.js$": "babel-jest",
   },
-
-  // which test to run
   testMatch: [
     "**/controllers/*.test.js",
     "**/controllers/*.integration.test.js",
@@ -20,8 +13,6 @@ export default {
     "**/models/*.test.js",
     "**/routes/*.test.js",
   ],
-
-  // jest code coverage
   collectCoverage: true,
   collectCoverageFrom: [
     "models/orderModel.js",

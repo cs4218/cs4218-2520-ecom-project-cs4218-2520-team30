@@ -35,8 +35,8 @@ jest.mock('../../hooks/useCategory', () => jest.fn(() => []));
 jest.mock('antd', () => {
     const React = require('react');
     return {
-        Modal: ({ children, visible, onCancel }) => {
-            if (!visible) return null;
+        Modal: ({ children, visible, open, onCancel }) => {
+            if (!(open ?? visible)) return null;
             return React.createElement('div', { 'data-testid': 'modal' },
                 React.createElement('button', { onClick: onCancel, 'data-testid': 'modal-close' }, 'Close'),
                 children
@@ -72,14 +72,18 @@ window.matchMedia = window.matchMedia || function () {
 // ============================================================
 // Alek Kwek, A0273471A
 
-const renderCreateCategory = () => {
-    return render(
+const renderCreateCategory = async () => {
+    render(
         <MemoryRouter initialEntries={['/dashboard/admin/create-category']}>
             <Routes>
                 <Route path="/dashboard/admin/create-category" element={<CreateCategory />} />
             </Routes>
         </MemoryRouter>
     );
+
+    await waitFor(() => {
+        expect(axios.get).toHaveBeenCalledWith('/api/v1/category/get-category');
+    });
 };
 
 // ============================================================
@@ -88,8 +92,18 @@ const renderCreateCategory = () => {
 // Alek Kwek, A0273471A
 
 describe('CreateCategory Component', () => {
+    let consoleErrorSpy;
+    let consoleLogSpy;
+
     beforeEach(() => {
         jest.clearAllMocks();
+        consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => { });
+        consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation((message) => {
+            if (typeof message === 'string' && message.includes('not wrapped in act')) {
+                return;
+            }
+        });
+
         // Default mock for useCategory hook API call
         axios.get.mockImplementation((url) => {
             if (url === '/api/v1/category/get-category') {
@@ -97,6 +111,11 @@ describe('CreateCategory Component', () => {
             }
             return Promise.resolve({ data: {} });
         });
+    });
+
+    afterEach(() => {
+        consoleLogSpy.mockRestore();
+        consoleErrorSpy.mockRestore();
     });
 
     // ----------------------------------------------------------
@@ -109,7 +128,7 @@ describe('CreateCategory Component', () => {
         });
 
         // Act
-        renderCreateCategory();
+        await renderCreateCategory();
 
         // Assert
         await waitFor(() => {
@@ -133,7 +152,7 @@ describe('CreateCategory Component', () => {
         // No mock needed for axios.post as it shouldn't be called
 
         // Act
-        renderCreateCategory();
+        await renderCreateCategory();
 
         await waitFor(() => {
             expect(screen.getByRole('heading', { name: /manage category/i })).toBeInTheDocument();
@@ -163,7 +182,7 @@ describe('CreateCategory Component', () => {
         });
 
         // Act
-        renderCreateCategory();
+        await renderCreateCategory();
 
         await waitFor(() => {
             expect(screen.getByPlaceholderText(/enter new category/i)).toBeInTheDocument();
@@ -200,7 +219,7 @@ describe('CreateCategory Component', () => {
         });
 
         // Act
-        renderCreateCategory();
+        await renderCreateCategory();
 
         // Assert
         await waitFor(() => {
@@ -220,7 +239,7 @@ describe('CreateCategory Component', () => {
         axios.post.mockRejectedValueOnce(new Error('Network error'));
 
         // Act
-        renderCreateCategory();
+        await renderCreateCategory();
 
         await waitFor(() => {
             expect(screen.getByPlaceholderText(/enter new category/i)).toBeInTheDocument();
@@ -245,7 +264,7 @@ describe('CreateCategory Component', () => {
         axios.get.mockRejectedValueOnce(new Error('Network error'));
 
         // Act
-        renderCreateCategory();
+        await renderCreateCategory();
 
         // Assert
         await waitFor(() => {
@@ -274,7 +293,7 @@ describe('CreateCategory Component', () => {
         });
 
         // Act
-        renderCreateCategory();
+        await renderCreateCategory();
 
         await waitFor(() => {
             expect(screen.getByText('Electronics')).toBeInTheDocument();
@@ -305,7 +324,7 @@ describe('CreateCategory Component', () => {
         axios.delete.mockRejectedValueOnce(new Error('Delete failed'));
 
         // Act
-        renderCreateCategory();
+        await renderCreateCategory();
 
         await waitFor(() => {
             expect(screen.getByText('Electronics')).toBeInTheDocument();
@@ -334,7 +353,7 @@ describe('CreateCategory Component', () => {
         });
 
         // Act
-        renderCreateCategory();
+        await renderCreateCategory();
 
         await waitFor(() => {
             expect(screen.getByText('Electronics')).toBeInTheDocument();
@@ -370,7 +389,7 @@ describe('CreateCategory Component', () => {
         });
 
         // Act
-        renderCreateCategory();
+        await renderCreateCategory();
 
         await waitFor(() => {
             expect(screen.getByText('Electronics')).toBeInTheDocument();
@@ -415,7 +434,7 @@ describe('CreateCategory Component', () => {
         });
 
         // Act
-        renderCreateCategory();
+        await renderCreateCategory();
 
         await waitFor(() => {
             expect(screen.getByPlaceholderText(/enter new category/i)).toBeInTheDocument();
@@ -449,7 +468,7 @@ describe('CreateCategory Component', () => {
         });
 
         // Act
-        renderCreateCategory();
+        await renderCreateCategory();
 
         await waitFor(() => {
             expect(screen.getByText('Electronics')).toBeInTheDocument();
@@ -488,7 +507,7 @@ describe('CreateCategory Component', () => {
         axios.put.mockRejectedValueOnce(new Error('Network error'));
 
         // Act
-        renderCreateCategory();
+        await renderCreateCategory();
 
         await waitFor(() => {
             expect(screen.getByText('Electronics')).toBeInTheDocument();
@@ -529,7 +548,7 @@ describe('CreateCategory Component', () => {
         });
 
         // Act
-        renderCreateCategory();
+        await renderCreateCategory();
 
         await waitFor(() => {
             expect(screen.getByText('Electronics')).toBeInTheDocument();
@@ -558,7 +577,7 @@ describe('CreateCategory Component', () => {
         });
 
         // Act
-        renderCreateCategory();
+        await renderCreateCategory();
 
         await waitFor(() => {
             expect(screen.getByText('Electronics')).toBeInTheDocument();
@@ -592,7 +611,7 @@ describe('CreateCategory Component', () => {
         });
 
         // Act
-        renderCreateCategory();
+        await renderCreateCategory();
 
         // Assert - component should still render, no error toast
         await waitFor(() => {

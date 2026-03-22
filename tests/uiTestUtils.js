@@ -1,6 +1,10 @@
 // Alek Kwek, A0273471A
 import bcrypt from "bcrypt";
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
 import mongoose from "mongoose";
+import { expect } from "@playwright/test";
 
 import categoryModel from "../models/categoryModel.js";
 import productModel from "../models/productModel.js";
@@ -13,45 +17,88 @@ import {
   PLAYWRIGHT_ADMIN_PASSWORD,
   PLAYWRIGHT_ADMIN_PHONE,
   PLAYWRIGHT_DB_NAME,
-  PLAYWRIGHT_PREFIX,
+  PLAYWRIGHT_PREFIX as BASE_PLAYWRIGHT_PREFIX,
   getBaseMongoUri,
-  getMongoHost,
   getPlaywrightMongoUri,
 } from "./playwrightDb.js";
 
+// Re-export constants for tests
+export {
+  PLAYWRIGHT_ADMIN_ADDRESS,
+  PLAYWRIGHT_ADMIN_ANSWER,
+  PLAYWRIGHT_ADMIN_EMAIL,
+  PLAYWRIGHT_ADMIN_NAME,
+  PLAYWRIGHT_ADMIN_PASSWORD,
+  PLAYWRIGHT_ADMIN_PHONE,
+  PLAYWRIGHT_DB_NAME,
+};
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Parallel worker support
+const WORKER_ID = process.env.TEST_WORKER_INDEX || "0";
+export const PLAYWRIGHT_PREFIX = `${BASE_PLAYWRIGHT_PREFIX}_w${WORKER_ID}__`;
 const prefixRegex = new RegExp(`^${PLAYWRIGHT_PREFIX}`, "i");
 
-export function getCleanupPlan(includeAdmin = false) {
-  const collections = [
-    {
-      name: "products",
-      filter: { name: { $regex: `^${PLAYWRIGHT_PREFIX}`, $options: "i" } },
-    },
-    {
-      name: "categories",
-      filter: { name: { $regex: `^${PLAYWRIGHT_PREFIX}`, $options: "i" } },
-    },
-  ];
+export const PLAYWRIGHT_USER_EMAIL = "playwright-user@test.com";
+export const PLAYWRIGHT_USER_PASSWORD = "userpassword123";
 
-  if (includeAdmin) {
-    collections.push({
-      name: "users",
-      filter: { email: PLAYWRIGHT_ADMIN_EMAIL },
-    });
-  }
+const PLAYWRIGHT_SEED_CATEGORY_SLUG = "playwright-seeded-category";
+const PLAYWRIGHT_SEED_ALT_CATEGORY_SLUG = "playwright-alt-category";
 
-  return {
-    mongoHost: getMongoHost(getPlaywrightMongoUri()),
-    appDbName: PLAYWRIGHT_DB_NAME,
-    helperDbName: PLAYWRIGHT_DB_NAME,
-    collections,
-  };
+const PLAYWRIGHT_SEED_PRODUCTS = [
+  {
+    slug: "playwright-alpha-product",
+    name: "Playwright Alpha Product",
+    description: "A seeded Playwright alpha catalog item for search and cart flows.",
+    price: 19,
+    quantity: 12,
+    shipping: true,
+    categorySlug: PLAYWRIGHT_SEED_CATEGORY_SLUG
+  },
+  {
+    slug: "playwright-beta-product",
+    name: "Playwright Beta Product",
+    description: "A seeded Playwright beta catalog item for multi-result search coverage.",
+    price: 29,
+    quantity: 8,
+    shipping: false,
+    categorySlug: PLAYWRIGHT_SEED_CATEGORY_SLUG
+  },
+  {
+    slug: "playwright-gamma-product",
+    name: "Playwright Gamma Product",
+    description: "A seeded Playwright high-price item for filtering tests.",
+    price: 150,
+    quantity: 5,
+    shipping: true,
+    categorySlug: PLAYWRIGHT_SEED_ALT_CATEGORY_SLUG
+  },
+  {
+    slug: "nus-t-shirt",
+    name: "NUS T-shirt",
+    description: "Plain NUS T-shirt for sale",
+    price: 20,
+    quantity: 10,
+    shipping: true,
+    categorySlug: PLAYWRIGHT_SEED_CATEGORY_SLUG
+  },
+];
+
+export function getPlaywrightMongoUrl() {
+  return getPlaywrightMongoUri();
 }
 
-export const withPlaywrightDb = withPlaywrightConnection;
-async function withPlaywrightConnection(work) {
-  await mongoose.connect(getPlaywrightMongoUri());
-
+/**
+ * Shared logic for DB connections.
+ */
+export async function withPlaywrightConnection(work) {
+  const uri = getPlaywrightMongoUri();
+  if (mongoose.connection.readyState !== 0) {
+    await mongoose.disconnect();
+  }
+  await mongoose.connect(uri);
   try {
     return await work(mongoose.connection.db);
   } finally {
@@ -59,9 +106,11 @@ async function withPlaywrightConnection(work) {
   }
 }
 
+export const withPlaywrightDb = withPlaywrightConnection;
+
 export async function seedPlaywrightAdmin() {
   return withPlaywrightConnection(async () => {
-    // Standard admin from playwrightDb.js
+    // Standard admin
     const hashedStandardPassword = await bcrypt.hash(PLAYWRIGHT_ADMIN_PASSWORD, 10);
     await userModel.findOneAndUpdate(
       { email: PLAYWRIGHT_ADMIN_EMAIL },
@@ -77,7 +126,7 @@ export async function seedPlaywrightAdmin() {
       { upsert: true, new: true, setDefaultsOnInsert: true }
     );
 
-    // Legacy admin expected by users.spec.ts
+    // Legacy admin
     const hashedLegacyPassword = await bcrypt.hash("admin@test.sg", 10);
     await userModel.findOneAndUpdate(
       { email: "admin@test.sg" },
@@ -85,8 +134,8 @@ export async function seedPlaywrightAdmin() {
         name: "admin@test.sg",
         email: "admin@test.sg",
         password: hashedLegacyPassword,
-        phone: "admin@test.sg", // Expected by users.spec.ts which checks nth(2)
-        address: "admin@test.sg", // Expected by users.spec.ts which checks nth(3)
+        phone: "admin@test.sg",
+        address: "admin@test.sg",
         answer: "Admin Answer",
         role: 1,
       },
@@ -95,51 +144,140 @@ export async function seedPlaywrightAdmin() {
   });
 }
 
+export async function ensurePlaywrightAdmin() {
+  return seedPlaywrightAdmin();
+}
+
+/**
+ * Cleanup targets used by teardown.
+ */
+export const cleanupTargetsInDatabase = async (label, targets) => {
+  return withPlaywrightConnection(async (db) => {
+    for (const target of targets) {
+      const result = await db.collection(target.collection).deleteMany(target.filter);
+      console.log(`[Playwright cleanup:${label}] deleted ${result.deletedCount} from ${target.collection}`);
+    }
+  });
+};
+
 export async function cleanupPlaywrightData({ includeAdmin = false } = {}) {
-  const cleanupPlan = getCleanupPlan(includeAdmin);
-
-  console.log(
-    JSON.stringify(
-      {
-        cleanup: cleanupPlan,
-        mongoHost: getMongoHost(getBaseMongoUri()),
-      },
-      null,
-      2
-    )
-  );
-
   return withPlaywrightConnection(async () => {
     await productModel.deleteMany({ name: prefixRegex });
     await categoryModel.deleteMany({ name: prefixRegex });
 
     if (includeAdmin) {
-      await userModel.deleteMany({ email: { $in: [PLAYWRIGHT_ADMIN_EMAIL, "admin@test.sg"] } });
+      await userModel.deleteMany({
+        email: { $in: [PLAYWRIGHT_ADMIN_EMAIL, "admin@test.sg", PLAYWRIGHT_USER_EMAIL] },
+      });
     }
   });
 }
 
-export async function findResidualPlaywrightData() {
-  return withPlaywrightConnection(async () => {
-    const [categories, products, users] = await Promise.all([
-      categoryModel.find({ name: prefixRegex }).select("name slug").lean(),
-      productModel
-        .find({ name: prefixRegex })
-        .select("name slug category")
-        .lean(),
-      userModel
-        .find({
-          $or: [{ email: PLAYWRIGHT_ADMIN_EMAIL }, { name: prefixRegex }],
-        })
-        .select("email name role")
-        .lean(),
-    ]);
+export const cleanupPlaywrightArtifacts = cleanupPlaywrightData;
 
-    return {
-      dbName: PLAYWRIGHT_DB_NAME,
-      categories,
-      products,
-      users,
-    };
+export async function ensurePlaywrightCatalog() {
+  return withPlaywrightConnection(async () => {
+    const fixturePath = getProductFixturePath();
+    const photoData = fs.readFileSync(fixturePath);
+    const now = new Date();
+
+    // Default category
+    await categoryModel.findOneAndUpdate(
+      { slug: PLAYWRIGHT_SEED_CATEGORY_SLUG },
+      { name: "Playwright Seeded Category", slug: PLAYWRIGHT_SEED_CATEGORY_SLUG },
+      { upsert: true, new: true }
+    );
+    
+    // Alt category
+    await categoryModel.findOneAndUpdate(
+      { slug: PLAYWRIGHT_SEED_ALT_CATEGORY_SLUG },
+      { name: "Playwright Alt Category", slug: PLAYWRIGHT_SEED_ALT_CATEGORY_SLUG },
+      { upsert: true, new: true }
+    );
+
+    const categories = await categoryModel.find({ 
+      slug: { $in: [PLAYWRIGHT_SEED_CATEGORY_SLUG, PLAYWRIGHT_SEED_ALT_CATEGORY_SLUG] } 
+    }).lean();
+    
+    const catMap = categories.reduce((acc, c) => {
+      acc[c.slug] = c._id;
+      return acc;
+    }, {});
+
+    for (const product of PLAYWRIGHT_SEED_PRODUCTS) {
+      await productModel.findOneAndUpdate(
+        { slug: product.slug },
+        {
+          name: product.name,
+          slug: product.slug,
+          description: product.description,
+          price: product.price,
+          category: catMap[product.categorySlug],
+          quantity: product.quantity,
+          shipping: product.shipping,
+          photo: { data: photoData, contentType: "image/svg+xml" },
+          updatedAt: now,
+        },
+        { upsert: true }
+      );
+    }
   });
 }
+
+export const makePlaywrightName = (label) =>
+  `${PLAYWRIGHT_PREFIX} ${label} ${Date.now()} ${Math.floor(Math.random() * 1000)}`;
+
+export const getProductFixturePath = () =>
+  path.join(__dirname, "fixtures", "playwright-product.svg");
+
+export async function loginAsPlaywrightAdmin(page) {
+  await page.goto("/login");
+  await page.getByPlaceholder("Enter Your Email ").fill(PLAYWRIGHT_ADMIN_EMAIL);
+  await page.getByPlaceholder("Enter Your Password").fill(PLAYWRIGHT_ADMIN_PASSWORD);
+  await page.getByRole("button", { name: "LOGIN" }).click();
+  await page.waitForURL("**/");
+  const authData = await page.evaluate(() => localStorage.getItem("auth"));
+  expect(authData).not.toBeNull();
+}
+
+// Additional Remote-added Helpers
+export const loginAsAdmin = async (page) => {
+  await loginAsPlaywrightAdmin(page);
+  await expect(page.getByText(PLAYWRIGHT_ADMIN_NAME)).toBeVisible();
+};
+
+export const resetAdminTestData = async () => {
+  await cleanupPlaywrightData({ includeAdmin: true });
+  await ensurePlaywrightAdmin();
+};
+
+export const clearAdminTestData = async () =>
+  cleanupPlaywrightArtifacts("clearAdminTestData");
+
+export const createCategory = async (page, categoryName) => {
+  await page.goto("/dashboard/admin/create-category");
+  await expect(page.getByRole("heading", { name: /manage category/i })).toBeVisible();
+  await page.getByPlaceholder("Enter new category").fill(categoryName);
+  await page.getByRole("button", { name: "Submit" }).first().click();
+  const createdRow = page.locator("tbody tr").filter({ hasText: categoryName });
+  await expect(createdRow).toHaveCount(1);
+};
+
+export const createProduct = async (page, productDetails) => {
+  const { categoryName, name, description, price, quantity, shippingLabel = "Yes" } = productDetails;
+  const productFixturePath = getProductFixturePath();
+
+  await page.getByRole("link", { name: "Create Product" }).click();
+  await expect(page).toHaveURL("/dashboard/admin/create-product");
+  await page.locator(".ant-select").first().click();
+  await page.locator(".ant-select-item-option-content", { hasText: categoryName }).click();
+  await page.locator('input[name="photo"]').setInputFiles(productFixturePath);
+  await page.locator('input[placeholder="write a name"]').fill(name);
+  await page.locator('textarea[placeholder="write a description"]').fill(description);
+  await page.locator('input[placeholder="write a Price"]').fill(String(price));
+  await page.locator('input[placeholder="write a quantity"]').fill(String(quantity));
+  await page.locator(".ant-select").nth(1).click();
+  await page.locator(".ant-select-item-option-content", { hasText: shippingLabel }).click();
+  await page.getByRole("button", { name: /create product/i }).click();
+  await expect(page).toHaveURL("/dashboard/admin/products");
+};

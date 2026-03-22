@@ -30,7 +30,8 @@ const Search = () => {
                 <div className="card-body d-flex flex-column">
                   <h5 className="card-title">{p.name}</h5>
                   <p className="card-text">
-                    {p.description.substring(0, 30)}...
+                    {/*Alek Kwek, A0273471A*/}
+                    {p.description?.substring(0, 30)}...
                   </p>
                   <p className="card-text"> $ {p.price}</p>
                   <div className="mt-auto">

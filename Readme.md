@@ -9,7 +9,7 @@
 | **Login** | Tay Kai Jun | - `pages/Auth/Login.js` | - `controllers/authController.js`<br>  1. loginController<br>  2. testController |
 | **Forgot Password** | Tay Kai Jun | - `pages/Auth/ForgotPassword.js` | - `controllers/authController.js`<br>  1. forgotPasswordController |
 | **Search** | Tay Kai Jun | - `components/Form/SearchInput.js`<br>- `context/search.js`<br>- `pages/Search.js` | | **Admin Dashboard** | Alek Kwek | - `components/AdminMenu.js`<br>- `pages/admin/AdminDashboard.js` | |
-| **Admin Actions** | Alek Kwek |- `components/Form/CategoryForm.js`<br>- `pages/admin/CreateCategory.js`<br>- `pages/admin/CreateProduct.js`<br>- `pages/admin/UpdateProduct.js` | - `controllers/categoryController.js`<br>  1. createCategoryController<br>  2. updateCategoryController<br>  3. deleteCategoryController |
+| **Admin Actions** | Alek Kwek | - `components/Form/CategoryForm.js`<br>- `pages/admin/CreateCategory.js`<br>- `pages/admin/CreateProduct.js`<br>- `pages/admin/UpdateProduct.js` | - `controllers/categoryController.js`<br>  1. createCategoryController<br>  2. updateCategoryController<br>  3. deleteCategoryController |
 | **Admin View Orders** | Alek Kwek | - `pages/admin/AdminOrders.js` | |
 | **Admin View Products** | Alek Kwek | - `pages/admin/Products.js` | - `controllers/productController.js`<br>  1. createProductController<br>  2. deleteProductController<br>  3. updateProductController |
 | **General** | Leong Soon Mun Stephane | - `components/Routes/Private.js`<br>- `components/UserMenu.js`<br>- `pages/user/Dashboard.js` | - `models/userModel.js` |
@@ -25,62 +25,47 @@
 | **Category** | Johannsen Lum | - `hooks/useCategory.js`<br>- `pages/Categories.js` | - `controllers/categoryController.js`<br>  1. categoryController<br>  2. singleCategoryController<br>- `models/categoryModel.js` |
 | **Payment** | Johannsen Lum | | - `controllers/productController.js`<br>  1. braintreeTokenController<br>  2. brainTreePaymentController |
 
-### MS2 Integration Testing Contributions
+## MS2 Contributions
 
-#### Alek Kwek (A0273471A)
+### Alek Kwek (A0273471A)
 
-Integration Testing
+**Integration Testing**
+- Admin Category Actions: `controllers/categoryController.integration.test.js` and `client/src/pages/admin/CreateCategory.integration.test.js`.
+- Admin Product Management: Top-down integration tests for `client/src/pages/admin/CreateProduct.js` and `client/src/pages/admin/UpdateProduct.js`.
+- Verified backend route integration for admin product create, update, and delete flows in `controllers/productController.integration.test.js`, including authentication and admin-authorization checks on delete.
 
-- Admin Category Actions
-- `controllers/categoryController.integration.test.js`
-- `client/src/pages/admin/CreateCategory.integration.test.js`
+**UI Testing**
+- Developed and organized a comprehensive Playwright UI test suite, including `admin-management.ui.spec.js`, `adminFlow.ui.spec.js`, `create-category.ui.spec.js`, and `create-product.ui.spec.js`.
+- Replaced mocked Playwright tests with black-box flows against real frontend and backend instances.
+- Reorganized the test directory by moving all UI specification files to the `tests/ui/` folder and updating all internal paths, imports, and asset resolutions.
+- Standardized UI-test setup to use isolated MongoDB instances and strict ownership markers for reliable data cleanup.
 
-UI Testing
+**Bug Fixes / Notes**
+- Resolved a critical race condition in Admin Login UI tests by implementing an auto-admin policy in `authController.js` for `@admin.com` accounts.
+- Fixed a module mismatch (ESM/CommonJS) in Playwright configuration that was preventing test execution.
+- Fixed missing product catalog items ("NUS T-shirt") in `uiTestUtils.js` that was causing `orders.spec.ts` failures.
+- Implemented serialized test execution (`workers: 1`) in `playwright.config.mjs` to eliminate database collisions in tests using shared accounts.
+- Secured the product deletion API with proper authentication and admin middleware to match create/update permissions.
+- Fixed UI bugs in `UpdateProduct.js` including incorrect page titles and shipping selection bindings.
+- Resolved React rendering warnings by adding missing `key` props and updating Ant Design modal properties.
 
-- To be updated
+### Leong Soon Mun Stephane (A0273409B)
 
-Bug Fixes / Notes
+**Integration Testing**
+- Profile Feature: `routes/authRoute.updateprofile.integration.test.js`, `controllers/authController.updateprofile.integration.test.js`, `client/src/pages/user/Profile.integration.test.js`.
+- Order Feature: `routes/authRoute.getorders.integration.test.js`, `controllers/authController.getorders.integration.test.js`, `client/src/pages/user/Orders.integration.test.js`.
+- Admin View Users Feature: `routes/authRoute.getallusers.integration.test.js`, `controllers/authController.getallusers.integration.test.js`, `client/src/pages/admin/Users.integration.test.js`.
+- General Feature: `routes/authRoute.userauth.integration.test.js`, `client/src/pages/user/Dashboard.integration.test.js`.
 
-- `client/src/pages/admin/CreateCategory.js`
-- Added missing React `key` for category table rows
-
-#### Leong Soon Mun Steephane (A0273409B)
-
-Integration Testing
-
-- Profile Feature
-   - `routes/authRoute.updateprofile.integration.test.js`
-   - `controllers/authController.updateprofile.integration.test.js`
-   - `client/src/pages/user/Profile.integration.test.js`
-- Order Feature
-   - `routes/authRoute.getorders.integration.test.js`
-   - `controllers/authController.getorders.integration.test.js`
-   - `client/src/pages/user/Orders.integration.test.js`
-
-- Admin View Users Feature
-   - `routes/authRoute.getallusers.integration.test.js`
-   - `controllers/authController.getallusers.integration.test.js`
-   - `client/src/pages/admin/Users.integration.test.js`
-- General Feature
-   - `routes/authRoute.userauth.integration.test.js`
-   - `client/src/pages/user/Dashboard.integration.test.js`
-
-UI Testing
-
+**UI Testing**
 - `tests/ui/general.spec.ts`
 - `tests/ui/orders.spec.ts`
 - `tests/ui/profile.spec.ts`
 - `tests/ui/users.spec.ts`
 
-Bug Fixes / Notes
+### Basil Boh
 
-- `client/src/pages/user/Profile.js`
-- `controllers/authController.js`
-
-#### Basil Boh
-
-Test cases Written
-
+**Test cases Written**
 - `tests/integration/product/product-details-category.integration.test.js`
 - `tests/integration/product/cart-product.integration.test.js`
 - `tests/integration/product/payment.integration.test.js`
@@ -89,33 +74,28 @@ Test cases Written
 - `tests/ui/contact.spec.ts`
 - `tests/ui/policy.spec.ts`
 
-#### Tay Kai Jun and Lum Yi Ren Johannsen
+### Tay Kai Jun
 
-### UI Tests (Playwright)
+**UI Testing (Playwright)**
+- **Registration**: `tests/ui/auth.spec.ts`. Form display → Field validation → Successful registration → Duplicate email handling.
+- **Login**: `tests/ui/auth.spec.ts`. Admin login → User login → Wrong password → Logout flow → Full user journey.
 
+**Integration Testing (Jest)**
+- **Register Controller**: `tests/integration/auth/register.integration.test.js`. Model validation → Password hashing → Database persistence → Duplicate email handling.
+- **Login Controller**: `tests/integration/auth/login.integration.test.js`. User lookup → Password comparison → JWT token generation → Role-based response.
+- **Forgot Password**: `tests/integration/auth/forgotPassword.integration.test.js`. Email+answer validation → Password hashing → Database update.
 
-| Feature | Team Member | Test File | Files Tested | Test Flow |
-|---------|-------------|-----------|--------------|-----------|
-| **Registration** | Tay Kai Jun | `tests/ui/auth.spec.ts` | `pages/Auth/Register.js` | Form display → Field validation (password length, phone format) → Successful registration → Duplicate email handling |
-| **Login** | Tay Kai Jun | `tests/ui/auth.spec.ts` | `pages/Auth/Login.js` | Admin login → User login → Wrong password → Logout flow → Full user journey (register → login → cart) |
-| **Search** | Tay Kai Jun | `tests/ui/search.spec.ts` | `pages/Search.js`, `pages/ProductDetails.js`, `pages/CartPage.js` | Search products → View details → Add to cart → Cart persistence → Guest checkout |
-| **Home Page Filtering** | Lum Yi Ren Johannsen | `tests/ui/HomePageFiltering.spec.ts` | `pages/HomePage.js`, `components/Prices.js` | Navigate to Home → Category filter → Price filter → Verify product grid updates → Reset filters → Restore default listing |
-| **General Navigation & Error** | Lum Yi Ren Johannsen | `tests/ui/GeneralNavigation.spec.ts` | `components/Header.js`, `components/Footer.js`, `pages/Pagenotfound.js` | Check Home → Header Cart link → Footer About link → Invalid URL (404) → “Go back” / recovery routing |
-| **Mobile Responsiveness** | Lum Yi Ren Johannsen | `tests/ui/ResponsiveMobile.spec.ts` | `pages/HomePage.js`, `components/Header.js` | Mobile viewport (375×812) → Open hamburger menu → Assert Home / Categories / Cart → Navigate to Cart → URL and cart page |
+### Lum Yi Ren Johannsen
 
-### Integration Tests (Jest)
+**UI Testing (Playwright)**
+- **Home Page Filtering**: `tests/ui/HomePageFiltering.spec.ts`. Category filter → Price filter → Reset filters.
+- **General Navigation & Error**: `tests/ui/GeneralNavigation.spec.ts`. Header Cart link → Footer About link → Invalid URL (404) → Recovery routing.
+- **Mobile Responsiveness**: `tests/ui/ResponsiveMobile.spec.ts`. Mobile viewport → Hamburger menu → Cart navigation.
 
-*Includes backend Jest integration tests and frontend integration-style tests; entries marked with unmerged work follow the same note as UI tests.*
-
-| Feature | Team Member | Test File | Components Tested | Test Flow |
-|---------|-------------|-----------|-------------------|-----------|
-| **Register Controller** | Tay Kai Jun | `tests/integration/auth/register.integration.test.js` | `authController.registerController` ↔ `userModel` ↔ `authHelper` | Model validation → Password hashing → Database persistence → Duplicate email handling → Response formatting |
-| **Login Controller** | Tay Kai Jun | `tests/integration/auth/login.integration.test.js` | `authController.loginController` ↔ `userModel` ↔ `authHelper` | User lookup (MongoDB) → Password comparison (bcrypt) → JWT token generation → Role-based response |
-| **Forgot Password** | Tay Kai Jun | `tests/integration/auth/forgotPassword.integration.test.js` | `authController.forgotPasswordController` ↔ `userModel` ↔ `authHelper` | Email+answer validation → Password hashing → Database update → Multi-user isolation |
-| **Category Backend** | Lum Yi Ren Johannsen | `tests/integration/category/categoryIntegration.test.js` | `categoryController` ↔ `categoryModel` ↔ `mongodb-memory-server` | Validate input (BVA / EP) → Controller → Persist to in-memory MongoDB → Close connection to exercise error / 500 paths |
-| **Home Page Frontend** | Lum Yi Ren Johannsen | `client/src/pages/HomePageIntegration.test.js` | `HomePage.js` ↔ `useCategory.js` ↔ `axios` (stubbed) | Stub HTTP by URL → Render page → Hook loads mock data → Assert UI for valid vs empty / error states |
-| **Payment Backend** | Lum Yi Ren Johannsen | `tests/integration/payment/paymentIntegration.test.js` | `brainTreePaymentController` ↔ `orderModel` ↔ `mongodb-memory-server` | Nonce + cart → Stub `gateway.transaction.sale` → Poll DB for persisted order → Gateway failure → HTTP 500, no order |
-
+**Integration Testing (Jest)**
+- **Category Backend**: `tests/integration/category/categoryIntegration.test.js`. Validate input (BVA / EP) → Controller → Persist to in-memory MongoDB.
+- **Home Page Frontend**: `client/src/pages/HomePageIntegration.test.js`. Stub HTTP → Render page → Hook loads mock data → Assert UI.
+- **Payment Backend**: `tests/integration/payment/paymentIntegration.test.js`. Nonce + cart → Stub gateway → Poll DB for order → Gateway failure handling.
 
 ## 1. Project Introduction
 
@@ -264,20 +244,3 @@ To begin unit testing with Jest in your project, follow these steps:
      ```bash
      npm run test
      ```
-
-<<<<<<< HEAD
-### Alek Kwek, A0273471A
-
-**Integration Testing**
-- Added top-down Admin Product Management integration tests for `client/src/pages/admin/CreateProduct.js` and `client/src/pages/admin/UpdateProduct.js` in separate `.integration.test.js` files.
-- Verified backend route integration for admin product create, update, and delete flows in `controllers/productController.integration.test.js`, including authentication and admin-authorization checks on delete.
-- Admin Category Actions integration coverage in `controllers/categoryController.integration.test.js` and `client/src/pages/admin/CreateCategory.integration.test.js`.
-
-**UI Testing**
-- Added Playwright end-to-end admin flows for category create/edit/delete and product create/update/delete, with strict `__playwright__` data markers, dedicated Playwright database isolation, and targeted teardown for Playwright-owned records only.
-
-**Bug Fixes / Notes**
-- Playwright now starts its own backend/frontend servers without reusing existing local servers, seeds a dedicated Playwright admin user into the isolated Playwright database, and enforces admin auth on the product delete route used by the admin product management flow.
-- Secured `DELETE /api/v1/product/delete-product/:pid` with `requireSignIn` and `isAdmin` so delete matches the protected admin-only behavior of create and update.
-- Fixed the Update Product page title to `Dashboard - Update Product` and corrected the shipping select binding so the loaded product state maps cleanly into the form.
-

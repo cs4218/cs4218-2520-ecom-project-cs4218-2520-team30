@@ -102,7 +102,8 @@ const AdminOrders = () => {
                       </div>
                       <div className="col-md-8">
                         <p>{p.name}</p>
-                        <p>{p.description.substring(0, 30)}</p>
+                        {/*Alek Kwek, A0273471A*/}
+                        <p>{p.description?.substring(0, 30)}</p>
                         <p>Price : {p.price}</p>
                       </div>
                     </div>

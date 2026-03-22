@@ -16,6 +16,11 @@ export const PLAYWRIGHT_CLIENT_PORT =
   process.env.PLAYWRIGHT_CLIENT_PORT || "3000";
 
 export function getBaseMongoUri() {
+  // Respect the URL passed by the test runner (e.g. from playwright.config.js)
+  if (process.env.PLAYWRIGHT_MONGO_URL) {
+    return process.env.PLAYWRIGHT_MONGO_URL;
+  }
+
   if (!process.env.MONGO_URL) {
     throw new Error("MONGO_URL is not set");
   }
@@ -24,9 +29,19 @@ export function getBaseMongoUri() {
 }
 
 export function buildMongoUriWithDb(baseMongoUri, dbName = PLAYWRIGHT_DB_NAME) {
-  const mongoUrl = new URL(baseMongoUri);
-  mongoUrl.pathname = `/${dbName}`;
-  return mongoUrl.toString();
+  // If we already have a full URI (like from MongoMemoryServer), just return it
+  if (baseMongoUri.includes("127.0.0.1") || baseMongoUri.includes("localhost")) {
+    return baseMongoUri;
+  }
+  
+  try {
+    const mongoUrl = new URL(baseMongoUri);
+    mongoUrl.pathname = `/${dbName}`;
+    return mongoUrl.toString();
+  } catch (e) {
+    // Fallback for non-standard URLs
+    return baseMongoUri;
+  }
 }
 
 export function getPlaywrightMongoUri() {
@@ -34,6 +49,10 @@ export function getPlaywrightMongoUri() {
 }
 
 export function getMongoHost(mongoUri) {
-  const mongoUrl = new URL(mongoUri);
-  return mongoUrl.host;
+  try {
+    const mongoUrl = new URL(mongoUri);
+    return mongoUrl.host;
+  } catch (e) {
+    return "unknown";
+  }
 }
