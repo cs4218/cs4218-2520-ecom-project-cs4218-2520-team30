@@ -88,10 +88,8 @@ function getCleanupPlan() {
     {
       collection: "users",
       filter: {
-        _id: {
-          $in: [PLAYWRIGHT_ADMIN_ID, PLAYWRIGHT_BUYER_ID].map((id) =>
-            id.toHexString()
-          ),
+        email: {
+          $in: [PLAYWRIGHT_ADMIN_EMAIL, "playwright-buyer@test.com"],
         },
       },
     },
@@ -134,7 +132,7 @@ async function cleanupPlaywrightAdminOrdersData(reason) {
       _id: PLAYWRIGHT_CATEGORY_ID,
     });
     await db.collection("users").deleteMany({
-      _id: { $in: [PLAYWRIGHT_ADMIN_ID, PLAYWRIGHT_BUYER_ID] },
+      email: { $in: [PLAYWRIGHT_ADMIN_EMAIL, "playwright-buyer@test.com"] },
     });
   });
 }
@@ -188,9 +186,11 @@ async function seedPlaywrightAdminOrdersData() {
         phone: "12345678",
         address: "Playwright Admin Address",
         answer: "__playwright__ admin answer"
-      })
+      }),
+      signal: AbortSignal.timeout(10000) // 10s timeout
     });
-    console.log("Admin Register Res:", await resAdmin.text());
+    const resAdminText = await resAdmin.text();
+    console.log("Admin Register Res:", resAdminText);
 
     const resBuyer = await fetch("http://localhost:6060/api/v1/auth/register", {
       method: "POST",
@@ -202,8 +202,11 @@ async function seedPlaywrightAdminOrdersData() {
         phone: "87654321",
         address: "Playwright Buyer Address",
         answer: "__playwright__ buyer answer"
-      })
+      }),
+      signal: AbortSignal.timeout(10000) // 10s timeout
     });
+    const resBuyerText = await resBuyer.text();
+    console.log("Buyer Register Res:", resBuyerText);
 
     // We must update admin role to 1 manually because API defaults to 0
     await db.collection("users").updateOne(

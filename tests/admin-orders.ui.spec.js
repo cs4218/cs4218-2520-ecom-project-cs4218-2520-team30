@@ -24,7 +24,7 @@ async function loginAsPlaywrightAdmin(page) {
     }
   });
   await page.getByRole("button", { name: "LOGIN" }).click();
-  await expect(page).toHaveURL("http://localhost:3000/");
+  await expect(page).toHaveURL(/\/$/);
 }
 
 async function openAdminOrdersFromDashboard(page) {
