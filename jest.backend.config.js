@@ -8,6 +8,7 @@ export default {
   // which test to run
   testMatch: [
     "**/controllers/*.test.js",
+    "**/controllers/*.integration.test.js",
     "**/config/*.test.js",
     "**/middlewares/*.test.js",
     "**/helpers/*.test.js",

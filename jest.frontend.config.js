@@ -25,6 +25,7 @@ export default {
     "<rootDir>/client/src/pages/Search.test.js",
     "<rootDir>/client/src/pages/HomePage.test.js",
     "<rootDir>/client/src/pages/Categories.test.js",
+    "<rootDir>/client/src/pages/admin/*.integration.test.js",
     "<rootDir>/client/src/hooks/useCategory.test.js",
     "<rootDir>/client/src/pages/admin/Products.test.js",
     "<rootDir>/client/src/pages/admin/AdminOrders.test.js",
