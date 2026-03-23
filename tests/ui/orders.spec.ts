@@ -153,37 +153,29 @@ test.describe("Orders Feature E2E Tests", () => {
         await card.getByRole("button", { name: "ADD TO CART" }).click();
         await page.getByRole("link", { name: "Cart" }).click();
         await page.getByRole("button", { name: "Paying with Card" }).click();
-        await page
-            .locator('iframe[name="braintree-hosted-field-number"]')
-            .contentFrame()
-            .getByRole("textbox", { name: "Credit Card Number" })
-            .click();
-        await page
-            .locator('iframe[name="braintree-hosted-field-number"]')
-            .contentFrame()
-            .getByRole("textbox", { name: "Credit Card Number" })
-            .fill("4076 8000 6857 1334");
-        await page
-            .locator('iframe[name="braintree-hosted-field-expirationDate"]')
-            .contentFrame()
-            .getByRole("textbox", { name: "Expiration Date" })
-            .click();
-        await page
-            .locator('iframe[name="braintree-hosted-field-expirationDate"]')
-            .contentFrame()
-            .getByRole("textbox", { name: "Expiration Date" })
-            .fill("03 / 29");
-        await page
-            .locator('iframe[name="braintree-hosted-field-cvv"]')
-            .contentFrame()
-            .getByRole("textbox", { name: "CVV" })
-            .click();
-        await page
-            .locator('iframe[name="braintree-hosted-field-cvv"]')
-            .contentFrame()
-            .getByRole("textbox", { name: "CVV" })
-            .fill("459");
-        await page.getByRole("button", { name: "Make Payment" }).click();
+
+        // Robust Braintree Hosted Fields handling with longer timeouts for CI
+        const numberFrame = page.frameLocator('iframe[name="braintree-hosted-field-number"]');
+        const numberInput = numberFrame.getByRole("textbox", { name: "Credit Card Number" });
+        await numberInput.waitFor({ state: "attached", timeout: 30000 });
+        await numberInput.click();
+        await numberInput.fill("4076 8000 6857 1334");
+
+        const expFrame = page.frameLocator('iframe[name="braintree-hosted-field-expirationDate"]');
+        const expInput = expFrame.getByRole("textbox", { name: "Expiration Date" });
+        await expInput.waitFor({ state: "attached", timeout: 30000 });
+        await expInput.click();
+        await expInput.fill("03 / 29");
+
+        const cvvFrame = page.frameLocator('iframe[name="braintree-hosted-field-cvv"]');
+        const cvvInput = cvvFrame.getByRole("textbox", { name: "CVV" });
+        await cvvInput.waitFor({ state: "attached", timeout: 30000 });
+        await cvvInput.click();
+        await cvvInput.fill("459");
+
+        const payButton = page.getByRole("button", { name: "Make Payment" });
+        await expect(payButton).toBeEnabled({ timeout: 30000 });
+        await payButton.click();
 
         // Assert
         await expect(page).toHaveURL("dashboard/user/orders");

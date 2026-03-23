@@ -61,7 +61,7 @@ async function fillBraintreeDropInSandboxCard(page: Page) {
   // Hosted fields live in cross-origin iframes; focus via evaluate then type from the page.
   const numberFrame = page.frameLocator('iframe[name="braintree-hosted-field-number"]');
   const numberInput = numberFrame.locator("#credit-card-number");
-  await numberInput.waitFor({ state: "attached", timeout: 20000 });
+  await numberInput.waitFor({ state: "attached", timeout: 30000 });
   await numberInput.evaluate((el: HTMLInputElement) => el.focus());
   // Slow enough that Drop-in receives every digit (fast runs can truncate the number).
   await page.keyboard.type("4005519200000004", { delay: 60 });
@@ -70,7 +70,7 @@ async function fillBraintreeDropInSandboxCard(page: Page) {
     'iframe[name="braintree-hosted-field-expirationDate"]'
   );
   const expInput = expFrame.locator("input").first();
-  await expInput.waitFor({ state: "attached", timeout: 15000 });
+  await expInput.waitFor({ state: "attached", timeout: 30000 });
   await expInput.evaluate((el: HTMLInputElement) => el.focus());
   await page.keyboard.type("1228", { delay: 50 });
 
@@ -406,7 +406,9 @@ test.describe("Cart shopping flow E2E", () => {
     await fillBraintreeDropInSandboxCard(page);
 
     const payButton = page.getByRole("button", { name: "Make Payment" });
-    await expect(payButton).toBeEnabled({ timeout: 30000 });
+    await expect(payButton).toBeEnabled({ timeout: 45000 });
+    // Small delay to ensure Drop-in has fully registered the inputs before we click
+    await page.waitForTimeout(1000);
 
     await payButton.click();
 
