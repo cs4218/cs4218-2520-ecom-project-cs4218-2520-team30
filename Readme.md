@@ -211,17 +211,6 @@ To download and use the MERN (MongoDB, Express.js, React.js, Node.js) app from G
 Unit testing is a crucial aspect of software development aimed at verifying the functionality of individual units or components of a software application. It involves isolating these units and subjecting them to various test scenarios to ensure their correctness.  
 Jest is a popular JavaScript testing framework widely used for unit testing. It offers a simple and efficient way to write and execute tests in JavaScript projects.
 
-### Alek Kwek, A0273471A
-
-Integration Testing
-Existing Jest-based integration coverage for Admin Orders was left separate and unchanged.
-
-UI Testing
-Added Playwright black-box admin order flows that log in through the UI, navigate from the admin dashboard to the orders page, view real order data, update a real order status, and verify the persisted result after returning to the orders page.
-
-Bug Fixes / Notes
-UI tests now run the real backend and frontend against a dedicated `playwright_ms2_ui` database, and Playwright cleanup only deletes exact Playwright-owned records identified by fixed `_id` values. The Playwright backend startup also supplies fallback JWT and Braintree environment values when those secrets are absent so the admin-orders UI flow can run in CI without touching unrelated auth secret management or payment features.
-
 ### Getting Started with Jest
 
 To begin unit testing with Jest in your project, follow these steps:
