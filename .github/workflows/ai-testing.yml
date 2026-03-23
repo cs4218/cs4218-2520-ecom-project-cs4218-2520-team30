@@ -188,7 +188,7 @@ jobs:
           if-no-files-found: ignore
 
       - name: Trigger AI Analysis and Post Comment
-        if: always() && vars.N8N_ENABLED == 'true' && github.event_name == 'pull_request'
+        if: always() && vars.N8N_ENABLED == 'true'
         continue-on-error: true
         run: |
           python3 - <<'PYEOF'
@@ -201,12 +201,13 @@ jobs:
                       raw = json.load(f)
                   tests = []
                   source = os.path.basename(path).replace("-results.json","").replace(".json","")
-                  if "testResults" in raw:
+                  if "testResults" in raw: # Jest format
+                      source = os.path.basename(path).replace("-results.json","").replace(".json","")
                       for suite in raw.get("testResults", []):
                           file_path = suite.get("testFilePath", "")
                           short = "/".join(file_path.replace("\\","/").split("/")[-2:])
                           for t in suite.get("assertionResults", []):
-                              entry = {"name": t.get("fullName",""), "suite": short, "status": t.get("status","")}
+                              entry = {"name": t.get("fullName",""), "suite": short, "status": t.get("status",""), "error": ""}
                               if t.get("status") != "passed":
                                   msgs = t.get("failureMessages", [])
                                   entry["error"] = msgs[0].split("\n")[0][:150] if msgs else ""
@@ -216,23 +217,27 @@ jobs:
                           "summary": {"total": raw.get("numTotalTests",0), "passed": raw.get("numPassedTests",0), "failed": raw.get("numFailedTests",0)},
                           "tests": tests
                       }
-                  elif "suites" in raw:
+                  elif "suites" in raw: # Playwright format
                       total = passed = failed = 0
                       def walk(suite, p_file=""):
                           nonlocal total, passed, failed
                           f_path = suite.get("file", p_file)
-                          short = "/".join(f_path.replace("\\","/").split("/")[-2:])
+                          short = "/".join(f_path.replace("\\","/").split("/")[-2:]) if f_path else ""
                           for spec in suite.get("specs", []):
                               for t in spec.get("tests", []):
                                   status = t.get("status", "unknown")
                                   total += 1
-                                  if status == "expected": passed += 1
-                                  else: failed += 1
+                                  if status == "expected":
+                                      passed += 1
+                                      s_mapped = "passed"
+                                  else:
+                                      failed += 1
+                                      s_mapped = "failed"
                                   res = t.get("results", [{}])
                                   err = ""
                                   if res and res[0].get("error"):
                                       err = res[0].get("error", {}).get("message", "").split("\n")[0][:150]
-                                  tests.append({"name": spec.get("title",""), "suite": short, "status": "passed" if status == "expected" else "failed", "error": err})
+                                  tests.append({"name": spec.get("title",""), "suite": short, "status": s_mapped, "error": err})
                           for s in suite.get("suites", []):
                               walk(s, f_path)
                       for s in raw.get("suites", []): walk(s)
@@ -248,67 +253,56 @@ jobs:
               if r: results.append(r)
 
           if not results:
-              print("No test results found, skipping")
+              print("No test results found.")
               sys.exit(0)
 
           payload = {
-              "run_id": os.environ.get("GITHUB_RUN_ID",""),
-              "repo": os.environ.get("GITHUB_REPOSITORY",""),
-              "branch": os.environ.get("GITHUB_REF_NAME",""),
-              "commit_sha": os.environ.get("GITHUB_SHA",""),
-              "pr_number": os.environ.get("PR_NUMBER",""),
-              "actor": os.environ.get("GITHUB_ACTOR",""),
+              "run_id": os.environ.get("GITHUB_RUN_ID"),
+              "repo": os.environ.get("GITHUB_REPOSITORY"),
+              "branch": os.environ.get("GITHUB_REF_NAME"),
+              "commit_sha": os.environ.get("GITHUB_SHA"),
+              "pr_number": os.environ.get("PR_NUMBER"),
+              "actor": os.environ.get("GITHUB_ACTOR"),
               "test_results": results
           }
 
-          # Step 1 — call n8n and get the formatted comment back
-          url = os.environ["N8N_WEBHOOK_URL"]
-          body = json.dumps(payload).encode()
-          req = urllib.request.Request(url, data=body, headers={"Content-Type": "application/json"}, method="POST")
-          
+          webhook_url = os.environ.get("N8N_WEBHOOK_URL")
+          if not webhook_url:
+              print("N8N_WEBHOOK_URL not set.")
+              sys.exit(0)
+
+          req = urllib.request.Request(webhook_url, data=json.dumps(payload).encode(), headers={"Content-Type": "application/json"}, method="POST")
           try:
               with urllib.request.urlopen(req, timeout=120) as resp:
-                  response = json.loads(resp.read().decode())
-                  print("n8n response received, health:", response.get("health"))
-                  pr_comment = response.get("pr_comment", "")
+                  data = json.loads(resp.read().decode())
+                  print(f"Health: {data.get('health')}")
+                  pr_comment = data.get("pr_comment")
           except Exception as e:
-              print(f"n8n call failed: {e}")
+              print(f"Webhook failed: {e}")
               sys.exit(0)
 
-          if not pr_comment:
-              print("No comment returned from n8n")
-              sys.exit(0)
-
-          # Step 2 — post the comment using CI's own fresh token
-          pr_number = os.environ.get("PR_NUMBER","")
-          if not pr_number:
-              print("Not a PR, skipping comment")
-              sys.exit(0)
-
-          repo = os.environ.get("GITHUB_REPOSITORY","")
-          github_token = os.environ.get("GITHUB_TOKEN","")
-          comment_url = f"https://api.github.com/repos/{repo}/issues/{pr_number}/comments"
-          
-          comment_body = json.dumps({"body": pr_comment}).encode()
-          comment_req = urllib.request.Request(
-              comment_url,
-              data=comment_body,
-              headers={
-                  "Content-Type": "application/json",
-                  "Authorization": f"Bearer {github_token}",
-                  "Accept": "application/vnd.github+json",
-                  "X-GitHub-Api-Version": "2022-11-28"
-              },
-              method="POST"
-          )
-          
-          try:
-              with urllib.request.urlopen(comment_req, timeout=30) as resp:
-                  result = json.loads(resp.read().decode())
-                  print(f"Comment posted successfully: {result.get('html_url','')}")
-          except Exception as e:
-              print(f"Failed to post comment: {e}")
-
+          pr_number = os.environ.get("PR_NUMBER")
+          if pr_number and pr_comment:
+              repo = os.environ.get("GITHUB_REPOSITORY")
+              github_token = os.environ.get("GITHUB_TOKEN")
+              comment_url = f"https://api.github.com/repos/{repo}/issues/{pr_number}/comments"
+              comment_req = urllib.request.Request(
+                  comment_url,
+                  data=json.dumps({"body": pr_comment}).encode(),
+                  headers={
+                      "Authorization": f"Bearer {github_token}",
+                      "Accept": "application/vnd.github+json",
+                      "X-GitHub-Api-Version": "2022-11-28",
+                      "Content-Type": "application/json"
+                  },
+                  method="POST"
+              )
+              try:
+                  with urllib.request.urlopen(comment_req, timeout=30) as resp:
+                      res_data = json.loads(resp.read().decode())
+                      print(f"Comment URL: {res_data.get('html_url')}")
+              except Exception as e:
+                  print(f"Github post failed: {e}")
           PYEOF
         env:
           N8N_WEBHOOK_URL: ${{ secrets.N8N_WEBHOOK_URL }}
