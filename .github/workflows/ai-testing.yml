@@ -197,35 +197,85 @@ jobs:
           import json, os, sys
 
           def load_json(path):
+              if not os.path.exists(path): return None
               try:
                   with open(path) as f:
                       raw = json.load(f)
                   tests = []
-                  for suite in raw.get("testResults", []):
-                      short = "/".join(suite.get("testFilePath","").replace("\\","/").split("/")[-2:])
-                      for t in suite.get("assertionResults", []):
-                          entry = {"name": t.get("fullName",""), "suite": short, "status": t.get("status","")}
-                          if t.get("status") != "passed":
-                              msgs = t.get("failureMessages", [])
-                              entry["error"] = msgs[0].split("\n")[0][:150] if msgs else ""
-                          tests.append(entry)
-                  return {
-                      "source": os.path.basename(path).replace("-results.json",""),
-                      "summary": {
-                          "total": raw.get("numTotalTests",0),
-                          "passed": raw.get("numPassedTests",0),
-                          "failed": raw.get("numFailedTests",0),
-                      },
-                      "tests": tests
-                  }
+                  source = os.path.basename(path).replace("-results.json","").replace(".json","")
+                  
+                  # Jest Format
+                  if "testResults" in raw:
+                      for suite in raw.get("testResults", []):
+                          file_path = suite.get("testFilePath", "")
+                          short = "/".join(file_path.replace("\\","/").split("/")[-2:])
+                          for t in suite.get("assertionResults", []):
+                              entry = {"name": t.get("fullName",""), "suite": short, "status": t.get("status","")}
+                              if t.get("status") != "passed":
+                                  msgs = t.get("failureMessages", [])
+                                  entry["error"] = msgs[0].split("\n")[0][:150] if msgs else ""
+                              tests.append(entry)
+                      return {
+                          "source": source,
+                          "summary": {
+                              "total": raw.get("numTotalTests",0),
+                              "passed": raw.get("numPassedTests",0),
+                              "failed": raw.get("numFailedTests",0),
+                          },
+                          "tests": tests
+                      }
+                  
+                  # Playwright Format (suites -> specs -> tests)
+                  elif "suites" in raw:
+                      total = passed = failed = 0
+                      def walk(suite, p_file=""):
+                          nonlocal total, passed, failed
+                          f_path = suite.get("file", p_file)
+                          short = "/".join(f_path.replace("\\","/").split("/")[-2:])
+                          for spec in suite.get("specs", []):
+                              for t in spec.get("tests", []):
+                                  status = t.get("status", "unknown")
+                                  total += 1
+                                  if status == "expected":
+                                      passed += 1
+                                  else:
+                                      failed += 1
+                                  
+                                  res = t.get("results", [{}])
+                                  err = ""
+                                  if res and res[0].get("error"):
+                                      err = res[0].get("error", {}).get("message", "").split("\n")[0][:150]
+                                  
+                                  tests.append({
+                                      "name": spec.get("title",""),
+                                      "suite": short,
+                                      "status": "passed" if status == "expected" else "failed",
+                                      "error": err
+                                  })
+                          for s in suite.get("suites", []):
+                              walk(s, f_path)
+                      
+                      for s in raw.get("suites", []):
+                          walk(s)
+                      
+                      return {
+                          "source": "playwright",
+                          "summary": {
+                              "total": total,
+                              "passed": passed,
+                              "failed": failed,
+                          },
+                          "tests": tests
+                      }
               except Exception as e:
                   print(f"Could not load {path}: {e}")
-                  return None
+              return None
 
           results = []
           for f in ["reports/jest-backend-results.json",
                     "reports/jest-frontend-results.json",
-                    "reports/jest-integration-results.json"]:
+                    "reports/jest-integration-results.json",
+                    "playwright-report/results.json"]:
               r = load_json(f)
               if r: results.append(r)
 
