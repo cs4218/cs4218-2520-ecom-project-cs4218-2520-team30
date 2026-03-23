@@ -65,8 +65,7 @@ jobs:
       - name: Run Backend Tests
         continue-on-error: true
         run: |
-          node --experimental-vm-modules node_modules/jest/bin/jest.js \
-            --config jest.backend.config.js \
+          npx jest --config jest.backend.config.js \
             --json --outputFile=reports/jest-backend-results.json
         id: backend-tests
 
@@ -74,8 +73,7 @@ jobs:
       - name: Run Frontend Tests
         continue-on-error: true
         run: |
-          node --experimental-vm-modules node_modules/jest/bin/jest.js \
-            --config jest.frontend.config.js \
+          npx jest --config jest.frontend.config.js \
             --json --outputFile=reports/jest-frontend-results.json
         id: frontend-tests
 
@@ -83,8 +81,7 @@ jobs:
       - name: Run Integration Tests
         continue-on-error: true
         run: |
-          node --experimental-vm-modules node_modules/jest/bin/jest.js \
-            --config jest.integration.config.js \
+          npx jest --config jest.integration.config.js \
             --json --outputFile=reports/jest-integration-results.json
         id: integration-tests
 
