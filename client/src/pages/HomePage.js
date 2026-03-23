@@ -75,7 +75,8 @@ const HomePage = () => {
     setChecked(all);
   };
   useEffect(() => {
-    if (!checked.length || !radio.length) getAllProducts();
+    //Alek Kwek, A0273471A
+    if (!checked.length && !radio.length) getAllProducts();
   }, [checked.length, radio.length]);
 
   useEffect(() => {
@@ -151,14 +152,16 @@ const HomePage = () => {
                   <div className="card-name-price">
                     <h5 className="card-title">{p.name}</h5>
                     <h5 className="card-title card-price">
-                      {p.price.toLocaleString("en-US", {
+                      {/*Alek Kwek, A0273471A*/}
+                      {p.price?.toLocaleString("en-US", {
                         style: "currency",
                         currency: "USD",
                       })}
                     </h5>
                   </div>
                   <p className="card-text ">
-                    {p.description.substring(0, 60)}...
+                    {/*Alek Kwek, A0273471A*/}
+                    {p.description?.substring(0, 60)}...
                   </p>
                   <div className="card-name-price">
                     <button

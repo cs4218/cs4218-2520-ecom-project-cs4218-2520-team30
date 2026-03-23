@@ -16,7 +16,8 @@
     "test": "npm run test:backend && npm run test:frontend",
     "test:frontend": "jest --config jest.frontend.config.js",
     "test:backend": "jest --config jest.backend.config.js",
-    "test:ui": "npx playwright test -c playwright.config.js"
+    "test:integration": "jest --config jest.integration.config.js",
+    "test:ui": "npx playwright test --config playwright.config.mjs"
   },
   "keywords": [],
   "author": "RP",

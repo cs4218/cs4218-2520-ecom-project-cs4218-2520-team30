@@ -23,11 +23,27 @@ async function globalTeardown() {
 
     const db = mongoose.connection.db;
     const usersCollection = db.collection("users");
+    const productsCollection = db.collection("products");
+    const categoriesCollection = db.collection("categories");
 
     // Delete test users matching pattern: testuser_*@test.com
     const result = await usersCollection.deleteMany({
-      email: { $regex: /^testuser_.*@test\.com$/ },
+      $or: [
+        { email: { $regex: /^testuser_.*@test\.com$/ } },
+        { email: "playwright-admin@test.com" },
+        { email: "playwright-user@test.com" }
+      ]
     });
+
+    const productsResult = await productsCollection.deleteMany({
+      slug: { $regex: /^playwright-/ }
+    });
+    console.log(`[Teardown] Deleted ${productsResult.deletedCount} Playwright seeded product(s).`);
+
+    const categoriesResult = await categoriesCollection.deleteMany({
+      slug: { $regex: /^playwright-/ }
+    });
+    console.log(`[Teardown] Deleted ${categoriesResult.deletedCount} Playwright seeded category(s).`);
 
     console.log(`[Teardown] Deleted ${result.deletedCount} test user(s) from database.`);
 

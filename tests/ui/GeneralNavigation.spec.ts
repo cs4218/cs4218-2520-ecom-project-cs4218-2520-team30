@@ -10,8 +10,7 @@ test("Layout navigation: header to cart, footer to about, invalid URL 404, go ba
   // Lum Yi Ren Johannsen, A0273503L
 
   // ARRANGE
-  await page.goto("/");
-  await page.waitForLoadState("load");
+  await page.goto("/", { waitUntil: "domcontentloaded" });
 
   await expect(page.getByRole("link", { name: /Virtual Vault/i })).toBeVisible({
     timeout: 30_000,

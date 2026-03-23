@@ -19,8 +19,9 @@ jest.mock("../../components/AdminMenu", () => ({
 }));
 
 jest.mock("antd", () => ({
-  Modal: ({ children, visible }) =>
-    visible ? <div data-testid="edit-modal">{children}</div> : null,
+  // Alek Kwek, A0273471A
+  Modal: ({ children, open }) =>
+    open ? <div data-testid="edit-modal">{children}</div> : null,
 }));
 
 const renderCreateCategory = () => render(<CreateCategory />);
@@ -28,7 +29,8 @@ const renderCreateCategory = () => render(<CreateCategory />);
 describe("CreateCategory integration tests", () => {
   // Alek Kwek, A0273471A
   beforeEach(() => {
-    jest.clearAllMocks();
+
+    jest.resetAllMocks();
   });
 
   // Alek Kwek, A0273471A

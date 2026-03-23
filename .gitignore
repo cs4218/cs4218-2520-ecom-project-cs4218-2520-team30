@@ -11,3 +11,4 @@ coverage/
 **/lcov.info
 **/lcov-report/
 .nvmrc
+.playwright_mongo_uri
