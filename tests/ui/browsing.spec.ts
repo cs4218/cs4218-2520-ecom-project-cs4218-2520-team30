@@ -81,17 +81,14 @@ test.describe("Product browsing and details E2E", () => {
     ).toBeVisible({ timeout: 10000 });
 
     await expect(page.getByRole("heading", { name: /Similar Products/ })).toBeVisible();
-
+    
+    // Basil Boh A0273232M - robustness: use or() for retriable assertion on multiple possibilities
     const noSimilar = page.getByText("No Similar Products found");
     const similarMoreDetails = page
       .locator(".similar-products")
       .getByRole("button", { name: "More Details" });
 
-    if (await noSimilar.isVisible()) {
-      await expect(noSimilar).toBeVisible();
-    } else {
-      await expect(similarMoreDetails.first()).toBeVisible({ timeout: 10000 });
-    }
+    await expect(noSimilar.or(similarMoreDetails.first())).toBeVisible({ timeout: 15000 });
   });
 
   test("TC4: should navigate from similar product to another product details page", async ({

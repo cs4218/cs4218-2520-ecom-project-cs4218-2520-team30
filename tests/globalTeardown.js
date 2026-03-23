@@ -39,9 +39,16 @@ const globalCleanupTargets = [
   },
 ];
 
+import fs from "fs";
+import path from "path";
+
 async function globalTeardown() {
   console.log("Running Playwright Global Teardown...");
   await cleanupTargetsInDatabase("globalTeardown", globalCleanupTargets);
+
+  // Cleanup the URI file
+  const MONGO_URI_FILE = path.join(process.cwd(), ".playwright_mongo_uri");
+  try { if (fs.existsSync(MONGO_URI_FILE)) fs.unlinkSync(MONGO_URI_FILE); } catch (e) {}
 }
 
 export default globalTeardown;

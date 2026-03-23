@@ -6,16 +6,28 @@ import {
   PLAYWRIGHT_CLIENT_PORT,
 } from "./tests/playwrightDb.js";
 
+import fs from "fs";
+import path from "path";
+
 dotenv.config();
 
-// Start a fresh, isolated MongoDB for this test run.
-// Using a dynamic port (0) to avoid conflicts with 27017 or other workers.
-const mongoServer = await MongoMemoryServer.create({
-  instance: {
-    dbName: "ecom-playwright"
-  }
-});
-const playwrightMongoUrl = mongoServer.getUri();
+const MONGO_URI_FILE = path.join(process.cwd(), ".playwright_mongo_uri");
+let playwrightMongoUrl;
+
+if (process.env.PLAYWRIGHT_MONGO_URL) {
+  playwrightMongoUrl = process.env.PLAYWRIGHT_MONGO_URL;
+} else if (fs.existsSync(MONGO_URI_FILE)) {
+  playwrightMongoUrl = fs.readFileSync(MONGO_URI_FILE, "utf8");
+} else {
+  // Start a fresh, isolated MongoDB for this test run.
+  const mongoServer = await MongoMemoryServer.create({
+    instance: {
+      dbName: "test"
+    }
+  });
+  playwrightMongoUrl = mongoServer.getUri();
+  fs.writeFileSync(MONGO_URI_FILE, playwrightMongoUrl);
+}
 
 // Propagate this URL so setup routines and the backend server both use it.
 process.env.PLAYWRIGHT_MONGO_URL = playwrightMongoUrl;

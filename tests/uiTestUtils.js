@@ -9,6 +9,7 @@ import { expect } from "@playwright/test";
 import categoryModel from "../models/categoryModel.js";
 import productModel from "../models/productModel.js";
 import userModel from "../models/userModel.js";
+import orderModel from "../models/orderModel.js";
 import {
   PLAYWRIGHT_ADMIN_ADDRESS,
   PLAYWRIGHT_ADMIN_ANSWER,
@@ -39,13 +40,31 @@ const __dirname = path.dirname(__filename);
 // Parallel worker support
 const WORKER_ID = process.env.TEST_WORKER_INDEX || "0";
 export const PLAYWRIGHT_PREFIX = `${BASE_PLAYWRIGHT_PREFIX}_w${WORKER_ID}__`;
-const prefixRegex = new RegExp(`^${PLAYWRIGHT_PREFIX}`, "i");
+const prefixRegex = new RegExp(`^${BASE_PLAYWRIGHT_PREFIX}`, "i");
 
 export const PLAYWRIGHT_USER_EMAIL = "playwright-user@test.com";
 export const PLAYWRIGHT_USER_PASSWORD = "userpassword123";
 
 const PLAYWRIGHT_SEED_CATEGORY_SLUG = "playwright-seeded-category";
 const PLAYWRIGHT_SEED_ALT_CATEGORY_SLUG = "playwright-alt-category";
+
+// Admin Orders Specific Constants (from HEAD)
+export const PLAYWRIGHT_BUYER_NAME = "__playwright__ Buyer";
+export const PLAYWRIGHT_ORDER_PRODUCT_NAMES = [
+  "__playwright__ Admin Orders Keyboard",
+  "__playwright__ Admin Orders Mouse",
+];
+export const PLAYWRIGHT_ORDER_STATUSES = ["Not Process", "Processing"];
+
+const PLAYWRIGHT_CATEGORY_ID = new mongoose.Types.ObjectId("65f000000000000000000001");
+const PLAYWRIGHT_PRODUCT_IDS = [
+  new mongoose.Types.ObjectId("65f000000000000000000011"),
+  new mongoose.Types.ObjectId("65f000000000000000000012"),
+];
+const PLAYWRIGHT_ORDER_IDS = [
+  new mongoose.Types.ObjectId("65f000000000000000000031"),
+  new mongoose.Types.ObjectId("65f000000000000000000032"),
+];
 
 const PLAYWRIGHT_SEED_PRODUCTS = [
   {
@@ -164,10 +183,15 @@ export async function cleanupPlaywrightData({ includeAdmin = false } = {}) {
   return withPlaywrightConnection(async () => {
     await productModel.deleteMany({ name: prefixRegex });
     await categoryModel.deleteMany({ name: prefixRegex });
+    
+    // Also cleanup based on specific IDs if any
+    await orderModel.deleteMany({ _id: { $in: PLAYWRIGHT_ORDER_IDS } });
+    await productModel.deleteMany({ _id: { $in: PLAYWRIGHT_PRODUCT_IDS } });
+    await categoryModel.deleteMany({ _id: PLAYWRIGHT_CATEGORY_ID });
 
     if (includeAdmin) {
       await userModel.deleteMany({
-        email: { $in: [PLAYWRIGHT_ADMIN_EMAIL, "admin@test.sg", PLAYWRIGHT_USER_EMAIL] },
+        email: { $in: [PLAYWRIGHT_ADMIN_EMAIL, "admin@test.sg", PLAYWRIGHT_USER_EMAIL, "playwright-buyer@test.com"] },
       });
     }
   });
@@ -281,3 +305,105 @@ export const createProduct = async (page, productDetails) => {
   await page.getByRole("button", { name: /create product/i }).click();
   await expect(page).toHaveURL("/dashboard/admin/products");
 };
+
+// Admin Orders Helpers (from HEAD, adapted for ESM/Mongoose)
+export async function cleanupPlaywrightAdminOrdersData(reason) {
+    await cleanupPlaywrightData();
+}
+
+export async function seedPlaywrightAdminOrdersData() {
+    return withPlaywrightConnection(async () => {
+        // Seed category
+        await categoryModel.findOneAndUpdate(
+            { _id: PLAYWRIGHT_CATEGORY_ID },
+            {
+                name: "__playwright__ Admin Orders Category",
+                slug: "__playwright__-admin-orders-category",
+            },
+            { upsert: true }
+        );
+
+        // Seed products
+        const products = [
+            {
+                _id: PLAYWRIGHT_PRODUCT_IDS[0],
+                name: PLAYWRIGHT_ORDER_PRODUCT_NAMES[0],
+                slug: "__playwright__-admin-orders-keyboard",
+                description: "Playwright-owned seeded keyboard for admin order tests.",
+                price: 149,
+                category: PLAYWRIGHT_CATEGORY_ID,
+                quantity: 5,
+                shipping: true,
+            },
+            {
+                _id: PLAYWRIGHT_PRODUCT_IDS[1],
+                name: PLAYWRIGHT_ORDER_PRODUCT_NAMES[1],
+                slug: "__playwright__-admin-orders-mouse",
+                description: "Playwright-owned seeded mouse for admin order tests.",
+                price: 59,
+                category: PLAYWRIGHT_CATEGORY_ID,
+                quantity: 8,
+                shipping: false,
+            },
+        ];
+
+        for (const p of products) {
+            await productModel.findOneAndUpdate({ _id: p._id }, p, { upsert: true });
+        }
+
+        // Seed Users
+        const hashedAdminPassword = await bcrypt.hash(PLAYWRIGHT_ADMIN_PASSWORD, 10);
+        const adminUser = await userModel.findOneAndUpdate(
+            { email: PLAYWRIGHT_ADMIN_EMAIL },
+            {
+                name: PLAYWRIGHT_ADMIN_NAME,
+                email: PLAYWRIGHT_ADMIN_EMAIL,
+                password: hashedAdminPassword,
+                phone: "12345678",
+                address: "Playwright Admin Address",
+                answer: "__playwright__ admin answer",
+                role: 1
+            },
+            { upsert: true, new: true }
+        );
+
+        const hashedBuyerPassword = await bcrypt.hash(PLAYWRIGHT_ADMIN_PASSWORD, 10);
+        const buyerUser = await userModel.findOneAndUpdate(
+            { email: "playwright-buyer@test.com" },
+            {
+                name: PLAYWRIGHT_BUYER_NAME,
+                email: "playwright-buyer@test.com",
+                password: hashedBuyerPassword,
+                phone: "87654321",
+                address: "Playwright Buyer Address",
+                answer: "__playwright__ buyer answer",
+                role: 0
+            },
+            { upsert: true, new: true }
+        );
+
+        // Seed Orders
+        const orders = [
+            {
+                _id: PLAYWRIGHT_ORDER_IDS[0],
+                products: [PLAYWRIGHT_PRODUCT_IDS[0]],
+                payment: { success: true },
+                buyer: buyerUser._id,
+                status: PLAYWRIGHT_ORDER_STATUSES[0],
+                createdAt: new Date("2026-03-19T10:00:00.000Z"),
+            },
+            {
+                _id: PLAYWRIGHT_ORDER_IDS[1],
+                products: [PLAYWRIGHT_PRODUCT_IDS[1]],
+                payment: { success: false },
+                buyer: buyerUser._id,
+                status: PLAYWRIGHT_ORDER_STATUSES[1],
+                createdAt: new Date("2026-03-18T10:00:00.000Z"),
+            },
+        ];
+
+        for (const o of orders) {
+            await orderModel.findOneAndUpdate({ _id: o._id }, o, { upsert: true });
+        }
+    });
+}

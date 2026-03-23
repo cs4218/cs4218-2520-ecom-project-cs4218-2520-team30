@@ -35,8 +35,7 @@
 - Verified backend route integration for admin product create, update, and delete flows in `controllers/productController.integration.test.js`, including authentication and admin-authorization checks on delete.
 
 **UI Testing**
-- Developed and organized a comprehensive Playwright UI test suite, including `admin-management.ui.spec.js`, `adminFlow.ui.spec.js`, `create-category.ui.spec.js`, and `create-product.ui.spec.js`.
-- Replaced mocked Playwright tests with black-box flows against real frontend and backend instances.
+- Developed and organized a comprehensive Playwright UI test suite, including `admin-management.ui.spec.js`, `adminFlow.ui.spec.js`, `create-category.ui.spec.js`, `create-product.ui.spec.js`, and `admin-orders.ui.spec.js`.
 - Reorganized the test directory by moving all UI specification files to the `tests/ui/` folder and updating all internal paths, imports, and asset resolutions.
 - Standardized UI-test setup to use isolated MongoDB instances and strict ownership markers for reliable data cleanup.
 
@@ -46,7 +45,8 @@
 - Fixed missing product catalog items ("NUS T-shirt") in `uiTestUtils.js` that was causing `orders.spec.ts` failures.
 - Implemented serialized test execution (`workers: 1`) in `playwright.config.mjs` to eliminate database collisions in tests using shared accounts.
 - Secured the product deletion API with proper authentication and admin middleware to match create/update permissions.
-- Fixed UI bugs in `UpdateProduct.js` including incorrect page titles and shipping selection bindings.
+- Fixed UI bugs in `UpdateProduct.js` and `AdminOrders.js` including incorrect page titles, shipping selection bindings, and typo in order date field (`createdAt`).
+- Switched the status Select in `AdminOrders.js` from `defaultValue` to `value` so the UI stays in sync after status updates.
 - Resolved React rendering warnings by adding missing `key` props and updating Ant Design modal properties.
 
 ### Leong Soon Mun Stephane (A0273409B)
@@ -210,6 +210,17 @@ To download and use the MERN (MongoDB, Express.js, React.js, Node.js) app from G
 
 Unit testing is a crucial aspect of software development aimed at verifying the functionality of individual units or components of a software application. It involves isolating these units and subjecting them to various test scenarios to ensure their correctness.  
 Jest is a popular JavaScript testing framework widely used for unit testing. It offers a simple and efficient way to write and execute tests in JavaScript projects.
+
+### Alek Kwek, A0273471A
+
+Integration Testing
+Existing Jest-based integration coverage for Admin Orders was left separate and unchanged.
+
+UI Testing
+Added Playwright black-box admin order flows that log in through the UI, navigate from the admin dashboard to the orders page, view real order data, update a real order status, and verify the persisted result after returning to the orders page.
+
+Bug Fixes / Notes
+UI tests now run the real backend and frontend against a dedicated `playwright_ms2_ui` database, and Playwright cleanup only deletes exact Playwright-owned records identified by fixed `_id` values. The Playwright backend startup also supplies fallback JWT and Braintree environment values when those secrets are absent so the admin-orders UI flow can run in CI without touching unrelated auth secret management or payment features.
 
 ### Getting Started with Jest
 

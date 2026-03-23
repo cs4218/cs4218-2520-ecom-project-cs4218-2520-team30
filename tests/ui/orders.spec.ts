@@ -152,38 +152,34 @@ test.describe("Orders Feature E2E Tests", () => {
         });
         await card.getByRole("button", { name: "ADD TO CART" }).click();
         await page.getByRole("link", { name: "Cart" }).click();
-        await page.getByRole("button", { name: "Paying with Card" }).click();
-        await page
-            .locator('iframe[name="braintree-hosted-field-number"]')
-            .contentFrame()
-            .getByRole("textbox", { name: "Credit Card Number" })
-            .click();
-        await page
-            .locator('iframe[name="braintree-hosted-field-number"]')
-            .contentFrame()
-            .getByRole("textbox", { name: "Credit Card Number" })
-            .fill("4076 8000 6857 1334");
-        await page
-            .locator('iframe[name="braintree-hosted-field-expirationDate"]')
-            .contentFrame()
-            .getByRole("textbox", { name: "Expiration Date" })
-            .click();
-        await page
-            .locator('iframe[name="braintree-hosted-field-expirationDate"]')
-            .contentFrame()
-            .getByRole("textbox", { name: "Expiration Date" })
-            .fill("03 / 29");
-        await page
-            .locator('iframe[name="braintree-hosted-field-cvv"]')
-            .contentFrame()
-            .getByRole("textbox", { name: "CVV" })
-            .click();
-        await page
-            .locator('iframe[name="braintree-hosted-field-cvv"]')
-            .contentFrame()
-            .getByRole("textbox", { name: "CVV" })
-            .fill("459");
-        await page.getByRole("button", { name: "Make Payment" }).click();
+
+        // Use the proven cart.spec.ts pattern for Braintree UI
+        const cardOption = page.locator(".braintree-option__card").first();
+        await expect(cardOption).toBeVisible({ timeout: 20000 });
+        await cardOption.click();
+
+        const numberFrame = page.frameLocator('iframe[name="braintree-hosted-field-number"]');
+        const numberInput = numberFrame.locator("input").first();
+        await numberInput.waitFor({ state: "attached", timeout: 30000 });
+        await numberInput.evaluate((el: HTMLInputElement) => el.focus());
+        await page.keyboard.type("4076 8000 6857 1334", { delay: 60 });
+
+        const expFrame = page.frameLocator('iframe[name="braintree-hosted-field-expirationDate"]');
+        const expInput = expFrame.locator("input").first();
+        await expInput.waitFor({ state: "attached", timeout: 30000 });
+        await expInput.evaluate((el: HTMLInputElement) => el.focus());
+        await page.keyboard.type("0329", { delay: 60 });
+
+        const cvvFrame = page.frameLocator('iframe[name="braintree-hosted-field-cvv"]');
+        const cvvInput = cvvFrame.locator("input").first();
+        await cvvInput.waitFor({ state: "attached", timeout: 30000 });
+        await cvvInput.evaluate((el: HTMLInputElement) => el.focus());
+        await page.keyboard.type("459", { delay: 60 });
+
+        const payButton = page.getByRole("button", { name: "Make Payment" });
+        await expect(payButton).toBeEnabled({ timeout: 45000 });
+        await page.waitForTimeout(1000);
+        await payButton.click();
 
         // Assert
         await expect(page).toHaveURL("dashboard/user/orders");
