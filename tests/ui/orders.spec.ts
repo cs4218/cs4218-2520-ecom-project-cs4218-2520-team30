@@ -152,29 +152,33 @@ test.describe("Orders Feature E2E Tests", () => {
         });
         await card.getByRole("button", { name: "ADD TO CART" }).click();
         await page.getByRole("link", { name: "Cart" }).click();
-        await page.getByRole("button", { name: "Paying with Card" }).click();
 
-        // Robust Braintree Hosted Fields handling with longer timeouts for CI
+        // Use the proven cart.spec.ts pattern for Braintree UI
+        const cardOption = page.locator(".braintree-option__card").first();
+        await expect(cardOption).toBeVisible({ timeout: 20000 });
+        await cardOption.click();
+
         const numberFrame = page.frameLocator('iframe[name="braintree-hosted-field-number"]');
-        const numberInput = numberFrame.getByRole("textbox", { name: "Credit Card Number" });
+        const numberInput = numberFrame.locator("input").first();
         await numberInput.waitFor({ state: "attached", timeout: 30000 });
-        await numberInput.click();
-        await numberInput.fill("4076 8000 6857 1334");
+        await numberInput.evaluate((el: HTMLInputElement) => el.focus());
+        await page.keyboard.type("4076 8000 6857 1334", { delay: 60 });
 
         const expFrame = page.frameLocator('iframe[name="braintree-hosted-field-expirationDate"]');
-        const expInput = expFrame.getByRole("textbox", { name: "Expiration Date" });
+        const expInput = expFrame.locator("input").first();
         await expInput.waitFor({ state: "attached", timeout: 30000 });
-        await expInput.click();
-        await expInput.fill("03 / 29");
+        await expInput.evaluate((el: HTMLInputElement) => el.focus());
+        await page.keyboard.type("0329", { delay: 60 });
 
         const cvvFrame = page.frameLocator('iframe[name="braintree-hosted-field-cvv"]');
-        const cvvInput = cvvFrame.getByRole("textbox", { name: "CVV" });
+        const cvvInput = cvvFrame.locator("input").first();
         await cvvInput.waitFor({ state: "attached", timeout: 30000 });
-        await cvvInput.click();
-        await cvvInput.fill("459");
+        await cvvInput.evaluate((el: HTMLInputElement) => el.focus());
+        await page.keyboard.type("459", { delay: 60 });
 
         const payButton = page.getByRole("button", { name: "Make Payment" });
-        await expect(payButton).toBeEnabled({ timeout: 30000 });
+        await expect(payButton).toBeEnabled({ timeout: 45000 });
+        await page.waitForTimeout(1000);
         await payButton.click();
 
         // Assert
