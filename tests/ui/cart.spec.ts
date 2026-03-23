@@ -412,8 +412,11 @@ test.describe("Cart shopping flow E2E", () => {
 
     await payButton.click();
 
+    // Increase robustness by waiting for either the URL change or the success toast
+    // which indicates the backend POST finished and navigation should trigger.
+    await expect(page.getByText("Payment Completed Successfully")).toBeVisible({ timeout: 60000 });
     await expect(page).toHaveURL(/\/dashboard\/user\/orders/, {
-      timeout: 60000,
+      timeout: 30000,
     });
     await expect(
       page.getByRole("heading", { name: "All Orders" })

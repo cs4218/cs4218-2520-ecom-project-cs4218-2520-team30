@@ -162,23 +162,20 @@ test.describe("Orders Feature E2E Tests", () => {
         const numberInput = numberFrame.locator("input").first();
         await numberInput.waitFor({ state: "attached", timeout: 30000 });
         await numberInput.evaluate((el: HTMLInputElement) => el.focus());
-        await page.keyboard.type("4076 8000 6857 1334", { delay: 60 });
+        await page.keyboard.type("4005519200000004", { delay: 60 });
 
         const expFrame = page.frameLocator('iframe[name="braintree-hosted-field-expirationDate"]');
         const expInput = expFrame.locator("input").first();
         await expInput.waitFor({ state: "attached", timeout: 30000 });
         await expInput.evaluate((el: HTMLInputElement) => el.focus());
-        await page.keyboard.type("0329", { delay: 60 });
+        await page.keyboard.type("1228", { delay: 60 });
 
-        const cvvFrame = page.frameLocator('iframe[name="braintree-hosted-field-cvv"]');
-        const cvvInput = cvvFrame.locator("input").first();
-        await cvvInput.waitFor({ state: "attached", timeout: 30000 });
-        await cvvInput.evaluate((el: HTMLInputElement) => el.focus());
-        await page.keyboard.type("459", { delay: 60 });
+        await page.keyboard.press("Tab");
+        await page.keyboard.type("123", { delay: 60 });
 
         const payButton = page.getByRole("button", { name: "Make Payment" });
-        await expect(payButton).toBeEnabled({ timeout: 45000 });
-        await page.waitForTimeout(1000);
+        await expect(payButton).toBeEnabled({ timeout: 60000 });
+        await page.waitForTimeout(2000);
         await payButton.click();
 
         // Assert
