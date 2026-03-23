@@ -16,6 +16,7 @@ jobs:
     env:
       PORT: 6060
       DEV_MODE: test
+      MONGO_URL: mongodb://localhost:27017/ecom-test
       PLAYWRIGHT_DB_NAME: ecom-playwright-ui
       JWT_SECRET: test-jwt-secret
       BRAINTREE_MERCHANT_ID: test-merchant-id
@@ -66,10 +67,6 @@ jobs:
           else
             echo "found=false" >> "$GITHUB_OUTPUT"
           fi
-
-      - name: Seed Playwright Admin User
-        if: steps.playwright-tests.outputs.found == 'true'
-        run: node setupAdmin.js
 
       - name: Run Playwright UI Tests
         if: steps.playwright-tests.outputs.found == 'true'
