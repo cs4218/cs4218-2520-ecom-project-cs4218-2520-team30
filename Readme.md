@@ -63,16 +63,18 @@
 - `tests/ui/profile.spec.ts`
 - `tests/ui/users.spec.ts`
 
-### Basil Boh
+### Basil Boh (A0273232M)
 
-**Test cases Written**
-- `tests/integration/product/product-details-category.integration.test.js`
-- `tests/integration/product/cart-product.integration.test.js`
-- `tests/integration/product/payment.integration.test.js`
-- `tests/ui/browsing.spec.ts`
-- `tests/ui/cart.spec.ts`
-- `tests/ui/contact.spec.ts`
-- `tests/ui/policy.spec.ts`
+**Integration Testing (Jest)**
+- **Payment (Braintree + orders)**: `tests/integration/product/payment.integration.test.js`. JWT/auth → cart POST to `/braintree/payment` → mocked Braintree gateway (`setup-braintree-mock.cjs`) → order persistence with `ObjectId` product refs → success vs 401 vs gateway failure partitions.
+- **Cart–product flow**: `tests/integration/product/cart-product.integration.test.js`. Seed category/product in MongoMemoryServer → GET product for cart-shaped payload → authenticated payment → order references match catalog response.
+- **Product details ↔ category**: `tests/integration/product/product-details-category.integration.test.js`. Category listing by slug → single product with category alignment → related products (same category, exclude current) → chained GET consistency.
+
+**UI Testing (Playwright)**
+- **Browsing & product details**: `tests/ui/browsing.spec.ts`. Homepage catalog → category/price filters → More Details → product page → similar products section (and navigation where applicable).
+- **Cart & checkout**: `tests/ui/cart.spec.ts`. Empty cart → add/remove from homepage or details → guest vs logged-in checkout behaviour → cart badge → successful checkout → orders destination.
+- **Contact**: `tests/ui/contact.spec.ts`. Contact page content (heading, details, hero) → footer **Contact** link from About.
+- **Policy**: `tests/ui/policy.spec.ts`. Privacy policy page → footer **Privacy Policy** link from About.
 
 ### Tay Kai Jun
 
