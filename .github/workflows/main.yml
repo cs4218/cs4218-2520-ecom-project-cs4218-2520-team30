@@ -1,5 +1,3 @@
-# This workflow runs tests and triggers the AI analysis agent after each run.
-# AI agent (n8n + Claude) reads the JSON test results and posts analysis to the PR.
 # This workflow will do a clean installation of node dependencies, cache/restore them, build the source code and run tests across different versions of Node.js
 # For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-nodejs
 
@@ -8,16 +6,13 @@ name: Run Tests
 on:
   workflow_dispatch:
   push:
-    branches: ["main", "MS2-3-implement-ai-testing"]
+    branches: ["main"]
   pull_request:
-    branches: ["main", "MS2-3-implement-ai-testing"]
+    branches: ["main"]
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    permissions:
-      pull-requests: write
-
     env:
       PORT: 6060
       DEV_MODE: test
@@ -57,64 +52,12 @@ jobs:
           npm ci
           npm install --prefix ./client
 
-      # Create reports directory for JSON output
-      - name: Create reports directory
-        run: mkdir -p reports
-
-      # Run backend tests and save JSON results for AI analysis
       - name: Run Backend Tests
-        continue-on-error: true
-        run: |
-          node --experimental-vm-modules node_modules/jest/bin/jest.js \
-            --config jest.backend.config.js \
-            --json --outputFile=reports/jest-backend-results.json
-        id: backend-tests
+        run: npm run test:backend
 
-      # Run frontend tests and save JSON results for AI analysis
       - name: Run Frontend Tests
-        continue-on-error: true
-        run: |
-          node --experimental-vm-modules node_modules/jest/bin/jest.js \
-            --config jest.frontend.config.js \
-            --json --outputFile=reports/jest-frontend-results.json
-        id: frontend-tests
+        run: npm run test:frontend
 
-      # Run integration tests and save JSON results for AI analysis
-      - name: Run Integration Tests
-        continue-on-error: true
-        run: |
-          node --experimental-vm-modules node_modules/jest/bin/jest.js \
-            --config jest.integration.config.js \
-            --json --outputFile=reports/jest-integration-results.json
-        id: integration-tests
-
-      # Fail the build if any Jest suite failed
-      - name: Check Jest Results
-        run: |
-          FAILED=0
-          if [ "${{ steps.backend-tests.outcome }}" = "failure" ]; then
-            echo "Backend tests failed"
-            FAILED=1
-          fi
-          if [ "${{ steps.frontend-tests.outcome }}" = "failure" ]; then
-            echo "Frontend tests failed"
-            FAILED=1
-          fi
-          if [ "${{ steps.integration-tests.outcome }}" = "failure" ]; then
-            echo "Integration tests failed"
-            FAILED=1
-          fi
-          exit $FAILED
-
-      # Upload all Jest JSON results as a single artifact for the AI agent to fetch
-      - name: Upload Jest Results (for AI analysis)
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: jest-results
-          path: reports/
-          if-no-files-found: ignore
-          retention-days: 30
       - name: Install Playwright Browser
         run: npx playwright install --with-deps chromium
 
@@ -164,18 +107,14 @@ jobs:
           PLAYWRIGHT_MONGO_URL: mongodb://localhost:27017/ecom-test
         run: node setupAdmin.js
 
-      # Run Playwright with JSON reporter so AI agent can read results
       - name: Run Playwright UI Tests
         if: steps.playwright-tests.outputs.found == 'true'
-        continue-on-error: true
-        id: ui-tests
         env:
           DEBUG: pw:webserver
           PLAYWRIGHT_MONGO_URL: mongodb://localhost:27017/ecom-test
           BRAINTREE_MERCHANT_ID: ${{ secrets.BRAINTREE_MERCHANT_ID }}
           BRAINTREE_PUBLIC_KEY: ${{ secrets.BRAINTREE_PUBLIC_KEY }}
           BRAINTREE_PRIVATE_KEY: ${{ secrets.BRAINTREE_PRIVATE_KEY }}
-          PLAYWRIGHT_JSON_OUTPUT_NAME: playwright-report/results.json
         run: npm run test:ui
 
       - name: Skip Playwright UI Tests
@@ -189,77 +128,3 @@ jobs:
           name: playwright-report
           path: playwright-report/
           if-no-files-found: ignore
-
-      # Trigger the n8n AI analysis agent — sends results INLINE in the payload
-      # This avoids the GitHub artifact download S3 auth issue entirely
-      - name: Trigger AI Analysis Agent (n8n)
-        if: always() && vars.N8N_ENABLED == 'true'
-        continue-on-error: true
-        run: |
-          python3 - <<'PYEOF'
-          import json, os, sys
-
-          def load_json(path):
-              try:
-                  with open(path) as f:
-                      raw = json.load(f)
-                  tests = []
-                  for suite in raw.get("testResults", []):
-                      short = "/".join(suite.get("testFilePath","").replace("\\","/").split("/")[-2:])
-                      for t in suite.get("assertionResults", []):
-                          entry = {"name": t.get("fullName",""), "suite": short, "status": t.get("status","")}
-                          if t.get("status") != "passed":
-                              msgs = t.get("failureMessages", [])
-                              entry["error"] = msgs[0].split("\n")[0][:150] if msgs else ""
-                          tests.append(entry)
-                  return {
-                      "source": os.path.basename(path).replace("-results.json",""),
-                      "summary": {
-                          "total": raw.get("numTotalTests",0),
-                          "passed": raw.get("numPassedTests",0),
-                          "failed": raw.get("numFailedTests",0),
-                      },
-                      "tests": tests
-                  }
-              except Exception as e:
-                  print(f"Could not load {path}: {e}")
-                  return None
-
-          results = []
-          for f in ["reports/jest-backend-results.json",
-                    "reports/jest-frontend-results.json",
-                    "reports/jest-integration-results.json"]:
-              r = load_json(f)
-              if r: results.append(r)
-
-          if not results:
-              print("No test results found, skipping webhook")
-              sys.exit(0)
-
-          payload = {
-              "run_id": os.environ.get("GITHUB_RUN_ID",""),
-              "repo": os.environ.get("GITHUB_REPOSITORY",""),
-              "branch": os.environ.get("GITHUB_REF_NAME",""),
-              "commit_sha": os.environ.get("GITHUB_SHA",""),
-              "pr_number": os.environ.get("PR_NUMBER",""),
-              "actor": os.environ.get("GITHUB_ACTOR",""),
-              "github_token": os.environ.get("GITHUB_TOKEN",""),
-              "test_results": results
-          }
-
-          import urllib.request
-          url = os.environ["N8N_WEBHOOK_URL"]
-          body = json.dumps(payload).encode()
-          req = urllib.request.Request(url, data=body,
-              headers={"Content-Type": "application/json"}, method="POST")
-          try:
-              with urllib.request.urlopen(req, timeout=15) as resp:
-                  print("AI analysis triggered:", resp.read().decode()[:200])
-          except Exception as e:
-              print(f"Webhook call failed (non-fatal): {e}")
-          PYEOF
-        env:
-          N8N_WEBHOOK_URL: ${{ secrets.N8N_WEBHOOK_URL }}
-          PR_NUMBER: ${{ github.event.number }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
