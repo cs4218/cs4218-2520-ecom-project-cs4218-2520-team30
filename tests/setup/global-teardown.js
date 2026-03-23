@@ -1,10 +1,10 @@
-/**
- * Playwright Global Teardown
- */
+import mongoose from "mongoose";
+import dotenv from "dotenv";
+import path from "path";
+import { fileURLToPath } from "url";
 
-const mongoose = require("mongoose");
-const dotenv = require("dotenv");
-const path = require("path");
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Load environment variables from root .env
 dotenv.config({ path: path.resolve(__dirname, "../../.env") });
@@ -23,11 +23,27 @@ async function globalTeardown() {
 
     const db = mongoose.connection.db;
     const usersCollection = db.collection("users");
+    const productsCollection = db.collection("products");
+    const categoriesCollection = db.collection("categories");
 
     // Delete test users matching pattern: testuser_*@test.com
     const result = await usersCollection.deleteMany({
-      email: { $regex: /^testuser_.*@test\.com$/ },
+      $or: [
+        { email: { $regex: /^testuser_.*@test\.com$/ } },
+        { email: "playwright-admin@test.com" },
+        { email: "playwright-user@test.com" }
+      ]
     });
+
+    const productsResult = await productsCollection.deleteMany({
+      slug: { $regex: /^playwright-/ }
+    });
+    console.log(`[Teardown] Deleted ${productsResult.deletedCount} Playwright seeded product(s).`);
+
+    const categoriesResult = await categoriesCollection.deleteMany({
+      slug: { $regex: /^playwright-/ }
+    });
+    console.log(`[Teardown] Deleted ${categoriesResult.deletedCount} Playwright seeded category(s).`);
 
     console.log(`[Teardown] Deleted ${result.deletedCount} test user(s) from database.`);
 
@@ -39,4 +55,4 @@ async function globalTeardown() {
   }
 }
 
-module.exports = globalTeardown;
+export default globalTeardown;

@@ -73,7 +73,7 @@ const mockOrders = [
         _id: 'order-1',
         status: 'Not Process',
         buyer: { name: 'Buyer One' },
-        createAt: '2023-01-01',
+        createdAt: '2023-01-01',
         payment: { success: true },
         products: [
             { _id: 'p1', name: 'Product A', description: 'Desc A', price: 100 },
@@ -83,7 +83,7 @@ const mockOrders = [
         _id: 'order-2',
         status: 'Processing',
         buyer: { name: 'Buyer Two' },
-        createAt: '2023-01-02',
+        createdAt: '2023-01-02',
         payment: { success: false },
         products: [
             { _id: 'p2', name: 'Product B', description: 'Desc B', price: 200 }
@@ -123,15 +123,15 @@ describe('AdminOrders Component', () => {
 
         renderComponent();
 
-        // Wait for potential async call
+        // Wait for potential async call and state update to settle
         await waitFor(() => expect(axios.get).toHaveBeenCalledWith('/api/v1/auth/all-orders'));
+        
+        // Wait for the heading to be sure rendering is done
+        expect(screen.getByText('All Orders')).toBeInTheDocument();
 
         // Assert no tables are rendered
         const tables = screen.queryAllByRole('table');
         expect(tables).toHaveLength(0);
-
-        // Assert Title is still there
-        expect(screen.getByText('All Orders')).toBeInTheDocument();
     });
 
     /**

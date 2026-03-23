@@ -10,9 +10,7 @@ const Users = () => {
   const getAllUsers = async () => { // Leong Soon Mun Stephane, A0273409B
     try {
       const { data } = await axios.get("/api/v1/auth/all-users");
-      if (data?.success) {
-        setUsers(data.users);
-      }
+      setUsers(data);
     } catch (error) {
       console.log(error);
     }

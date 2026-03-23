@@ -1,20 +1,18 @@
 export default {
-  // display name
   displayName: "backend",
-
-  // when testing backend
   testEnvironment: "node",
-
-  // which test to run
+  transform: {
+    "^.+\\.js$": "babel-jest",
+  },
   testMatch: [
     "**/controllers/*.test.js",
+    "**/controllers/*.integration.test.js",
     "**/config/*.test.js",
     "**/middlewares/*.test.js",
     "**/helpers/*.test.js",
     "**/models/*.test.js",
+    "**/routes/*.test.js",
   ],
-
-  // jest code coverage
   collectCoverage: true,
   collectCoverageFrom: [
     "models/orderModel.js",

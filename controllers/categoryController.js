@@ -68,6 +68,7 @@ export const updateCategoryController = async (req, res) => {
 export const categoryController = async (req, res) => {
   try {
     const category = await categoryModel.find({});
+    res.set("Cache-Control", "no-store");
     res.status(200).send({
       success: true,
       message: "All Categories List",
@@ -87,6 +88,7 @@ export const categoryController = async (req, res) => {
 export const singleCategoryController = async (req, res) => {
   try {
     const category = await categoryModel.findOne({ slug: req.params.slug });
+    res.set("Cache-Control", "no-store");
     res.status(200).send({
       success: true,
       message: "Get Single Category Successfully", // Alek Kwek, A0273471A

@@ -78,6 +78,7 @@ export const getProductController = async (req, res) => {
       .select("-photo")
       .limit(12)
       .sort({ createdAt: -1 });
+    res.set("Cache-Control", "no-store");
     res.status(200).send({
       success: true,
       countTotal: products.length,
@@ -102,6 +103,7 @@ export const getSingleProductController = async (req, res) => {
       .findOne({ slug: req.params.slug })
       .select("-photo")
       .populate("category");
+    res.set("Cache-Control", "no-store");
     res.status(200).send({
       success: true,
       message: "Single Product Fetched",
@@ -122,17 +124,22 @@ export const getSingleProductController = async (req, res) => {
 export const productPhotoController = async (req, res) => {
   try {
     const product = await productModel.findById(req.params.pid).select("photo");
-    if (product.photo.data) {
+    if (product && product.photo && product.photo.data) {
       res.set("Content-type", product.photo.contentType);
       return res.status(200).send(product.photo.data);
     }
+    // Alek Kwek, A0273471A - Return 404 if photo not found to prevent hang
+    return res.status(404).send({
+      success: false,
+      message: "Photo not found",
+    });
   } catch (error) {
     console.log(error);
     res.status(500).send({
       success: false,
       // Alek Kwek, A0273471A
       message: "Error while getting photo",
-      error,
+      error: error.message || error,
     });
   }
 };

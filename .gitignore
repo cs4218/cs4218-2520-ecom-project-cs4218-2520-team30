@@ -15,3 +15,5 @@ coverage/
 reports/
 venv/
 ai-testing/run_history.json
+.nvmrc
+.playwright_mongo_uri

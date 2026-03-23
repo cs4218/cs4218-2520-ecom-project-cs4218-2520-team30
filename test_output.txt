@@ -1,0 +1,18 @@
+file:///Users/alekkwek/Documents/GitHub/cs4218-2520-ecom-project-cs4218-2520-team30/playwright.config.mjs:4
+import { PLAYWRIGHT_APP_PORT, PLAYWRIGHT_CLIENT_PORT } from "./tests/playwrightDb.js";
+         ^^^^^^^^^^^^^^^^^^^
+SyntaxError: Named export 'PLAYWRIGHT_APP_PORT' not found. The requested module './tests/playwrightDb.js' is a CommonJS module, which may not support all module.exports as named exports.
+CommonJS modules can always be imported via the default export, for example using:
+
+import pkg from './tests/playwrightDb.js';
+const { PLAYWRIGHT_APP_PORT, PLAYWRIGHT_CLIENT_PORT } = pkg;
+
+    at ModuleJob._instantiate (node:internal/modules/esm/module_job:226:21)
+    at ModuleJob.run (node:internal/modules/esm/module_job:335:5)
+    at onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:665:26)
+    at requireOrImport (/Users/alekkwek/Documents/GitHub/cs4218-2520-ecom-project-cs4218-2520-team30/node_modules/playwright/lib/transform/transform.js:223:12)
+    at loadUserConfig (/Users/alekkwek/Documents/GitHub/cs4218-2520-ecom-project-cs4218-2520-team30/node_modules/playwright/lib/common/configLoader.js:107:46)
+    at loadConfig (/Users/alekkwek/Documents/GitHub/cs4218-2520-ecom-project-cs4218-2520-team30/node_modules/playwright/lib/common/configLoader.js:119:22)
+    at loadConfigFromFile (/Users/alekkwek/Documents/GitHub/cs4218-2520-ecom-project-cs4218-2520-team30/node_modules/playwright/lib/common/configLoader.js:331:10)
+    at runTests (/Users/alekkwek/Documents/GitHub/cs4218-2520-ecom-project-cs4218-2520-team30/node_modules/playwright/lib/program.js:197:18)
+    at i.<anonymous> (/Users/alekkwek/Documents/GitHub/cs4218-2520-ecom-project-cs4218-2520-team30/node_modules/playwright/lib/program.js:70:7)

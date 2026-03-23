@@ -1,9 +1,12 @@
 # This workflow runs tests and triggers the AI analysis agent after each run.
 # AI agent (n8n + Claude) reads the JSON test results and posts analysis to the PR.
+# This workflow will do a clean installation of node dependencies, cache/restore them, build the source code and run tests across different versions of Node.js
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-nodejs
 
 name: Run Tests
 
 on:
+  workflow_dispatch:
   push:
     branches: ["main", "MS2-3-implement-ai-testing"]
   pull_request:
@@ -14,6 +17,27 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
+
+    env:
+      PORT: 6060
+      DEV_MODE: test
+      MONGO_URL: mongodb://localhost:27017/ecom-test
+      PLAYWRIGHT_DB_NAME: ecom-playwright-ui
+      JWT_SECRET: test-jwt-secret
+      BRAINTREE_MERCHANT_ID: test-merchant-id
+      BRAINTREE_PUBLIC_KEY: test-public-key
+      BRAINTREE_PRIVATE_KEY: test-private-key
+
+    services:
+      mongodb:
+        image: mongo:7
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --eval 'db.adminCommand({ ping: 1 })'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
     strategy:
       matrix:
@@ -26,12 +50,12 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
-          cache: "npm"
+          cache: npm
 
-      - run: npm ci
-      - run: npm install
-      - name: Install Client Dependencies
-        run: npm install --prefix ./client
+      - name: Install Dependencies
+        run: |
+          npm ci
+          npm install --prefix ./client
 
       # Create reports directory for JSON output
       - name: Create reports directory
@@ -91,7 +115,6 @@ jobs:
           path: reports/
           if-no-files-found: ignore
           retention-days: 30
-
       - name: Install Playwright Browser
         run: npx playwright install --with-deps chromium
 
@@ -99,20 +122,61 @@ jobs:
         id: playwright-tests
         shell: bash
         run: |
-          if compgen -G "tests/*.ui.spec.js" > /dev/null; then
+          if find tests -name "*.spec.js" -o -name "*.spec.ts" | grep . > /dev/null; then
             echo "found=true" >> "$GITHUB_OUTPUT"
           else
             echo "found=false" >> "$GITHUB_OUTPUT"
           fi
 
+      - name: Verify Playwright Secrets
+        if: steps.playwright-tests.outputs.found == 'true'
+        shell: bash
+        env:
+          MONGO_URL: ${{ secrets.MONGO_URL }}
+          BRAINTREE_MERCHANT_ID: ${{ secrets.BRAINTREE_MERCHANT_ID }}
+          BRAINTREE_PUBLIC_KEY: ${{ secrets.BRAINTREE_PUBLIC_KEY }}
+          BRAINTREE_PRIVATE_KEY: ${{ secrets.BRAINTREE_PRIVATE_KEY }}
+        run: |
+          missing=0
+          if [ -z "$MONGO_URL" ]; then
+            echo "Missing MONGO_URL"
+            missing=1
+          fi
+          if [ -z "$BRAINTREE_MERCHANT_ID" ]; then
+            echo "Missing BRAINTREE_MERCHANT_ID"
+            missing=1
+          fi
+          if [ -z "$BRAINTREE_PUBLIC_KEY" ]; then
+            echo "Missing BRAINTREE_PUBLIC_KEY"
+            missing=1
+          fi
+          if [ -z "$BRAINTREE_PRIVATE_KEY" ]; then
+            echo "Missing BRAINTREE_PRIVATE_KEY"
+            missing=1
+          fi
+          if [ "$missing" -ne 0 ]; then
+            echo "Warning: Some secrets are missing. Using defaults if provided in playwright.config.mjs."
+          fi
+
+      - name: Seed Playwright Admin User
+        if: steps.playwright-tests.outputs.found == 'true'
+        env:
+          PLAYWRIGHT_MONGO_URL: mongodb://localhost:27017/ecom-test
+        run: node setupAdmin.js
+
       # Run Playwright with JSON reporter so AI agent can read results
       - name: Run Playwright UI Tests
         if: steps.playwright-tests.outputs.found == 'true'
         continue-on-error: true
-        run: npx playwright test --reporter=json,html
         id: ui-tests
         env:
+          DEBUG: pw:webserver
+          PLAYWRIGHT_MONGO_URL: mongodb://localhost:27017/ecom-test
+          BRAINTREE_MERCHANT_ID: ${{ secrets.BRAINTREE_MERCHANT_ID }}
+          BRAINTREE_PUBLIC_KEY: ${{ secrets.BRAINTREE_PUBLIC_KEY }}
+          BRAINTREE_PRIVATE_KEY: ${{ secrets.BRAINTREE_PRIVATE_KEY }}
           PLAYWRIGHT_JSON_OUTPUT_NAME: playwright-report/results.json
+        run: npm run test:ui
 
       - name: Skip Playwright UI Tests
         if: steps.playwright-tests.outputs.found != 'true'

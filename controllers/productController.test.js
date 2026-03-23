@@ -807,7 +807,8 @@ describe("Payment Controller Unit Tests", () => {
             expect(res.send).toHaveBeenCalledWith(photoData);
         });
 
-        it("should not send data if photo.data is missing", async () => {
+        it("should return 404 if photo.data is missing", async () => {
+            // Alek Kwek, A0273471A
             // ARRANGE
             req.params.pid = "pid1";
             productModel.findById.mockReturnValue({
@@ -821,8 +822,11 @@ describe("Payment Controller Unit Tests", () => {
 
             // ASSERT
             expect(productModel.findById).toHaveBeenCalledWith("pid1");
-            expect(res.set).not.toHaveBeenCalled();
-            expect(res.send).not.toHaveBeenCalled();
+            expect(res.status).toHaveBeenCalledWith(404);
+            expect(res.send).toHaveBeenCalledWith({
+                success: false,
+                message: "Photo not found",
+            });
         });
 
         it("should send 500 on error", async () => {
@@ -841,7 +845,27 @@ describe("Payment Controller Unit Tests", () => {
             expect(res.send).toHaveBeenCalledWith({
                 success: false,
                 message: "Error while getting photo",
-                error: expect.any(Error),
+                error: "DB error", // Alek Kwek - Expect string message
+            });
+        });
+
+        it("should send 500 on raw string error to cover error branch", async () => {
+            // Alek Kwek, A0273471A
+            // ARRANGE
+            req.params.pid = "pid1";
+            productModel.findById.mockReturnValue({
+                select: jest.fn().mockRejectedValue("Raw String Error"),
+            });
+
+            // ACT
+            await productPhotoController(req, res);
+
+            // ASSERT
+            expect(res.status).toHaveBeenCalledWith(500);
+            expect(res.send).toHaveBeenCalledWith({
+                success: false,
+                message: "Error while getting photo",
+                error: "Raw String Error",
             });
         });
     });
@@ -1634,7 +1658,7 @@ describe("Product Controller - Core Product APIs", () => {
             expect(res.send).toHaveBeenCalledWith({
                 success: false,
                 message: "Error while getting photo",
-                error: expect.any(Error),
+                error: "DB error", // Alek Kwek - Expect string message
             });
         });
     });

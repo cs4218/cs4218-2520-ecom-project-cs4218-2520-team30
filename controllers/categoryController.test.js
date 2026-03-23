@@ -32,6 +32,7 @@ describe("Category Controller Tests", () => {
         res = {
             status: jest.fn().mockReturnThis(),
             send: jest.fn(),
+            set: jest.fn().mockReturnThis(),
         };
         // Clear all mocks
         jest.clearAllMocks();
@@ -274,6 +275,7 @@ describe("Category Controllers", () => {
         res = {
             status: jest.fn().mockReturnThis(),
             send: jest.fn(),
+            set: jest.fn().mockReturnThis(),
         };
     });
 
@@ -291,6 +293,7 @@ describe("Category Controllers", () => {
 
         // ASSERT
         expect(categoryModel.find).toHaveBeenCalledWith({});
+        expect(res.set).toHaveBeenCalledWith("Cache-Control", "no-store");
         expect(res.status).toHaveBeenCalledWith(200);
         expect(res.send).toHaveBeenCalledWith({
             success: true,
@@ -311,6 +314,7 @@ describe("Category Controllers", () => {
 
         // ASSERT
         expect(categoryModel.findOne).toHaveBeenCalledWith({ slug: "electronics" });
+        expect(res.set).toHaveBeenCalledWith("Cache-Control", "no-store");
         expect(res.status).toHaveBeenCalledWith(200);
         expect(res.send).toHaveBeenCalledWith({
             success: true,
@@ -366,6 +370,7 @@ describe("Category Controllers", () => {
         res = {
             status: jest.fn().mockReturnThis(),
             send: jest.fn(),
+            set: jest.fn().mockReturnThis(),
         };
     });
 
@@ -383,6 +388,7 @@ describe("Category Controllers", () => {
 
         // ASSERT
         expect(categoryModel.find).toHaveBeenCalledWith({});
+        expect(res.set).toHaveBeenCalledWith("Cache-Control", "no-store");
         expect(res.status).toHaveBeenCalledWith(200);
         expect(res.send).toHaveBeenCalledWith({
             success: true,
@@ -403,6 +409,7 @@ describe("Category Controllers", () => {
 
         // ASSERT
         expect(categoryModel.findOne).toHaveBeenCalledWith({ slug: "electronics" });
+        expect(res.set).toHaveBeenCalledWith("Cache-Control", "no-store");
         expect(res.status).toHaveBeenCalledWith(200);
         expect(res.send).toHaveBeenCalledWith({
             success: true,

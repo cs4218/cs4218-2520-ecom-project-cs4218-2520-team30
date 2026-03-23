@@ -1,6 +1,7 @@
 // Tay Kai Jun A0283343E
 
 import { test, expect, type Page } from "@playwright/test";
+import { withPlaywrightDb } from "../uiTestUtils.js";
 
 interface TestUser {
   name: string;
@@ -16,9 +17,10 @@ interface TestUser {
  */
 function generateTestUser(suffix = ""): TestUser {
   const timestamp = Date.now();
+  const random = Math.floor(Math.random() * 10000);
   return {
-    name: `TestUser_${timestamp}${suffix}`,
-    email: `testuser_${timestamp}${suffix}@test.com`,
+    name: `TestUser_${timestamp}_${random}${suffix}`,
+    email: `testuser_${timestamp}_${random}${suffix}@test.com`,
     password: "password123",
     phone: "1234567890",
     address: "123 Test Street",
@@ -198,7 +200,52 @@ test.describe("Registration Page E2E Tests", () => {
 });
 
 test.describe("Login Page E2E Tests", () => {
+  test.beforeEach(async ({ request }) => {
+    // Clear old users to ensure fresh registration with correct passwords
+    await withPlaywrightDb(async (db) => {
+      await db.collection("users").deleteMany({ email: { $in: ["admin@admin.com", "user@test.com"] } });
+    });
+
+    // Ensure users exist
+    await request.post("http://localhost:6060/api/v1/auth/register", {
+      data: { name: "MyAdmin", email: "admin@admin.com", password: "password123", phone: "123", address: "addr", answer: "ans" }
+    });
+    await request.post("http://localhost:6060/api/v1/auth/register", {
+      data: { name: "User", email: "user@test.com", password: "password123", phone: "123", address: "addr", answer: "ans" }
+    });
+    
+    // Update Admin role to 1
+    await withPlaywrightDb(async (db) => {
+      await db.collection("users").updateOne(
+        { email: "admin@admin.com" },
+        { $set: { role: 1 } }
+      );
+    });
+  });
+
   // Tay Kai Jun A0283343E
+  test.beforeEach(async ({ request }) => {
+    // Clear old users to ensure fresh registration with correct passwords
+    await withPlaywrightDb(async (db) => {
+      await db.collection("users").deleteMany({ email: { $in: ["admin@admin.com", "user@test.com"] } });
+    });
+
+    // Ensure users exist
+    await request.post("http://localhost:6060/api/v1/auth/register", {
+      data: { name: "MyAdmin", email: "admin@admin.com", password: "password123", phone: "123", address: "addr", answer: "ans" }
+    });
+    await request.post("http://localhost:6060/api/v1/auth/register", {
+      data: { name: "User", email: "user@test.com", password: "password123", phone: "123", address: "addr", answer: "ans" }
+    });
+    
+    // Update Admin role to 1
+    await withPlaywrightDb(async (db) => {
+      await db.collection("users").updateOne(
+        { email: "admin@admin.com" },
+        { $set: { role: 1 } }
+      );
+    });
+  });
   test("TC1: should login as admin and navigate to admin dashboard", async ({
     page,
   }) => {

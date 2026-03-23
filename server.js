@@ -12,7 +12,9 @@ import cors from "cors";
 dotenv.config();
 
 //database config
+console.log("SERVER JS MONGO_URL BEFORE:", process.env.MONGO_URL);
 connectDB();
+console.log("SERVER JS MONGO_URL AFTER:", process.env.MONGO_URL);
 
 const app = express();
 

@@ -16,7 +16,6 @@ const AdminOrders = () => {
     "deliverd",
     "cancel",
   ]);
-  const [changeStatus, setCHangeStatus] = useState("");
   const [orders, setOrders] = useState([]);
   const [auth, setAuth] = useAuth();
   const getOrders = async () => {
@@ -52,7 +51,8 @@ const AdminOrders = () => {
           <h1 className="text-center">All Orders</h1>
           {orders?.map((o, i) => {
             return (
-              <div className="border shadow">
+              // Alek Kwek, A0273471A
+              <div className="border shadow" key={o._id}>
                 <table className="table">
                   <thead>
                     <tr>
@@ -71,7 +71,7 @@ const AdminOrders = () => {
                         <Select
                           bordered={false}
                           onChange={(value) => handleChange(o._id, value)}
-                          defaultValue={o?.status}
+                          value={o?.status}
                         >
                           {status.map((s, i) => (
                             <Option key={i} value={s}>
@@ -81,7 +81,7 @@ const AdminOrders = () => {
                         </Select>
                       </td>
                       <td>{o?.buyer?.name}</td>
-                      <td>{moment(o?.createAt).fromNow()}</td>
+                      <td>{moment(o?.createdAt).fromNow()}</td>
                       <td>{o?.payment.success ? "Success" : "Failed"}</td>
                       <td>{o?.products?.length}</td>
                     </tr>
@@ -101,7 +101,8 @@ const AdminOrders = () => {
                       </div>
                       <div className="col-md-8">
                         <p>{p.name}</p>
-                        <p>{p.description.substring(0, 30)}</p>
+                        {/*Alek Kwek, A0273471A*/}
+                        <p>{p.description?.substring(0, 30)}</p>
                         <p>Price : {p.price}</p>
                       </div>
                     </div>
