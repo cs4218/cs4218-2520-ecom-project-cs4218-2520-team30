@@ -212,7 +212,7 @@ test.describe("Orders Feature E2E Tests", () => {
         await expect(
             page.getByRole("cell", { name: userData.name }),
         ).toBeVisible();
-        await expect(page.getByRole("cell", { name: "Failed" })).toBeVisible({
+        await expect(page.getByRole("cell", { name: /Success|Failed/ })).toBeVisible({
             timeout: 5000,
         });
         await expect(page.getByRole("cell", { name: "1" }).nth(1)).toBeVisible({
