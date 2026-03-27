@@ -46,6 +46,39 @@ You can also relax or tighten the response-time checks:
 K6_MAX_DURATION_MS=3000 k6 run k6/mixed-flows.js
 ```
 
+## Docker Run
+
+If you want to run the app and `k6` through Docker instead of your host Node setup:
+
+1. Copy the example env file:
+
+```bash
+cp .env.docker.example .env.docker
+```
+
+2. Start MongoDB and the app:
+
+```bash
+docker compose --env-file .env.docker -f docker-compose.k6.yml up --build -d app
+```
+
+3. Seed the default admin account used by the admin and mixed scripts:
+
+```bash
+docker compose --env-file .env.docker -f docker-compose.k6.yml run --rm seed-admin
+```
+
+4. Run any `k6` script from the container:
+
+```bash
+docker compose --env-file .env.docker -f docker-compose.k6.yml run --rm k6 run /scripts/mixed-flows.js
+docker compose --env-file .env.docker -f docker-compose.k6.yml run --rm k6 run /scripts/anonymous-browsing.js
+docker compose --env-file .env.docker -f docker-compose.k6.yml run --rm k6 run /scripts/auth-user-flows.js
+docker compose --env-file .env.docker -f docker-compose.k6.yml run --rm k6 run /scripts/admin-flows.js
+```
+
+The Docker `k6` container targets `http://app:6060`, so it can talk to the backend service over the Compose network.
+
 ## What Each Script Covers
 
 ### Anonymous

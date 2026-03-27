@@ -12,3 +12,6 @@ coverage/
 **/lcov-report/
 .nvmrc
 .playwright_mongo_uri
+.env.docker
+docker-compose.override.yml
+k6-results/
