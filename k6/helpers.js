@@ -1,3 +1,4 @@
+// Alek Kwek, A0273471A
 import http from "k6/http";
 import { check } from "k6";
 
