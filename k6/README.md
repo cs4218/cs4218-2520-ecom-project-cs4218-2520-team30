@@ -56,6 +56,18 @@ If you want to run the app and `k6` through Docker instead of your host Node set
 cp .env.docker.example .env.docker
 ```
 
+The example file constrains Docker to a cheap-EC2-like profile by default:
+
+- `APP_PLATFORM=linux/amd64`
+- `APP_CPUS=2`
+- `APP_MEM_LIMIT=2g`
+- `MONGO_CPUS=1`
+- `MONGO_MEM_LIMIT=1g`
+- `K6_CPUS=1`
+- `K6_MEM_LIMIT=512m`
+
+That does not make your M1 Pro identical to EC2, but it avoids using full local hardware and makes the environment easier to explain in a report.
+
 2. Start MongoDB and the app:
 
 ```bash

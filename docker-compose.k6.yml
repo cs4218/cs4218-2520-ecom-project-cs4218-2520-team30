@@ -13,7 +13,10 @@ x-app-env: &app-env
 services:
   mongo:
     image: mongo:7
+    platform: ${APP_PLATFORM:-linux/amd64}
     restart: unless-stopped
+    cpus: ${MONGO_CPUS:-1}
+    mem_limit: ${MONGO_MEM_LIMIT:-1g}
     ports:
       - "${APP_MONGO_PORT:-27017}:27017"
     healthcheck:
@@ -29,10 +32,13 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    platform: ${APP_PLATFORM:-linux/amd64}
     restart: unless-stopped
     depends_on:
       mongo:
         condition: service_healthy
+    cpus: ${APP_CPUS:-2}
+    mem_limit: ${APP_MEM_LIMIT:-2g}
     environment: *app-env
     ports:
       - "${APP_CLIENT_PORT:-3000}:3000"
@@ -54,9 +60,12 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    platform: ${APP_PLATFORM:-linux/amd64}
     depends_on:
       mongo:
         condition: service_healthy
+    cpus: ${APP_CPUS:-2}
+    mem_limit: ${APP_MEM_LIMIT:-2g}
     environment: *app-env
     command: ["node", "setupAdmin.js"]
 
@@ -64,9 +73,12 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.k6
+    platform: ${APP_PLATFORM:-linux/amd64}
     depends_on:
       app:
         condition: service_healthy
+    cpus: ${K6_CPUS:-1}
+    mem_limit: ${K6_MEM_LIMIT:-512m}
     environment:
       K6_BASE_URL: http://app:6060
       K6_ADMIN_EMAIL: ${K6_ADMIN_EMAIL:-playwright-admin@test.com}
