@@ -1,5 +1,9 @@
 # k6 Load Testing Scripts
 
+## Workload
+
+**Alek Kwek, A0273471A** — Load Testing via k6
+
 These scripts target the Express backend directly at `http://localhost:6060`, which matches the frontend proxy behavior in this repo.
 
 ## Files
