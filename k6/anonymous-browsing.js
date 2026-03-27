@@ -13,11 +13,11 @@ import {
 
 export const options = {
   stages: [
-    { duration: "10s", target: 5 },
-    { duration: "20s", target: 5 },
-    { duration: "10s", target: 10 },
-    { duration: "20s", target: 10 },
-    { duration: "10s", target: 0 },
+    { duration: "30s", target: 20 },   // ramp up to 20 VUs
+    { duration: "1m",  target: 50 },   // ramp up to 50 VUs
+    { duration: "2m",  target: 100 },  // sustain peak load (100 VUs)
+    { duration: "1m",  target: 50 },   // scale back to 50 VUs
+    { duration: "30s", target: 0 },    // ramp down
   ],
   thresholds: {
     http_req_duration: ["p(95)<2000"],

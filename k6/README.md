@@ -8,11 +8,18 @@ These scripts target the Express backend directly at `http://localhost:6060`, wh
 
 ## Files
 
-- `k6/anonymous-browsing.js`: anonymous catalog browsing and product reads
-- `k6/auth-user-flows.js`: register, login, user-auth, profile update, orders
-- `k6/admin-flows.js`: admin-auth, all-orders, order-status, category CRUD, product list
-- `k6/mixed-flows.js`: mostly anonymous traffic, with smaller user and admin portions
-- `k6/helpers.js`: small shared helpers for checks, headers, and login
+### Scripts
+
+- `k6/anonymous-browsing.js` — anonymous catalog browsing and product reads
+- `k6/auth-user-flows.js` — register, login, user-auth, profile update, orders
+- `k6/admin-flows.js` — admin-auth, all-orders, order-status, category CRUD, product list
+- `k6/mixed-flows.js` — full authenticated user journey (browse → login → checkout init); main script for MS3 reporting
+- `k6/helpers.js` — shared helpers for checks, headers, and login
+
+### Config Files
+
+- `k6/config.ecom-realistic.json` — business-hours profile: 5 min baseline at 30 VUs, 3 min peak at 60 VUs
+- `k6/config.ecom-very-high-load.json` — high-load profile: 7 min sustained at 100 VUs (ramping-vus executor)
 
 ## Before Running
 
@@ -27,24 +34,67 @@ export K6_ADMIN_PASSWORD="admin@test.sg"
 
 ## Run Commands
 
+### Local (k6 installed on host)
+
 ```bash
+# Run individual scripts with their built-in load profile
 k6 run k6/anonymous-browsing.js
 k6 run k6/auth-user-flows.js
 k6 run k6/admin-flows.js
 k6 run k6/mixed-flows.js
 ```
 
-If your backend is not on `localhost:6060`, override it:
+Override the base URL if your backend is not on `localhost:6060`:
 
 ```bash
-K6_BASE_URL="http://localhost:6060" k6 run k6/anonymous-browsing.js
+K6_BASE_URL="http://localhost:6060" k6 run k6/mixed-flows.js
 ```
 
-You can also relax or tighten the response-time checks:
+### Running mixed-flows.js with an external JSON config
+
+`mixed-flows.js` defaults to a 40-VU baseline. To override the load profile
+without editing the script, pass `EXTERNAL_CONFIG=true` and point to a
+JSON config file with `--config`:
 
 ```bash
-K6_MAX_DURATION_MS=3000 k6 run k6/mixed-flows.js
+# Business-hours profile (30 VU baseline, 60 VU peak)
+k6 run -e EXTERNAL_CONFIG=true \
+    --config k6/config.ecom-realistic.json \
+    k6/mixed-flows.js
+
+# High-load profile (100 VUs sustained for 7 minutes)
+k6 run -e EXTERNAL_CONFIG=true \
+    --config k6/config.ecom-very-high-load.json \
+    k6/mixed-flows.js
 ```
+
+> **Why `EXTERNAL_CONFIG=true`?** k6 merges `--config` with the script-level
+> `options`, so a script's `stages` would override the JSON file. Setting this
+> env var clears the script options so the JSON config takes full control.
+
+## Load Profile
+
+### Built-in profiles (no config file needed)
+
+| Script | Peak VUs | Total duration |
+| --- | --- | --- |
+| `anonymous-browsing.js` | **100** | ~5 min |
+| `auth-user-flows.js` | **30** | ~5 min |
+| `admin-flows.js` | **10** | ~5 min |
+| `mixed-flows.js` | **40** | ~11 min |
+
+### External config profiles (`mixed-flows.js` only)
+
+| Config file | Peak VUs | Total duration | Use case |
+| --- | --- | --- | --- |
+| `config.ecom-realistic.json` | **60** | ~16 min | Business-hours baseline |
+| `config.ecom-very-high-load.json` | **100** | ~11 min | Peak/stress probe |
+
+### Thresholds (`mixed-flows.js`)
+
+- `p(95) < 200 ms` (Google RAIL model)
+- error rate `< 1 %`
+- check pass rate `> 99 %`
 
 ## Docker Run
 
@@ -56,17 +106,9 @@ If you want to run the app and `k6` through Docker instead of your host Node set
 cp .env.docker.example .env.docker
 ```
 
-The example file constrains Docker to a cheap-EC2-like profile by default:
-
-- `APP_PLATFORM=linux/amd64`
-- `APP_CPUS=2`
-- `APP_MEM_LIMIT=2g`
-- `MONGO_CPUS=1`
-- `MONGO_MEM_LIMIT=1g`
-- `K6_CPUS=1`
-- `K6_MEM_LIMIT=512m`
-
-That does not make your M1 Pro identical to EC2, but it avoids using full local hardware and makes the environment easier to explain in a report.
+The example file constrains Docker to a cheap-EC2-like profile by default
+(`APP_CPUS=2`, `APP_MEM_LIMIT=2g`, `K6_CPUS=1`, `K6_MEM_LIMIT=512m`), which
+represents a typical low-cost cloud instance.
 
 2. Start MongoDB and the app:
 
@@ -74,22 +116,53 @@ That does not make your M1 Pro identical to EC2, but it avoids using full local 
 docker compose --env-file .env.docker -f docker-compose.k6.yml up --build -d app
 ```
 
-3. Seed the default admin account used by the admin and mixed scripts:
+3. Seed the default admin account:
 
 ```bash
 docker compose --env-file .env.docker -f docker-compose.k6.yml run --rm seed-admin
 ```
 
-4. Run any `k6` script from the container:
+4. **(Important)** Rebuild the k6 image whenever you add or change files in `k6/`:
 
 ```bash
-docker compose --env-file .env.docker -f docker-compose.k6.yml run --rm k6 run /scripts/mixed-flows.js
-docker compose --env-file .env.docker -f docker-compose.k6.yml run --rm k6 run /scripts/anonymous-browsing.js
-docker compose --env-file .env.docker -f docker-compose.k6.yml run --rm k6 run /scripts/auth-user-flows.js
-docker compose --env-file .env.docker -f docker-compose.k6.yml run --rm k6 run /scripts/admin-flows.js
+docker compose --env-file .env.docker -f docker-compose.k6.yml build k6
 ```
 
-The Docker `k6` container targets `http://app:6060`, so it can talk to the backend service over the Compose network.
+1. Run scripts:
+
+```bash
+# Built-in load profile (default)
+docker compose --env-file .env.docker -f docker-compose.k6.yml run --rm \
+  k6 run /scripts/mixed-flows.js
+
+# Other scripts
+docker compose --env-file .env.docker -f docker-compose.k6.yml run --rm \
+  k6 run /scripts/anonymous-browsing.js
+docker compose --env-file .env.docker -f docker-compose.k6.yml run --rm \
+  k6 run /scripts/auth-user-flows.js
+docker compose --env-file .env.docker -f docker-compose.k6.yml run --rm \
+  k6 run /scripts/admin-flows.js
+```
+
+1. Run `mixed-flows.js` with an external JSON config:
+
+```bash
+# Business-hours profile
+docker compose --env-file .env.docker -f docker-compose.k6.yml run --rm \
+  k6 run \
+  -e EXTERNAL_CONFIG=true \
+  --config /scripts/config.ecom-realistic.json \
+  /scripts/mixed-flows.js
+
+# High-load profile (100 VUs)
+docker compose --env-file .env.docker -f docker-compose.k6.yml run --rm \
+  k6 run \
+  -e EXTERNAL_CONFIG=true \
+  --config /scripts/config.ecom-very-high-load.json \
+  /scripts/mixed-flows.js
+```
+
+The Docker `k6` container targets `http://app:6060` over the Compose network.
 
 ## What Each Script Covers
 
