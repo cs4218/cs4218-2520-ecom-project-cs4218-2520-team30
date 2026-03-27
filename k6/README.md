@@ -100,6 +100,18 @@ k6 run -e EXTERNAL_CONFIG=true \
 
 If you want to run the app and `k6` through Docker instead of your host Node setup:
 
+> **⚠️ Important — rebuild the k6 image after any change to `k6/`**
+>
+> The k6 Docker image bakes in a copy of the `k6/` folder at build time.
+> If you edit a script, add a config file, or change `helpers.js`, the running
+> container will still use the **old** files until you rebuild:
+>
+> ```bash
+> docker compose --env-file .env.docker -f docker-compose.k6.yml build k6
+> ```
+>
+> Skipping this is the most common reason config changes appear to have no effect.
+
 1. Copy the example env file:
 
 ```bash
@@ -110,19 +122,19 @@ The example file constrains Docker to a cheap-EC2-like profile by default
 (`APP_CPUS=2`, `APP_MEM_LIMIT=2g`, `K6_CPUS=1`, `K6_MEM_LIMIT=512m`), which
 represents a typical low-cost cloud instance.
 
-2. Start MongoDB and the app:
+1. Start MongoDB and the app:
 
 ```bash
 docker compose --env-file .env.docker -f docker-compose.k6.yml up --build -d app
 ```
 
-3. Seed the default admin account:
+1. Seed the default admin account:
 
 ```bash
 docker compose --env-file .env.docker -f docker-compose.k6.yml run --rm seed-admin
 ```
 
-4. **(Important)** Rebuild the k6 image whenever you add or change files in `k6/`:
+1. **(Important)** Rebuild the k6 image whenever you add or change files in `k6/`:
 
 ```bash
 docker compose --env-file .env.docker -f docker-compose.k6.yml build k6
@@ -145,6 +157,12 @@ docker compose --env-file .env.docker -f docker-compose.k6.yml run --rm \
 ```
 
 1. Run `mixed-flows.js` with an external JSON config:
+
+```bash
+# Default profile 
+docker compose --env-file .env.docker -f docker-compose.k6.yml run --rm \
+  k6 run /scripts/mixed-flows.js
+```
 
 ```bash
 # Business-hours profile
