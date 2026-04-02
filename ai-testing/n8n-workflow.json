@@ -3,31 +3,79 @@
   "nodes": [
     {
       "parameters": {
-        "jsCode": "// NODE B \u2014 Attach history to webhook data\n// This merges the Google Sheets history with the incoming webhook payload\n// so Build Claude Payload can pass BOTH to Claude in one call.\n\nconst webhookBody = $('GitHub CI Webhook1').first().json.body;\n\n// Read last 5 runs from Sheets (slice(-5) = most recent 5 rows)\nlet history = [];\ntry {\n  const rows = $('Read History').all();\n  if (rows.length > 0 && rows[0].json.Failed_Tests !== undefined) {\n    history = rows\n      .slice(-5)\n      .map(r => ({\n        date: r.json.Date,\n        branch: r.json.Branch,\n        failed: r.json.Failed_Tests\n          ? r.json.Failed_Tests.split(',').map(s => s.trim()).filter(Boolean)\n          : []\n      }));\n  }\n} catch(e) {\n  // If sheet is empty or unreadable, just use empty history \u2014 don't crash\n  history = [];\n}\n\n// Return webhook data WITH history attached\nreturn [{ json: { ...webhookBody, history } }];"
+        "method": "POST",
+        "url": "=https://api.github.com/repos/{{ $json.repo }}/issues/{{ $json.pr_number }}/comments",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/vnd.github+json"
+            },
+            {
+              "name": "X-GitHub-Api-Version",
+              "value": "2022-11-28"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_PAT_HERE"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ body: $json.pr_comment }) }}",
+        "options": {}
       },
-      "id": "d54a91d3-ae71-4fc4-875d-353430bc996d",
-      "name": "Merge History",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
+      "id": "6b08136d-5fb2-43ef-a616-80e941fbc60a",
+      "name": "Post GitHub PR Comment",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
       "position": [
-        -3312,
-        96
+        -2704,
+        -296
       ],
-      "notes": "NODE B \u2014 Attaches Google Sheets history to the webhook payload. Build Claude Payload reads from this node."
+      "credentials": {
+        "githubApi": {
+          "id": "rEnPOIcNesTwvH1Y",
+          "name": "GitHub account"
+        },
+        "httpBearerAuth": {
+          "id": "96qyhGtzOH5UdZtS",
+          "name": "Github Org Pat"
+        }
+      },
+      "notes": "Uses your personal PAT — permanent, never expires. Replace YOUR_PAT_HERE with your github_pat_... token."
     },
     {
       "parameters": {
-        "jsCode": "// NODE C \u2014 Extract failed test names cleanly for logging to Sheets\n// Runs after Format PR Comment, feeds into Append Row to Sheets\n\nconst analysis = $('Format PR Comment1').first().json.analysis;\nconst webhookBody = $('Format PR Comment1').first().json;\n\n// Get unique failed test names as a comma-separated string\nconst failedNames = (analysis.failed_tests || [])\n  .map(t => t.name)\n  .filter((v, i, a) => a.indexOf(v) === i)  // remove duplicates\n  .join(', ');\n\n// Get flaky test names detected this run\nconst flakyNames = (analysis.flaky_tests || [])\n  .map(t => t.name)\n  .join(', ');\n\nreturn [{\n  json: {\n    Date: new Date().toLocaleString('en-SG', { timeZone: 'Asia/Singapore' }),\n    Branch: webhookBody.branch || '',\n    Run_ID: webhookBody.run_id || '',\n    Health: analysis.run_summary.overall_health,\n    Total: analysis.run_summary.total_tests,\n    Passed: analysis.run_summary.passed,\n    Failed: analysis.run_summary.failed,\n    Failed_Tests: failedNames,\n    Flaky_Tests: flakyNames\n  }\n}];"
+        "jsCode": "// NODE B — Attach history to webhook data\n// This merges the Google Sheets history with the incoming webhook payload\n// so Build Claude Payload can pass BOTH to Claude in one call.\n\nconst webhookBody = $('GitHub CI Webhook').first().json.body;\n\n// Read last 5 runs from Sheets (slice(-5) = most recent 5 rows)\nlet history = [];\ntry {\n  const rows = $('Read History').all();\n  if (rows.length > 0 && rows[0].json.Failed_Tests !== undefined) {\n    history = rows\n      .slice(-5)\n      .map(r => ({\n        date: r.json.Date,\n        branch: r.json.Branch,\n        failed: r.json.Failed_Tests\n          ? r.json.Failed_Tests.split(',').map(s => s.trim()).filter(Boolean)\n          : []\n      }));\n  }\n} catch(e) {\n  // If sheet is empty or unreadable, just use empty history — don't crash\n  history = [];\n}\n\n// Return webhook data WITH history attached\nreturn [{ json: { ...webhookBody, history } }];"
       },
-      "id": "9d7a2ab8-2600-4df5-987e-d283cbf74b8c",
-      "name": "Extract Failed Names",
+      "id": "c8ef3a4f-13aa-4583-a071-d501a6727ae0",
+      "name": "Merge History1",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -2192,
-        192
+        -3824,
+        -272
       ],
-      "notes": "NODE C \u2014 Prepares a clean row to write to Google Sheets. Runs in parallel with Post GitHub PR Comment."
+      "notes": "NODE B — Attaches Google Sheets history to the webhook payload. Build Claude Payload reads from this node."
+    },
+    {
+      "parameters": {
+        "jsCode": "// NODE C — Extract failed test names cleanly for logging to Sheets\n// Runs after Format PR Comment, feeds into Append Row to Sheets\n\nconst analysis = $('Format PR Comment').first().json.analysis;\nconst webhookBody = $('Format PR Comment').first().json;\n\n// Get unique failed test names as a comma-separated string\nconst failedNames = (analysis.failed_tests || [])\n  .map(t => t.name)\n  .filter((v, i, a) => a.indexOf(v) === i)  // remove duplicates\n  .join(', ');\n\n// Get flaky test names detected this run\nconst flakyNames = (analysis.flaky_tests || [])\n  .map(t => t.name)\n  .join(', ');\n\nreturn [{\n  json: {\n    Date: new Date().toLocaleString('en-SG', { timeZone: 'Asia/Singapore' }),\n    Branch: webhookBody.branch || '',\n    Run_ID: webhookBody.run_id || '',\n    Health: analysis.run_summary.overall_health,\n    Total: analysis.run_summary.total_tests,\n    Passed: analysis.run_summary.passed,\n    Failed: analysis.run_summary.failed,\n    Failed_Tests: failedNames,\n    Flaky_Tests: flakyNames\n  }\n}];"
+      },
+      "id": "10a3abc1-2883-4d3d-82ce-08b5a8fa311f",
+      "name": "Extract Failed Names1",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2928,
+        -104
+      ],
+      "notes": "NODE C — Prepares a clean row to write to Google Sheets. Runs in parallel with Post GitHub PR Comment."
     },
     {
       "parameters": {
@@ -145,13 +193,13 @@
         },
         "options": {}
       },
-      "id": "ae5febd5-ce11-410e-bc32-f36e68d6ef18",
-      "name": "Append Row to Sheets",
+      "id": "3064eea3-62d9-4b9e-98c5-297488baf9d6",
+      "name": "Append Row to Sheets1",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.4,
       "position": [
-        -1968,
-        192
+        -2704,
+        -104
       ],
       "credentials": {
         "googleApi": {
@@ -159,7 +207,7 @@
           "name": "Google Sheets account"
         }
       },
-      "notes": "NODE D \u2014 Writes this run's results to Google Sheets so future runs can use it as history for flaky detection."
+      "notes": "NODE D — Writes this run's results to Google Sheets so future runs can use it as history for flaky detection."
     },
     {
       "parameters": {
@@ -168,28 +216,28 @@
         "responseMode": "lastNode",
         "options": {}
       },
-      "id": "67e5ef5a-2848-45c6-ba97-a7cbc9266483",
-      "name": "GitHub CI Webhook1",
+      "id": "fe63e9d0-5fe3-4cb6-a5e2-152edae4b557",
+      "name": "GitHub CI Webhook",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 1,
       "position": [
-        -3760,
-        96
+        -4272,
+        -272
       ],
       "webhookId": "cs4218-test-results",
       "notes": "Receives test results from GitHub Actions CI. Entry point of the workflow."
     },
     {
       "parameters": {
-        "jsCode": "// Build Claude API request body \u2014 TRIMMED to avoid rate limits\n// Now reads from 'Merge History' instead of directly from webhook\nconst webhookBody = $input.first().json;\nconst testResults = webhookBody.test_results || [];\nconst history = webhookBody.history || [];\n\n// Trim: full detail for failed/skipped, name+suite only for passed\nconst trimmed = testResults.map(suite => {\n  const failed = (suite.tests || []).filter(t => t.status !== 'passed');\n  const passed = (suite.tests || []).filter(t => t.status === 'passed');\n  return {\n    source: suite.source,\n    summary: suite.summary,\n    failed_tests: failed,\n    passed_sample: passed.slice(0, 10).map(t => ({ name: t.name, suite: t.suite })),\n    total_passed_not_shown: Math.max(0, passed.length - 10)\n  };\n});\n\n// Detect if playwright data is present\nconst hasPW = testResults.some(r => r.source === 'playwright');\n\nconst systemPrompt = `You are a software testing analyst covering Jest unit/integration tests AND Playwright UI tests. Analyse all provided test suites and return ONLY valid JSON - no markdown, no preamble - matching this schema exactly:\n{\"run_summary\":{\"total_tests\":0,\"passed\":0,\"failed\":0,\"skipped\":0,\"overall_health\":\"healthy|degraded|critical\",\"health_reason\":\"string\",\"suites\":{\"backend\":{\"total\":0,\"passed\":0,\"failed\":0},\"frontend\":{\"total\":0,\"passed\":0,\"failed\":0},\"integration\":{\"total\":0,\"passed\":0,\"failed\":0},\"playwright\":{\"total\":0,\"passed\":0,\"failed\":0}}},\"failed_tests\":[{\"name\":\"string\",\"suite\":\"string\",\"source\":\"backend|frontend|integration|playwright\",\"failure_type\":\"assertion_error|timeout|selector_not_found|navigation_error|import_error|setup_teardown|unexpected_exception|unknown\",\"error_message\":\"string\",\"fix_hint\":\"string\"}],\"brittle_tests\":[{\"name\":\"string\",\"suite\":\"string\",\"source\":\"string\",\"reason\":\"string\",\"recommendation\":\"string\"}],\"anti_patterns\":[{\"suite\":\"string\",\"source\":\"string\",\"pattern\":\"string\",\"details\":\"string\"}],\"flaky_tests\":[{\"name\":\"string\",\"suite\":\"string\",\"fail_count_last_5\":0,\"recommendation\":\"string\"}],\"suggested_new_test\":{\"test_name\":\"string\",\"target_suite\":\"string\",\"source\":\"string\",\"what_to_assert\":\"string\",\"rationale\":\"string\"},\"top_priority_fixes\":[\"string\"]}\n\nRules:\n- failure_type selector_not_found and navigation_error are for Playwright only\n- For Playwright failures, fix_hint should reference the specific selector or page action\n- If error_message is empty, write No error captured (do not explain why in error_message, save explanation for fix_hint)\n- If error_message is empty but test references a UI element, classify as selector_not_found\n- If error_message is empty and fix_hint references missing fixtures, classify as setup_teardown\n- For flaky_tests: a test is flaky if it appears in failed list of 2 or more of the last 5 historical runs\n- Each brittle_tests entry must have a UNIQUE reason \u2014 do not repeat the same explanation\n- top_priority_fixes max 3 items ordered by severity\n- empty arrays if nothing found, never omit fields`;\n\n// Include history so Claude can detect flaky tests\nconst userMessage = `Analyse these test results (branch: ${webhookBody.branch}, actor: ${webhookBody.actor}, has_playwright: ${hasPW}).\n\nHistorical context from last ${history.length} runs (use this to detect flaky tests):\n${JSON.stringify(history)}\n\nCurrent run results:\n${JSON.stringify(trimmed)}`;\n\nconst claudeBody = {\n  model: 'claude-sonnet-4-6',\n  max_tokens: 2048,\n  system: systemPrompt,\n  messages: [{ role: 'user', content: userMessage }]\n};\n\nreturn [{ json: { claudeBody: JSON.stringify(claudeBody), webhookBody } }];"
+        "jsCode": "// Build Claude API request body — TRIMMED to avoid rate limits\n// Now reads from 'Merge History' instead of directly from webhook\nconst webhookBody = $input.first().json;\nconst testResults = webhookBody.test_results || [];\nconst history = webhookBody.history || [];\n\n// Trim: full detail for failed/skipped, name+suite only for passed\nconst trimmed = testResults.map(suite => {\n  const failed = (suite.tests || []).filter(t => t.status !== 'passed');\n  const passed = (suite.tests || []).filter(t => t.status === 'passed');\n  return {\n    source: suite.source,\n    summary: suite.summary,\n    failed_tests: failed,\n    passed_sample: passed.slice(0, 10).map(t => ({ name: t.name, suite: t.suite })),\n    total_passed_not_shown: Math.max(0, passed.length - 10)\n  };\n});\n\n// Detect if playwright data is present\nconst hasPW = testResults.some(r => r.source === 'playwright');\n\nconst systemPrompt = `You are a software testing analyst covering Jest unit/integration tests AND Playwright UI tests. Analyse all provided test suites and return ONLY valid JSON - no markdown, no preamble - matching this schema exactly:\n{\"run_summary\":{\"total_tests\":0,\"passed\":0,\"failed\":0,\"skipped\":0,\"overall_health\":\"healthy|degraded|critical\",\"health_reason\":\"string\",\"suites\":{\"backend\":{\"total\":0,\"passed\":0,\"failed\":0},\"frontend\":{\"total\":0,\"passed\":0,\"failed\":0},\"integration\":{\"total\":0,\"passed\":0,\"failed\":0},\"playwright\":{\"total\":0,\"passed\":0,\"failed\":0}}},\"failed_tests\":[{\"name\":\"string\",\"suite\":\"string\",\"source\":\"backend|frontend|integration|playwright\",\"failure_type\":\"assertion_error|timeout|selector_not_found|navigation_error|import_error|setup_teardown|unexpected_exception|unknown\",\"error_message\":\"string\",\"fix_hint\":\"string\"}],\"brittle_tests\":[{\"name\":\"string\",\"suite\":\"string\",\"source\":\"string\",\"reason\":\"string\",\"recommendation\":\"string\"}],\"anti_patterns\":[{\"suite\":\"string\",\"source\":\"string\",\"pattern\":\"string\",\"details\":\"string\"}],\"flaky_tests\":[{\"name\":\"string\",\"suite\":\"string\",\"fail_count_last_5\":0,\"recommendation\":\"string\"}],\"suggested_new_test\":{\"test_name\":\"string\",\"target_suite\":\"string\",\"source\":\"string\",\"what_to_assert\":\"string\",\"rationale\":\"string\"},\"top_priority_fixes\":[\"string\"]}\n\nRules:\n- failure_type selector_not_found and navigation_error are for Playwright only\n- For Playwright failures, fix_hint should reference the specific selector or page action\n- If error_message is empty, write No error captured (do not explain why in error_message, save explanation for fix_hint)\n- If error_message is empty but test references a UI element, classify as selector_not_found\n- If error_message is empty and fix_hint references missing fixtures, classify as setup_teardown\n- For flaky_tests: a test is flaky if it appears in failed list of 2 or more of the last 5 historical runs\n- Each brittle_tests entry must have a UNIQUE reason — do not repeat the same explanation\n- top_priority_fixes max 3 items ordered by severity\n- empty arrays if nothing found, never omit fields`;\n\n// Include history so Claude can detect flaky tests\nconst userMessage = `Analyse these test results (branch: ${webhookBody.branch}, actor: ${webhookBody.actor}, has_playwright: ${hasPW}).\n\nHistorical context from last ${history.length} runs (use this to detect flaky tests):\n${JSON.stringify(history)}\n\nCurrent run results:\n${JSON.stringify(trimmed)}`;\n\nconst claudeBody = {\n  model: 'claude-sonnet-4-6',\n  max_tokens: 2048,\n  system: systemPrompt,\n  messages: [{ role: 'user', content: userMessage }]\n};\n\nreturn [{ json: { claudeBody: JSON.stringify(claudeBody), webhookBody } }];"
       },
-      "id": "0f45d455-3163-4678-9a7b-2aab777cb8df",
-      "name": "Build Claude Payload1",
+      "id": "546d908a-4837-4a2c-aaf1-5aaee70b4e44",
+      "name": "Build Claude Payload",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -3088,
-        96
+        -3600,
+        -272
       ],
       "notes": "Reads from Merge History node now (not directly from webhook). History is passed to Claude so it can detect flaky tests across runs."
     },
@@ -217,13 +265,13 @@
         "jsonBody": "={{ $json.claudeBody }}",
         "options": {}
       },
-      "id": "bf91bb0d-09be-49ab-bd73-0a4aafe17176",
-      "name": "Call Claude API1",
+      "id": "8136f1ca-f874-4d35-8b84-5a3b711b891d",
+      "name": "Call Claude API",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "position": [
-        -2864,
-        96
+        -3376,
+        -272
       ],
       "credentials": {
         "httpHeaderAuth": {
@@ -234,15 +282,15 @@
     },
     {
       "parameters": {
-        "jsCode": "const claudeResponse = $input.first().json;\nconst rawText = claudeResponse.content[0].text.trim();\nlet analysis;\ntry {\n  const cleaned = rawText.replace(/^```[\\w]*\\n?/, '').replace(/\\n?```$/, '').trim();\n  analysis = JSON.parse(cleaned);\n} catch(e) {\n  throw new Error(`Claude returned invalid JSON: ${rawText.substring(0, 300)}`);\n}\n\nconst s = analysis.run_summary;\nconst webhookBody = $('Build Claude Payload1').first().json.webhookBody;\nconst healthEmoji = s.overall_health === 'healthy' ? '\u2705' : s.overall_health === 'degraded' ? '\u26a0\ufe0f' : '\ud83d\udd34';\n\nlet comment = `## ${healthEmoji} AI Test Analysis \u2014 ${s.overall_health.toUpperCase()}\\n\\n`;\ncomment += `> ${s.health_reason}\\n\\n`;\n\n// Overall metrics table\ncomment += `| Metric | Value |\\n|--------|-------|\\n`;\ncomment += `| Total Tests | ${s.total_tests} |\\n`;\ncomment += `| \u2705 Passed | ${s.passed} |\\n`;\ncomment += `| \u274c Failed | ${s.failed} |\\n`;\ncomment += `| \u23ed Skipped | ${s.skipped || 0} |\\n\\n`;\n\n// Per-suite breakdown (only show suites that have data)\nif (s.suites) {\n  const suiteRows = Object.entries(s.suites)\n    .filter(([_, v]) => v.total > 0)\n    .map(([name, v]) => {\n      const icon = name === 'playwright' ? '\ud83c\udfad' : name === 'backend' ? '\u2699\ufe0f' : name === 'frontend' ? '\ud83d\udda5\ufe0f' : '\ud83d\udd17';\n      const status = v.failed > 0 ? '\u274c' : '\u2705';\n      return `| ${icon} ${name} | ${v.total} | ${v.passed} | ${v.failed} | ${status} |`;\n    });\n  if (suiteRows.length > 0) {\n    comment += `### \ud83d\udcca Suite Breakdown\\n\\n`;\n    comment += `| Suite | Total | Passed | Failed | Status |\\n`;\n    comment += `|-------|-------|--------|--------|--------|\\n`;\n    comment += suiteRows.join('\\n') + '\\n\\n';\n  }\n}\n\n// Failed tests \u2014 split Jest and Playwright\nif (analysis.failed_tests && analysis.failed_tests.length > 0) {\n  const jestFailed = analysis.failed_tests.filter(t => t.source !== 'playwright');\n  const pwFailed = analysis.failed_tests.filter(t => t.source === 'playwright');\n  if (jestFailed.length > 0) {\n    comment += `### \u274c Failed Tests (Jest)\\n\\n`;\n    for (const t of jestFailed) {\n      comment += `**${t.name}** (\\`${t.suite}\\`)\\n`;\n      comment += `- Type: \\`${t.failure_type}\\` | Error: ${t.error_message}\\n`;\n      comment += `- \ud83d\udca1 ${t.fix_hint}\\n\\n`;\n    }\n  }\n  if (pwFailed.length > 0) {\n    comment += `### \ud83c\udfad Failed Tests (Playwright UI)\\n\\n`;\n    for (const t of pwFailed) {\n      comment += `**${t.name}** (\\`${t.suite}\\`)\\n`;\n      comment += `- Type: \\`${t.failure_type}\\` | Error: ${t.error_message}\\n`;\n      comment += `- \ud83d\udca1 ${t.fix_hint}\\n\\n`;\n    }\n  }\n}\n\n// Flaky tests \u2014 NEW section powered by memory\nif (analysis.flaky_tests && analysis.flaky_tests.length > 0) {\n  comment += `### \ud83c\udfb2 Flaky Tests (detected across runs)\\n\\n`;\n  for (const t of analysis.flaky_tests) {\n    comment += `- **${t.name}** \u2014 failed ${t.fail_count_last_5}/5 recent runs. ${t.recommendation}\\n`;\n  }\n  comment += '\\n';\n}\n\n// Brittle tests\nif (analysis.brittle_tests && analysis.brittle_tests.length > 0) {\n  comment += `### \u26a0\ufe0f Brittle Tests\\n\\n`;\n  for (const t of analysis.brittle_tests) {\n    const src = t.source ? ` \u00b7 ${t.source}` : '';\n    comment += `- **${t.name}**${src} \u2014 ${t.reason}\\n`;\n  }\n  comment += '\\n';\n}\n\n// Top priority fixes\nif (analysis.top_priority_fixes && analysis.top_priority_fixes.length > 0) {\n  comment += `### \ud83c\udfaf Top Priority Fixes\\n\\n`;\n  analysis.top_priority_fixes.forEach((fix, i) => { comment += `${i+1}. ${fix}\\n`; });\n  comment += '\\n';\n}\n\n// Suggested new test\nif (analysis.suggested_new_test && analysis.suggested_new_test.test_name) {\n  const sug = analysis.suggested_new_test;\n  const srcLabel = sug.source ? ` (${sug.source})` : '';\n  comment += `### \ud83d\udca1 Suggested New Test${srcLabel}\\n`;\n  comment += `**${sug.test_name}** \u2014 ${sug.what_to_assert}\\n\\n`;\n}\n\ncomment += `---\\n*Powered by Claude AI \u00b7 [View CI run](https://github.com/${webhookBody.repo}/actions/runs/${webhookBody.run_id})*`;\n\nreturn [{\n  json: {\n    ...webhookBody,\n    analysis,\n    pr_comment: comment,\n    has_pr: !!(webhookBody.pr_number && webhookBody.pr_number !== '' && webhookBody.pr_number !== 'undefined')\n  }\n}];"
+        "jsCode": "const claudeResponse = $input.first().json;\nconst rawText = claudeResponse.content[0].text.trim();\nlet analysis;\ntry {\n  const cleaned = rawText.replace(/^```[\\w]*\\n?/, '').replace(/\\n?```$/, '').trim();\n  analysis = JSON.parse(cleaned);\n} catch(e) {\n  throw new Error(`Claude returned invalid JSON: ${rawText.substring(0, 300)}`);\n}\n\nconst s = analysis.run_summary;\nconst webhookBody = $('Build Claude Payload').first().json.webhookBody;\nconst healthEmoji = s.overall_health === 'healthy' ? '✅' : s.overall_health === 'degraded' ? '⚠️' : '🔴';\n\nlet comment = `## ${healthEmoji} AI Test Analysis — ${s.overall_health.toUpperCase()}\\n\\n`;\ncomment += `> ${s.health_reason}\\n\\n`;\n\n// Overall metrics table\ncomment += `| Metric | Value |\\n|--------|-------|\\n`;\ncomment += `| Total Tests | ${s.total_tests} |\\n`;\ncomment += `| ✅ Passed | ${s.passed} |\\n`;\ncomment += `| ❌ Failed | ${s.failed} |\\n`;\ncomment += `| ⏭ Skipped | ${s.skipped || 0} |\\n\\n`;\n\n// Per-suite breakdown (only show suites that have data)\nif (s.suites) {\n  const suiteRows = Object.entries(s.suites)\n    .filter(([_, v]) => v.total > 0)\n    .map(([name, v]) => {\n      const icon = name === 'playwright' ? '🎭' : name === 'backend' ? '⚙️' : name === 'frontend' ? '🖥️' : '🔗';\n      const status = v.failed > 0 ? '❌' : '✅';\n      return `| ${icon} ${name} | ${v.total} | ${v.passed} | ${v.failed} | ${status} |`;\n    });\n  if (suiteRows.length > 0) {\n    comment += `### 📊 Suite Breakdown\\n\\n`;\n    comment += `| Suite | Total | Passed | Failed | Status |\\n`;\n    comment += `|-------|-------|--------|--------|--------|\\n`;\n    comment += suiteRows.join('\\n') + '\\n\\n';\n  }\n}\n\n// Failed tests — split Jest and Playwright\nif (analysis.failed_tests && analysis.failed_tests.length > 0) {\n  const jestFailed = analysis.failed_tests.filter(t => t.source !== 'playwright');\n  const pwFailed = analysis.failed_tests.filter(t => t.source === 'playwright');\n  if (jestFailed.length > 0) {\n    comment += `### ❌ Failed Tests (Jest)\\n\\n`;\n    for (const t of jestFailed) {\n      comment += `**${t.name}** (\\`${t.suite}\\`)\\n`;\n      comment += `- Type: \\`${t.failure_type}\\` | Error: ${t.error_message}\\n`;\n      comment += `- 💡 ${t.fix_hint}\\n\\n`;\n    }\n  }\n  if (pwFailed.length > 0) {\n    comment += `### 🎭 Failed Tests (Playwright UI)\\n\\n`;\n    for (const t of pwFailed) {\n      comment += `**${t.name}** (\\`${t.suite}\\`)\\n`;\n      comment += `- Type: \\`${t.failure_type}\\` | Error: ${t.error_message}\\n`;\n      comment += `- 💡 ${t.fix_hint}\\n\\n`;\n    }\n  }\n}\n\n// Flaky tests — NEW section powered by memory\nif (analysis.flaky_tests && analysis.flaky_tests.length > 0) {\n  comment += `### 🎲 Flaky Tests (detected across runs)\\n\\n`;\n  for (const t of analysis.flaky_tests) {\n    comment += `- **${t.name}** — failed ${t.fail_count_last_5}/5 recent runs. ${t.recommendation}\\n`;\n  }\n  comment += '\\n';\n}\n\n// Brittle tests\nif (analysis.brittle_tests && analysis.brittle_tests.length > 0) {\n  comment += `### ⚠️ Brittle Tests\\n\\n`;\n  for (const t of analysis.brittle_tests) {\n    const src = t.source ? ` · ${t.source}` : '';\n    comment += `- **${t.name}**${src} — ${t.reason}\\n`;\n  }\n  comment += '\\n';\n}\n\n// Top priority fixes\nif (analysis.top_priority_fixes && analysis.top_priority_fixes.length > 0) {\n  comment += `### 🎯 Top Priority Fixes\\n\\n`;\n  analysis.top_priority_fixes.forEach((fix, i) => { comment += `${i+1}. ${fix}\\n`; });\n  comment += '\\n';\n}\n\n// Suggested new test\nif (analysis.suggested_new_test && analysis.suggested_new_test.test_name) {\n  const sug = analysis.suggested_new_test;\n  const srcLabel = sug.source ? ` (${sug.source})` : '';\n  comment += `### 💡 Suggested New Test${srcLabel}\\n`;\n  comment += `**${sug.test_name}** — ${sug.what_to_assert}\\n\\n`;\n}\n\ncomment += `---\\n*Powered by Claude AI · [View CI run](https://github.com/${webhookBody.repo}/actions/runs/${webhookBody.run_id})*`;\n\nreturn [{\n  json: {\n    ...webhookBody,\n    analysis,\n    pr_comment: comment,\n    has_pr: !!(webhookBody.pr_number && webhookBody.pr_number !== '' && webhookBody.pr_number !== 'undefined')\n  }\n}];"
       },
-      "id": "c290daf8-e74f-44ee-8bf4-7bee858a6d6f",
-      "name": "Format PR Comment1",
+      "id": "8cf450ed-5dfd-4331-8d4e-a2cd7c66ff53",
+      "name": "Format PR Comment",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -2640,
-        96
+        -3152,
+        -272
       ],
       "notes": "Now includes a Flaky Tests section that only appears when memory has detected repeated failures."
     },
@@ -269,28 +317,28 @@
         },
         "options": {}
       },
-      "id": "b3e15476-084a-434e-8d29-6b53b1ad9697",
-      "name": "Is this a PR?1",
+      "id": "09294cf7-4dbd-43b5-9f89-3e66f3ac6808",
+      "name": "Is this a PR?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        -2416,
-        96
+        -2928,
+        -368
       ]
     },
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={{ JSON.stringify({ status: 'analysis_complete', health: $('Format PR Comment1').first().json.analysis.run_summary.overall_health, pr_comment: $('Format PR Comment1').first().json.pr_comment }) }}",
+        "responseBody": "={{ JSON.stringify({ status: 'analysis_complete', health: $('Format PR Comment').first().json.analysis.run_summary.overall_health, pr_comment: $('Format PR Comment').first().json.pr_comment }) }}",
         "options": {}
       },
-      "id": "035b10a9-f57e-4c62-b527-a26f5f2c455a",
-      "name": "Respond to Webhook1",
+      "id": "db0a60c0-1b7e-4288-82cb-55b7bc93695b",
+      "name": "Respond to Webhook",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
       "position": [
-        -1968,
-        0
+        -2480,
+        -368
       ]
     },
     {
@@ -315,11 +363,11 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.7,
       "position": [
-        -3536,
-        96
+        -4048,
+        -272
       ],
-      "id": "e1b35fff-a059-428d-8c31-b883d5b265b7",
-      "name": "Get row(s) in sheet1",
+      "id": "7c7b4c72-7008-4873-a6ac-d25f94822592",
+      "name": "Get row(s) in sheet",
       "alwaysOutputData": true,
       "credentials": {
         "googleApi": {
@@ -328,118 +376,93 @@
         }
       },
       "onError": "continueRegularOutput"
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "=https://api.github.com/repos/{{ $json.repo }}/issues/{{ $json.pr_number }}/comments",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "Accept",
-              "value": "application/vnd.github+json"
-            },
-            {
-              "name": "X-GitHub-Api-Version",
-              "value": "2022-11-28"
-            },
-            {
-              "name": "Authorization",
-              "value": "Bearer YOUR_PAT_HERE"
-            }
-          ]
-        },
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ body: $json.pr_comment }) }}",
-        "options": {}
-      },
-      "id": "post-github-pr-comment-pat",
-      "name": "Post GitHub PR Comment",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4,
-      "position": [
-        1200,
-        0
-      ],
-      "notes": "Uses your personal PAT \u2014 permanent, never expires. Replace YOUR_PAT_HERE with your github_pat_... token."
     }
   ],
   "pinData": {},
   "connections": {
-    "Merge History": {
+    "Post GitHub PR Comment": {
       "main": [
         [
           {
-            "node": "Build Claude Payload1",
+            "node": "Respond to Webhook",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Extract Failed Names": {
+    "Merge History1": {
       "main": [
         [
           {
-            "node": "Append Row to Sheets",
+            "node": "Build Claude Payload",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "GitHub CI Webhook1": {
+    "Extract Failed Names1": {
       "main": [
         [
           {
-            "node": "Get row(s) in sheet1",
+            "node": "Append Row to Sheets1",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Build Claude Payload1": {
+    "GitHub CI Webhook": {
       "main": [
         [
           {
-            "node": "Call Claude API1",
+            "node": "Get row(s) in sheet",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Call Claude API1": {
+    "Build Claude Payload": {
       "main": [
         [
           {
-            "node": "Format PR Comment1",
+            "node": "Call Claude API",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Format PR Comment1": {
+    "Call Claude API": {
       "main": [
         [
           {
-            "node": "Is this a PR?1",
+            "node": "Format PR Comment",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format PR Comment": {
+      "main": [
+        [
+          {
+            "node": "Is this a PR?",
             "type": "main",
             "index": 0
           },
           {
-            "node": "Extract Failed Names",
+            "node": "Extract Failed Names1",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Is this a PR?1": {
+    "Is this a PR?": {
       "main": [
         [
           {
@@ -450,29 +473,18 @@
         ],
         [
           {
-            "node": "Respond to Webhook1",
+            "node": "Respond to Webhook",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Get row(s) in sheet1": {
+    "Get row(s) in sheet": {
       "main": [
         [
           {
-            "node": "Merge History",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Post GitHub PR Comment": {
-      "main": [
-        [
-          {
-            "node": "Respond to Webhook1",
+            "node": "Merge History1",
             "type": "main",
             "index": 0
           }
@@ -485,7 +497,7 @@
     "executionOrder": "v1",
     "binaryMode": "separate"
   },
-  "versionId": "feb639d2-b19e-4c73-9e07-b41623cda8c8",
+  "versionId": "a928a646-7836-4106-8e7f-380077d78f63",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "11a0b8a4bdede886f10ea36d82ba980f770eec752f5d7c963e22d60bffcf4e36"
