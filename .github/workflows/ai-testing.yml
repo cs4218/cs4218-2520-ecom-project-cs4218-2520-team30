@@ -7,10 +7,10 @@ name: AI-Enhanced Testing
 
 on:
   workflow_dispatch:
-  push:
-    branches: ["main", "MS2-3-implement-ai-testing"]
-  pull_request:
-    branches: ["main", "MS2-3-implement-ai-testing"]
+  # push:
+  #   branches: ["main", "MS2-3-implement-ai-testing"]
+  # pull_request:
+  #   branches: ["main", "MS2-3-implement-ai-testing"]
 
 jobs:
   build:
