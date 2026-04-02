@@ -17,11 +17,11 @@ export const options = {
     { duration: "1m",  target: 10 },  // scale back
     { duration: "30s", target: 0 },   // ramp down
   ],
-  thresholds: {
-    http_req_duration: ["p(95)<2000"],
-    http_req_failed: ["rate<0.05"],
-    checks: ["rate>0.95"],
-  },
+   thresholds: {
+        "http_req_duration": ["p(95)<500"],
+        "http_req_failed": ["rate<0.01"],
+        "checks": ["rate>0.99"]
+    },
 };
 
 export default () => {

@@ -283,5 +283,11 @@ export default (data) => {
   });
 
   // Final think time before the iteration resets
-  thinkTime(1, 3);
+   thinkTime(1, 3);
 };
+
+export function teardown() {
+   console.log("\n=== Load test completed ===");
+   console.log("Reminder: Clean up test data manually");
+   console.log("Example: db.users.deleteMany({email: /@loadtest\\.com$/})");
+}

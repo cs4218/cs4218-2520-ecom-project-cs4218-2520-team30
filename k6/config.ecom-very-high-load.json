@@ -31,6 +31,9 @@
         "http_req_duration": [
             "p(95)<500",
             "p(99)<1500"
+        ],
+        "checks": [
+            "rate>0.99"
         ]
     }
 }

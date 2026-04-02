@@ -86,7 +86,10 @@ services:
       K6_MAX_DURATION_MS: ${K6_MAX_DURATION_MS:-2000}
     profiles:
       - loadtest
-    command: ["run", "/scripts/mixed-flows.js"]
+    volumes:
+      - ./k6-results:/results
+    command:
+      ["run", "--summary-export", "/scripts/summary.json", "--out", "json=/results/output.json", "/scripts/mixed-flows.js"]
 
 volumes:
   mongo-data:
