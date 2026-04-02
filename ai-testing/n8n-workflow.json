@@ -1,6 +1,166 @@
 {
-  "name": "CS4218 AI Test Result Analyser",
+  "name": "CS4218 AI Test Result Analyser (With Memory)",
   "nodes": [
+    {
+      "parameters": {
+        "jsCode": "// NODE B \u2014 Attach history to webhook data\n// This merges the Google Sheets history with the incoming webhook payload\n// so Build Claude Payload can pass BOTH to Claude in one call.\n\nconst webhookBody = $('GitHub CI Webhook1').first().json.body;\n\n// Read last 5 runs from Sheets (slice(-5) = most recent 5 rows)\nlet history = [];\ntry {\n  const rows = $('Read History').all();\n  if (rows.length > 0 && rows[0].json.Failed_Tests !== undefined) {\n    history = rows\n      .slice(-5)\n      .map(r => ({\n        date: r.json.Date,\n        branch: r.json.Branch,\n        failed: r.json.Failed_Tests\n          ? r.json.Failed_Tests.split(',').map(s => s.trim()).filter(Boolean)\n          : []\n      }));\n  }\n} catch(e) {\n  // If sheet is empty or unreadable, just use empty history \u2014 don't crash\n  history = [];\n}\n\n// Return webhook data WITH history attached\nreturn [{ json: { ...webhookBody, history } }];"
+      },
+      "id": "d54a91d3-ae71-4fc4-875d-353430bc996d",
+      "name": "Merge History",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -3312,
+        96
+      ],
+      "notes": "NODE B \u2014 Attaches Google Sheets history to the webhook payload. Build Claude Payload reads from this node."
+    },
+    {
+      "parameters": {
+        "jsCode": "// NODE C \u2014 Extract failed test names cleanly for logging to Sheets\n// Runs after Format PR Comment, feeds into Append Row to Sheets\n\nconst analysis = $('Format PR Comment1').first().json.analysis;\nconst webhookBody = $('Format PR Comment1').first().json;\n\n// Get unique failed test names as a comma-separated string\nconst failedNames = (analysis.failed_tests || [])\n  .map(t => t.name)\n  .filter((v, i, a) => a.indexOf(v) === i)  // remove duplicates\n  .join(', ');\n\n// Get flaky test names detected this run\nconst flakyNames = (analysis.flaky_tests || [])\n  .map(t => t.name)\n  .join(', ');\n\nreturn [{\n  json: {\n    Date: new Date().toLocaleString('en-SG', { timeZone: 'Asia/Singapore' }),\n    Branch: webhookBody.branch || '',\n    Run_ID: webhookBody.run_id || '',\n    Health: analysis.run_summary.overall_health,\n    Total: analysis.run_summary.total_tests,\n    Passed: analysis.run_summary.passed,\n    Failed: analysis.run_summary.failed,\n    Failed_Tests: failedNames,\n    Flaky_Tests: flakyNames\n  }\n}];"
+      },
+      "id": "9d7a2ab8-2600-4df5-987e-d283cbf74b8c",
+      "name": "Extract Failed Names",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2192,
+        192
+      ],
+      "notes": "NODE C \u2014 Prepares a clean row to write to Google Sheets. Runs in parallel with Post GitHub PR Comment."
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1cNxHVam74Ms5LXbS7xcuzWXfRap1SFBrxtOlfqqBICw",
+          "mode": "list",
+          "cachedResultName": "CS4218_Test_History",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1cNxHVam74Ms5LXbS7xcuzWXfRap1SFBrxtOlfqqBICw/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Sheet1",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Date": "={{ $json.Date }}",
+            "Branch": "={{ $json.Branch }}",
+            "Run_ID": "={{ $json.Run_ID }}",
+            "Health": "={{ $json.Health }}",
+            "Total": "={{ $json.Total }}",
+            "Passed": "={{ $json.Passed }}",
+            "Failed": "={{ $json.Failed }}",
+            "Failed_Tests": "={{ $json.Failed_Tests }}",
+            "Flaky_Tests": "={{ $json.Flaky_Tests }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Branch",
+              "displayName": "Branch",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Run_ID",
+              "displayName": "Run_ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Health",
+              "displayName": "Health",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Total",
+              "displayName": "Total",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Passed",
+              "displayName": "Passed",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Failed",
+              "displayName": "Failed",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Failed_Tests",
+              "displayName": "Failed_Tests",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Flaky_Tests",
+              "displayName": "Flaky_Tests",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "ae5febd5-ce11-410e-bc32-f36e68d6ef18",
+      "name": "Append Row to Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.4,
+      "position": [
+        -1968,
+        192
+      ],
+      "credentials": {
+        "googleApi": {
+          "id": "KV4njpX0HbErkv5c",
+          "name": "Google Sheets account"
+        }
+      },
+      "notes": "NODE D \u2014 Writes this run's results to Google Sheets so future runs can use it as history for flaky detection."
+    },
     {
       "parameters": {
         "httpMethod": "POST",
@@ -8,23 +168,30 @@
         "responseMode": "lastNode",
         "options": {}
       },
-      "id": "webhook-trigger",
-      "name": "GitHub CI Webhook",
+      "id": "67e5ef5a-2848-45c6-ba97-a7cbc9266483",
+      "name": "GitHub CI Webhook1",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 1,
-      "position": [240, 300],
-      "webhookId": "cs4218-test-results"
+      "position": [
+        -3760,
+        96
+      ],
+      "webhookId": "cs4218-test-results",
+      "notes": "Receives test results from GitHub Actions CI. Entry point of the workflow."
     },
     {
       "parameters": {
-        "jsCode": "// Build Claude API request body — TRIMMED to avoid rate limits\nconst webhookBody = $input.first().json.body;\nconst testResults = webhookBody.test_results || [];\n\n// Trim: full detail for failed/skipped, name+suite only for passed\nconst trimmed = testResults.map(suite => {\n  const failed = (suite.tests || []).filter(t => t.status !== 'passed');\n  const passed = (suite.tests || []).filter(t => t.status === 'passed');\n  return {\n    source: suite.source,\n    summary: suite.summary,\n    failed_tests: failed,\n    passed_sample: passed.slice(0, 20).map(t => ({ name: t.name, suite: t.suite })),\n    total_passed_not_shown: Math.max(0, passed.length - 20)\n  };\n});\n\nconst systemPrompt = `You are a software testing analyst. Analyse Jest results and return ONLY valid JSON - no markdown, no preamble - matching this schema exactly:\n{\"run_summary\":{\"total_tests\":0,\"passed\":0,\"failed\":0,\"skipped\":0,\"duration_ms\":0,\"overall_health\":\"healthy|degraded|critical\",\"health_reason\":\"string\"},\"failed_tests\":[{\"name\":\"string\",\"suite\":\"string\",\"failure_type\":\"assertion_error|timeout|import_error|setup_teardown|unexpected_exception|unknown\",\"error_message\":\"string\",\"fix_hint\":\"string\"}],\"brittle_tests\":[{\"name\":\"string\",\"suite\":\"string\",\"reason\":\"string\",\"recommendation\":\"string\"}],\"anti_patterns\":[{\"suite\":\"string\",\"pattern\":\"string\",\"details\":\"string\"}],\"flaky_tests\":[],\"suggested_new_test\":{\"test_name\":\"string\",\"target_suite\":\"string\",\"what_to_assert\":\"string\",\"rationale\":\"string\"},\"top_priority_fixes\":[\"string\"]}`;\n\nconst userMessage = `Analyse these test results (branch: ${webhookBody.branch}, actor: ${webhookBody.actor}):\\n\\n${JSON.stringify(trimmed)}`;\n\nconst claudeBody = {\n  model: 'claude-opus-4-5',\n  max_tokens: 2048,\n  system: systemPrompt,\n  messages: [{ role: 'user', content: userMessage }]\n};\n\nreturn [{ json: { claudeBody: JSON.stringify(claudeBody), webhookBody } }];"
+        "jsCode": "// Build Claude API request body \u2014 TRIMMED to avoid rate limits\n// Now reads from 'Merge History' instead of directly from webhook\nconst webhookBody = $input.first().json;\nconst testResults = webhookBody.test_results || [];\nconst history = webhookBody.history || [];\n\n// Trim: full detail for failed/skipped, name+suite only for passed\nconst trimmed = testResults.map(suite => {\n  const failed = (suite.tests || []).filter(t => t.status !== 'passed');\n  const passed = (suite.tests || []).filter(t => t.status === 'passed');\n  return {\n    source: suite.source,\n    summary: suite.summary,\n    failed_tests: failed,\n    passed_sample: passed.slice(0, 10).map(t => ({ name: t.name, suite: t.suite })),\n    total_passed_not_shown: Math.max(0, passed.length - 10)\n  };\n});\n\n// Detect if playwright data is present\nconst hasPW = testResults.some(r => r.source === 'playwright');\n\nconst systemPrompt = `You are a software testing analyst covering Jest unit/integration tests AND Playwright UI tests. Analyse all provided test suites and return ONLY valid JSON - no markdown, no preamble - matching this schema exactly:\n{\"run_summary\":{\"total_tests\":0,\"passed\":0,\"failed\":0,\"skipped\":0,\"overall_health\":\"healthy|degraded|critical\",\"health_reason\":\"string\",\"suites\":{\"backend\":{\"total\":0,\"passed\":0,\"failed\":0},\"frontend\":{\"total\":0,\"passed\":0,\"failed\":0},\"integration\":{\"total\":0,\"passed\":0,\"failed\":0},\"playwright\":{\"total\":0,\"passed\":0,\"failed\":0}}},\"failed_tests\":[{\"name\":\"string\",\"suite\":\"string\",\"source\":\"backend|frontend|integration|playwright\",\"failure_type\":\"assertion_error|timeout|selector_not_found|navigation_error|import_error|setup_teardown|unexpected_exception|unknown\",\"error_message\":\"string\",\"fix_hint\":\"string\"}],\"brittle_tests\":[{\"name\":\"string\",\"suite\":\"string\",\"source\":\"string\",\"reason\":\"string\",\"recommendation\":\"string\"}],\"anti_patterns\":[{\"suite\":\"string\",\"source\":\"string\",\"pattern\":\"string\",\"details\":\"string\"}],\"flaky_tests\":[{\"name\":\"string\",\"suite\":\"string\",\"fail_count_last_5\":0,\"recommendation\":\"string\"}],\"suggested_new_test\":{\"test_name\":\"string\",\"target_suite\":\"string\",\"source\":\"string\",\"what_to_assert\":\"string\",\"rationale\":\"string\"},\"top_priority_fixes\":[\"string\"]}\n\nRules:\n- failure_type selector_not_found and navigation_error are for Playwright only\n- For Playwright failures, fix_hint should reference the specific selector or page action\n- If error_message is empty, write No error captured (do not explain why in error_message, save explanation for fix_hint)\n- If error_message is empty but test references a UI element, classify as selector_not_found\n- If error_message is empty and fix_hint references missing fixtures, classify as setup_teardown\n- For flaky_tests: a test is flaky if it appears in failed list of 2 or more of the last 5 historical runs\n- Each brittle_tests entry must have a UNIQUE reason \u2014 do not repeat the same explanation\n- top_priority_fixes max 3 items ordered by severity\n- empty arrays if nothing found, never omit fields`;\n\n// Include history so Claude can detect flaky tests\nconst userMessage = `Analyse these test results (branch: ${webhookBody.branch}, actor: ${webhookBody.actor}, has_playwright: ${hasPW}).\n\nHistorical context from last ${history.length} runs (use this to detect flaky tests):\n${JSON.stringify(history)}\n\nCurrent run results:\n${JSON.stringify(trimmed)}`;\n\nconst claudeBody = {\n  model: 'claude-sonnet-4-6',\n  max_tokens: 2048,\n  system: systemPrompt,\n  messages: [{ role: 'user', content: userMessage }]\n};\n\nreturn [{ json: { claudeBody: JSON.stringify(claudeBody), webhookBody } }];"
       },
-      "id": "build-claude-payload",
-      "name": "Build Claude Payload",
+      "id": "0f45d455-3163-4678-9a7b-2aab777cb8df",
+      "name": "Build Claude Payload1",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [460, 300],
-      "notes": "Trims payload: full detail for failed tests only, sample of 20 names for passed tests."
+      "position": [
+        -3088,
+        96
+      ],
+      "notes": "Reads from Merge History node now (not directly from webhook). History is passed to Claude so it can detect flaky tests across runs."
     },
     {
       "parameters": {
@@ -35,8 +202,14 @@
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "anthropic-version", "value": "2023-06-01" },
-            { "name": "content-type", "value": "application/json" }
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
           ]
         },
         "sendBody": true,
@@ -44,56 +217,137 @@
         "jsonBody": "={{ $json.claudeBody }}",
         "options": {}
       },
-      "id": "call-claude-api",
-      "name": "Call Claude API",
+      "id": "bf91bb0d-09be-49ab-bd73-0a4aafe17176",
+      "name": "Call Claude API1",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
-      "position": [700, 300],
-      "notes": "Sends pre-built JSON body to Anthropic API. jsonBody is a simple expression referencing the string built by the Code node above."
+      "position": [
+        -2864,
+        96
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "8zARWY4PFSAIuuI1",
+          "name": "Claude"
+        }
+      }
     },
     {
       "parameters": {
-        "jsCode": "const claudeResponse = $input.first().json;\nconst rawText = claudeResponse.content[0].text.trim();\nlet analysis;\ntry {\n  const cleaned = rawText.replace(/^```[\\w]*\\n?/, '').replace(/\\n?```$/, '').trim();\n  analysis = JSON.parse(cleaned);\n} catch(e) {\n  throw new Error(`Claude returned invalid JSON: ${rawText.substring(0, 300)}`);\n}\n\nconst s = analysis.run_summary;\nconst webhookBody = $('Build Claude Payload').first().json.webhookBody;\nconst healthEmoji = s.overall_health === 'healthy' ? '✅' : s.overall_health === 'degraded' ? '⚠️' : '🔴';\n\nlet comment = `## ${healthEmoji} AI Test Analysis — ${s.overall_health.toUpperCase()}\\n\\n`;\ncomment += `> ${s.health_reason}\\n\\n`;\ncomment += `| Metric | Value |\\n|--------|-------|\\n`;\ncomment += `| Total Tests | ${s.total_tests} |\\n| ✅ Passed | ${s.passed} |\\n| ❌ Failed | ${s.failed} |\\n| ⏭ Skipped | ${s.skipped} |\\n\\n`;\n\nif (analysis.failed_tests && analysis.failed_tests.length > 0) {\n  comment += `### ❌ Failed Tests\\n\\n`;\n  for (const t of analysis.failed_tests) {\n    comment += `**${t.name}** (\\`${t.suite}\\`)\\n- Type: \\`${t.failure_type}\\` | Error: ${t.error_message}\\n- 💡 ${t.fix_hint}\\n\\n`;\n  }\n}\n\nif (analysis.brittle_tests && analysis.brittle_tests.length > 0) {\n  comment += `### ⚠️ Brittle Tests\\n\\n`;\n  for (const t of analysis.brittle_tests) {\n    comment += `- **${t.name}** — ${t.reason}\\n`;\n  }\n  comment += '\\n';\n}\n\nif (analysis.top_priority_fixes && analysis.top_priority_fixes.length > 0) {\n  comment += `### 🎯 Top Priority Fixes\\n\\n`;\n  analysis.top_priority_fixes.forEach((fix, i) => { comment += `${i+1}. ${fix}\\n`; });\n  comment += '\\n';\n}\n\nif (analysis.suggested_new_test && analysis.suggested_new_test.test_name) {\n  const sug = analysis.suggested_new_test;\n  comment += `### 💡 Suggested New Test\\n**${sug.test_name}** — ${sug.what_to_assert}\\n\\n`;\n}\n\ncomment += `---\\n*Powered by Claude AI · [View CI run](https://github.com/${webhookBody.repo}/actions/runs/${webhookBody.run_id})*`;\n\nreturn [{\n  json: {\n    ...webhookBody,\n    analysis,\n    pr_comment: comment,\n    has_pr: !!(webhookBody.pr_number && webhookBody.pr_number !== '' && webhookBody.pr_number !== 'undefined')\n  }\n}];"
+        "jsCode": "const claudeResponse = $input.first().json;\nconst rawText = claudeResponse.content[0].text.trim();\nlet analysis;\ntry {\n  const cleaned = rawText.replace(/^```[\\w]*\\n?/, '').replace(/\\n?```$/, '').trim();\n  analysis = JSON.parse(cleaned);\n} catch(e) {\n  throw new Error(`Claude returned invalid JSON: ${rawText.substring(0, 300)}`);\n}\n\nconst s = analysis.run_summary;\nconst webhookBody = $('Build Claude Payload1').first().json.webhookBody;\nconst healthEmoji = s.overall_health === 'healthy' ? '\u2705' : s.overall_health === 'degraded' ? '\u26a0\ufe0f' : '\ud83d\udd34';\n\nlet comment = `## ${healthEmoji} AI Test Analysis \u2014 ${s.overall_health.toUpperCase()}\\n\\n`;\ncomment += `> ${s.health_reason}\\n\\n`;\n\n// Overall metrics table\ncomment += `| Metric | Value |\\n|--------|-------|\\n`;\ncomment += `| Total Tests | ${s.total_tests} |\\n`;\ncomment += `| \u2705 Passed | ${s.passed} |\\n`;\ncomment += `| \u274c Failed | ${s.failed} |\\n`;\ncomment += `| \u23ed Skipped | ${s.skipped || 0} |\\n\\n`;\n\n// Per-suite breakdown (only show suites that have data)\nif (s.suites) {\n  const suiteRows = Object.entries(s.suites)\n    .filter(([_, v]) => v.total > 0)\n    .map(([name, v]) => {\n      const icon = name === 'playwright' ? '\ud83c\udfad' : name === 'backend' ? '\u2699\ufe0f' : name === 'frontend' ? '\ud83d\udda5\ufe0f' : '\ud83d\udd17';\n      const status = v.failed > 0 ? '\u274c' : '\u2705';\n      return `| ${icon} ${name} | ${v.total} | ${v.passed} | ${v.failed} | ${status} |`;\n    });\n  if (suiteRows.length > 0) {\n    comment += `### \ud83d\udcca Suite Breakdown\\n\\n`;\n    comment += `| Suite | Total | Passed | Failed | Status |\\n`;\n    comment += `|-------|-------|--------|--------|--------|\\n`;\n    comment += suiteRows.join('\\n') + '\\n\\n';\n  }\n}\n\n// Failed tests \u2014 split Jest and Playwright\nif (analysis.failed_tests && analysis.failed_tests.length > 0) {\n  const jestFailed = analysis.failed_tests.filter(t => t.source !== 'playwright');\n  const pwFailed = analysis.failed_tests.filter(t => t.source === 'playwright');\n  if (jestFailed.length > 0) {\n    comment += `### \u274c Failed Tests (Jest)\\n\\n`;\n    for (const t of jestFailed) {\n      comment += `**${t.name}** (\\`${t.suite}\\`)\\n`;\n      comment += `- Type: \\`${t.failure_type}\\` | Error: ${t.error_message}\\n`;\n      comment += `- \ud83d\udca1 ${t.fix_hint}\\n\\n`;\n    }\n  }\n  if (pwFailed.length > 0) {\n    comment += `### \ud83c\udfad Failed Tests (Playwright UI)\\n\\n`;\n    for (const t of pwFailed) {\n      comment += `**${t.name}** (\\`${t.suite}\\`)\\n`;\n      comment += `- Type: \\`${t.failure_type}\\` | Error: ${t.error_message}\\n`;\n      comment += `- \ud83d\udca1 ${t.fix_hint}\\n\\n`;\n    }\n  }\n}\n\n// Flaky tests \u2014 NEW section powered by memory\nif (analysis.flaky_tests && analysis.flaky_tests.length > 0) {\n  comment += `### \ud83c\udfb2 Flaky Tests (detected across runs)\\n\\n`;\n  for (const t of analysis.flaky_tests) {\n    comment += `- **${t.name}** \u2014 failed ${t.fail_count_last_5}/5 recent runs. ${t.recommendation}\\n`;\n  }\n  comment += '\\n';\n}\n\n// Brittle tests\nif (analysis.brittle_tests && analysis.brittle_tests.length > 0) {\n  comment += `### \u26a0\ufe0f Brittle Tests\\n\\n`;\n  for (const t of analysis.brittle_tests) {\n    const src = t.source ? ` \u00b7 ${t.source}` : '';\n    comment += `- **${t.name}**${src} \u2014 ${t.reason}\\n`;\n  }\n  comment += '\\n';\n}\n\n// Top priority fixes\nif (analysis.top_priority_fixes && analysis.top_priority_fixes.length > 0) {\n  comment += `### \ud83c\udfaf Top Priority Fixes\\n\\n`;\n  analysis.top_priority_fixes.forEach((fix, i) => { comment += `${i+1}. ${fix}\\n`; });\n  comment += '\\n';\n}\n\n// Suggested new test\nif (analysis.suggested_new_test && analysis.suggested_new_test.test_name) {\n  const sug = analysis.suggested_new_test;\n  const srcLabel = sug.source ? ` (${sug.source})` : '';\n  comment += `### \ud83d\udca1 Suggested New Test${srcLabel}\\n`;\n  comment += `**${sug.test_name}** \u2014 ${sug.what_to_assert}\\n\\n`;\n}\n\ncomment += `---\\n*Powered by Claude AI \u00b7 [View CI run](https://github.com/${webhookBody.repo}/actions/runs/${webhookBody.run_id})*`;\n\nreturn [{\n  json: {\n    ...webhookBody,\n    analysis,\n    pr_comment: comment,\n    has_pr: !!(webhookBody.pr_number && webhookBody.pr_number !== '' && webhookBody.pr_number !== 'undefined')\n  }\n}];"
       },
-      "id": "format-pr-comment",
-      "name": "Format PR Comment",
+      "id": "c290daf8-e74f-44ee-8bf4-7bee858a6d6f",
+      "name": "Format PR Comment1",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [960, 300]
+      "position": [
+        -2640,
+        96
+      ],
+      "notes": "Now includes a Flaky Tests section that only appears when memory has detected repeated failures."
     },
     {
       "parameters": {
         "conditions": {
-          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
           "conditions": [
             {
               "id": "has-pr",
               "leftValue": "={{ $json.has_pr }}",
               "rightValue": true,
-              "operator": { "type": "boolean", "operation": "equals" }
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
             }
           ],
           "combinator": "and"
         },
         "options": {}
       },
-      "id": "check-is-pr",
-      "name": "Is this a PR?",
+      "id": "b3e15476-084a-434e-8d29-6b53b1ad9697",
+      "name": "Is this a PR?1",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
-      "position": [1200, 300]
+      "position": [
+        -2416,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ status: 'analysis_complete', health: $('Format PR Comment1').first().json.analysis.run_summary.overall_health, pr_comment: $('Format PR Comment1').first().json.pr_comment }) }}",
+        "options": {}
+      },
+      "id": "035b10a9-f57e-4c62-b527-a26f5f2c455a",
+      "name": "Respond to Webhook1",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        -1968,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "documentId": {
+          "__rl": true,
+          "value": "1cNxHVam74Ms5LXbS7xcuzWXfRap1SFBrxtOlfqqBICw",
+          "mode": "list",
+          "cachedResultName": "CS4218_Test_History",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1cNxHVam74Ms5LXbS7xcuzWXfRap1SFBrxtOlfqqBICw/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1cNxHVam74Ms5LXbS7xcuzWXfRap1SFBrxtOlfqqBICw/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -3536,
+        96
+      ],
+      "id": "e1b35fff-a059-428d-8c31-b883d5b265b7",
+      "name": "Get row(s) in sheet1",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleApi": {
+          "id": "KV4njpX0HbErkv5c",
+          "name": "Google Sheets account"
+        }
+      },
+      "onError": "continueRegularOutput"
     },
     {
       "parameters": {
         "method": "POST",
         "url": "=https://api.github.com/repos/{{ $json.repo }}/issues/{{ $json.pr_number }}/comments",
-        "authentication": "none",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "Accept", "value": "application/vnd.github+json" },
-            { "name": "X-GitHub-Api-Version", "value": "2022-11-28" },
-            { "name": "Authorization", "value": "={{ 'Bearer ' + $('GitHub CI Webhook').first().json.body.github_token }}" }
+            {
+              "name": "Accept",
+              "value": "application/vnd.github+json"
+            },
+            {
+              "name": "X-GitHub-Api-Version",
+              "value": "2022-11-28"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_PAT_HERE"
+            }
           ]
         },
         "sendBody": true,
@@ -101,42 +355,141 @@
         "jsonBody": "={{ JSON.stringify({ body: $json.pr_comment }) }}",
         "options": {}
       },
-      "id": "post-github-comment",
+      "id": "post-github-pr-comment-pat",
       "name": "Post GitHub PR Comment",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
-      "position": [1440, 180]
-    },
-    {
-      "parameters": {
-        "respondWith": "json",
-        "responseBody": "={{ JSON.stringify({ status: 'analysis_complete', health: $('Format PR Comment').first().json.analysis.run_summary.overall_health }) }}"
-      },
-      "id": "respond-to-webhook",
-      "name": "Respond to Webhook",
-      "type": "n8n-nodes-base.respondToWebhook",
-      "typeVersion": 1,
-      "position": [1440, 420]
+      "position": [
+        1200,
+        0
+      ],
+      "notes": "Uses your personal PAT \u2014 permanent, never expires. Replace YOUR_PAT_HERE with your github_pat_... token."
     }
   ],
+  "pinData": {},
   "connections": {
-    "GitHub CI Webhook": { "main": [[{ "node": "Build Claude Payload", "type": "main", "index": 0 }]] },
-    "Build Claude Payload": { "main": [[{ "node": "Call Claude API", "type": "main", "index": 0 }]] },
-    "Call Claude API": { "main": [[{ "node": "Format PR Comment", "type": "main", "index": 0 }]] },
-    "Format PR Comment": { "main": [[{ "node": "Is this a PR?", "type": "main", "index": 0 }]] },
-    "Is this a PR?": {
+    "Merge History": {
       "main": [
-        [{ "node": "Post GitHub PR Comment", "type": "main", "index": 0 }],
-        [{ "node": "Respond to Webhook", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Build Claude Payload1",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
-    "Post GitHub PR Comment": { "main": [[{ "node": "Respond to Webhook", "type": "main", "index": 0 }]] }
+    "Extract Failed Names": {
+      "main": [
+        [
+          {
+            "node": "Append Row to Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GitHub CI Webhook1": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Claude Payload1": {
+      "main": [
+        [
+          {
+            "node": "Call Claude API1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call Claude API1": {
+      "main": [
+        [
+          {
+            "node": "Format PR Comment1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format PR Comment1": {
+      "main": [
+        [
+          {
+            "node": "Is this a PR?1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Extract Failed Names",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is this a PR?1": {
+      "main": [
+        [
+          {
+            "node": "Post GitHub PR Comment",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet1": {
+      "main": [
+        [
+          {
+            "node": "Merge History",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post GitHub PR Comment": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
   },
-  "settings": { "executionOrder": "v1", "saveManualExecutions": true },
-  "staticData": null,
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "feb639d2-b19e-4c73-9e07-b41623cda8c8",
   "meta": {
-    "description": "CS4218 AI-driven testing: receives inline test results from CI, calls Claude, posts analysis to PR comments.",
-    "templateCredsSetupCompleted": false
+    "templateCredsSetupCompleted": true,
+    "instanceId": "11a0b8a4bdede886f10ea36d82ba980f770eec752f5d7c963e22d60bffcf4e36"
   },
-  "pinData": {}
+  "id": "bBjMxkl7LKjvYcw0",
+  "tags": []
 }
