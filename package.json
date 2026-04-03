@@ -18,7 +18,9 @@
     "test:backend": "jest --config jest.backend.config.js",
     "test:integration": "jest --config jest.integration.config.js",
     "test:ui": "npx playwright test --config playwright.config.mjs",
-    "test:spike": "k6 run tests/nft/spike-search-k6.js"
+    "test:spike-search": "k6 run tests/nft/spike-search-k6.js",
+    "test:spike-login": "k6 run tests/nft/spike-login-k6.js",
+    "test:spike-frontend": "npx playwright test tests/nft/spike-search-frontend.spec.js --config playwright.spike.config.mjs"
   },
   "keywords": [],
   "author": "RP",
