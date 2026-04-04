@@ -218,9 +218,9 @@ jobs:
                           "tests": tests
                       }
                   elif "suites" in raw: # Playwright format
-                      total = passed = failed = 0
+                      total = passed = failed = skipped = 0
                       def walk(suite, p_file=""):
-                          nonlocal total, passed, failed
+                          nonlocal total, passed, failed, skipped
                           f_path = suite.get("file", p_file)
                           short = "/".join(f_path.replace("\\","/").split("/")[-2:]) if f_path else ""
                           for spec in suite.get("specs", []):
@@ -230,6 +230,9 @@ jobs:
                                   if status == "expected":
                                       passed += 1
                                       s_mapped = "passed"
+                                  elif status == "skipped":
+                                      skipped += 1
+                                      s_mapped = "skipped"
                                   else:
                                       failed += 1
                                       s_mapped = "failed"
@@ -241,7 +244,7 @@ jobs:
                           for s in suite.get("suites", []):
                               walk(s, f_path)
                       for s in raw.get("suites", []): walk(s)
-                      return {"source": "playwright", "summary": {"total": total, "passed": passed, "failed": failed}, "tests": tests}
+                      return {"source": "playwright", "summary": {"total": total, "passed": passed, "failed": failed, "skipped": skipped}, "tests": tests}
               except Exception as e:
                   print(f"Could not load {path}: {e}")
               return None
