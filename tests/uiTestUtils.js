@@ -282,6 +282,37 @@ export const makePlaywrightName = (label) =>
 export const getProductFixturePath = () =>
   path.join(__dirname, "fixtures", "playwright-product.svg");
 
+/**
+ * Seed a single order in the DB for a given user + product slug.
+ *
+ * The orders page fetches orders via getOrdersController which does
+ * `.populate("products", "-photo")`, so products must be real ObjectId
+ * references to existing product documents (not embedded objects).
+ *
+ * @param {string} userEmail  - email of the buyer user (must already exist in DB)
+ * @param {string} productSlug - slug of the product to include in the order
+ * @param {string} [status]   - order status (default: "Not Process")
+ * @returns {Promise<object>}  - the created order document
+ */
+export async function seedOrderForUser(userEmail, productSlug, status = "Not Process") {
+  return withPlaywrightConnection(async () => {
+    const user = await userModel.findOne({ email: userEmail }).lean();
+    if (!user) throw new Error(`seedOrderForUser: no user found with email "${userEmail}"`);
+
+    const product = await productModel.findOne({ slug: productSlug }).lean();
+    if (!product) throw new Error(`seedOrderForUser: no product found with slug "${productSlug}"`);
+
+    const order = await orderModel.create({
+      products: [product._id],
+      payment: { success: true },
+      buyer: user._id,
+      status,
+    });
+
+    return order;
+  });
+}
+
 export async function loginAsPlaywrightAdmin(page) {
   await page.goto("/login");
   await page.getByPlaceholder("Enter Your Email ").fill(PLAYWRIGHT_ADMIN_EMAIL);

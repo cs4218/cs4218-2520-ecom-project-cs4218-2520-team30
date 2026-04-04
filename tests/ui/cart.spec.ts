@@ -477,14 +477,20 @@ test.describe("Cart shopping flow E2E", () => {
     request,
   }) => {
     // Basil Boh A0273232M
-    // Skip unconditionally when PayPal sandbox credentials are absent.
-    // The guard is evaluated first — before any page navigation — to prevent
-    // the test from failing due to missing credentials in CI.
+    // Skip in CI unconditionally — PayPal sandbox is a live external service
+    // that is non-deterministic in automated pipelines regardless of credentials.
+    // Also skip locally when credentials are absent.
+    const isCI = process.env.CI === "true";
     const hasPayPalCreds =
       !!process.env.PAYPAL_SANDBOX_EMAIL?.trim() &&
       !!process.env.PAYPAL_SANDBOX_PASSWORD?.trim();
-    test.skip(!hasPayPalCreds, "Set PAYPAL_SANDBOX_EMAIL and PAYPAL_SANDBOX_PASSWORD in .env");
-    if (!hasPayPalCreds) return; // Belt-and-suspenders: TypeScript guard for the assertions below
+    test.skip(
+      isCI || !hasPayPalCreds,
+      isCI
+        ? "PayPal sandbox test is disabled in CI (live external service)"
+        : "Set PAYPAL_SANDBOX_EMAIL and PAYPAL_SANDBOX_PASSWORD in .env"
+    );
+    if (isCI || !hasPayPalCreds) return;
 
     test.setTimeout(180000);
 
