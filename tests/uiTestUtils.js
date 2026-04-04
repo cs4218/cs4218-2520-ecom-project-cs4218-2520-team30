@@ -103,6 +103,34 @@ const PLAYWRIGHT_SEED_PRODUCTS = [
     shipping: true,
     categorySlug: PLAYWRIGHT_SEED_CATEGORY_SLUG
   },
+  // --- Extra products to ensure total > perPage(6) so the Loadmore button renders in TC7 ---
+  {
+    slug: "playwright-delta-product",
+    name: "Playwright Delta Product",
+    description: "A seeded Playwright delta item for pagination and loadmore coverage.",
+    price: 45,
+    quantity: 7,
+    shipping: true,
+    categorySlug: PLAYWRIGHT_SEED_CATEGORY_SLUG
+  },
+  {
+    slug: "playwright-epsilon-product",
+    name: "Playwright Epsilon Product",
+    description: "A seeded Playwright epsilon item for pagination coverage.",
+    price: 65,
+    quantity: 3,
+    shipping: false,
+    categorySlug: PLAYWRIGHT_SEED_ALT_CATEGORY_SLUG
+  },
+  {
+    slug: "playwright-zeta-product",
+    name: "Playwright Zeta Product",
+    description: "A seeded Playwright zeta item ensuring total products exceed page size.",
+    price: 99,
+    quantity: 6,
+    shipping: true,
+    categorySlug: PLAYWRIGHT_SEED_ALT_CATEGORY_SLUG
+  },
 ];
 
 export function getPlaywrightMongoUrl() {
