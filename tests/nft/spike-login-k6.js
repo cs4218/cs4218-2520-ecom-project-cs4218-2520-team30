@@ -11,8 +11,8 @@
  * connection pool can handle extreme authentication load.
  * 
  * Scenario:
- * - Spike from 0 to 500 users in 10 seconds
- * - Hold at 500 users for 30 seconds (simulating flash sale duration)
+ * - Spike from 0 to 200 users in 10 seconds
+ * - Hold at 200 users for 30 seconds (simulating flash sale duration)
  * - Ramp down to 0 over 10 seconds
  * 
  * Usage:
@@ -51,11 +51,11 @@ export const options = {
         // Stage 1: Warm-up (baseline)
         { duration: '5s', target: 5 },
         
-        // Stage 2: SPIKE! Flash sale starts - rapid ramp to 100 users
-        { duration: '10s', target: 100 },
+        // Stage 2: SPIKE! Flash sale starts - rapid ramp to 200 users
+        { duration: '10s', target: 200 },
         
         // Stage 3: Sustained peak - flash sale in progress
-        { duration: '30s', target: 100 },
+        { duration: '30s', target: 200 },
         
         // Stage 4: Recovery - flash sale ends
         { duration: '10s', target: 20 },
@@ -126,7 +126,7 @@ export function setup() {
   console.log('='.repeat(70));
   console.log(`Target Server: ${BASE_URL}`);
   console.log(`Test Users: ${TEST_USER_COUNT}`);
-  console.log(`Peak Load: 100 VUs`);
+  console.log(`Peak Load: 200 VUs`);
   console.log('='.repeat(70));
   console.log('Setting up test users...');
   
@@ -298,7 +298,7 @@ export function handleSummary(data) {
       module: 'CS4218 Software Testing - Milestone 3',
       testType: 'Spike Test - Flash Sale Login',
       component: 'Login API',
-      peakLoad: '100 VUs',
+      peakLoad: '200 VUs',
       timestamp: new Date().toISOString(),
     },
     metrics: {
@@ -350,7 +350,7 @@ function textSummary(data) {
   const metrics = data.metrics;
   let output = '\n';
   output += '='.repeat(70) + '\n';
-  output += '🔥 FLASH SALE LOGIN SPIKE TEST SUMMARY (Peak: 100 VUs)\n';
+  output += '🔥 FLASH SALE LOGIN SPIKE TEST SUMMARY (Peak: 200 VUs)\n';
   output += 'Author: Tay Kai Jun, A0283343E\n';
   output += '='.repeat(70) + '\n\n';
   

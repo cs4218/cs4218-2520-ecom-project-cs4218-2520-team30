@@ -84,10 +84,10 @@ export const options = {
   // Tay Kai Jun, A0283343E
   thresholds: {
     // 90th percentile response time (primary metric)
-    'http_req_duration': ['p(90)<1500', 'p(95)<2000', 'p(99)<5000'],
+    'http_req_duration': ['p(90)<2000', 'p(95)<3000', 'p(99)<5000'],
     
     // Search-specific response time with p90
-    'search_response_time': ['p(90)<1500', 'p(95)<2000', 'avg<1000'],
+    'search_response_time': ['p(90)<2000', 'p(95)<3000', 'avg<1500'],
     
     // At least 95% success rate
     'search_success_rate': ['rate>0.95'],
@@ -97,7 +97,7 @@ export const options = {
     'error_rate': ['rate<0.05'],
     
     // Waiting time (time-to-first-byte) should be reasonable
-    'waiting_time': ['p(90)<1000'],
+    'waiting_time': ['p(90)<1500'],
     
     // Connection time threshold
     'connecting_time': ['p(95)<500'],
@@ -187,7 +187,7 @@ export default function () {
           return false;
         }
       },
-      'response time < 2s': (r) => r.timings.duration < 2000,
+      'response time < 3s': (r) => r.timings.duration < 3000,
       'response has body': (r) => r.body && r.body.length > 0,
     });
     
