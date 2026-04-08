@@ -76,16 +76,24 @@
 - **Contact**: `tests/ui/contact.spec.ts`. Contact page content (heading, details, hero) → footer **Contact** link from About.
 - **Policy**: `tests/ui/policy.spec.ts`. Privacy policy page → footer **Privacy Policy** link from About.
 
-### Tay Kai Jun
+### Tay Kai Jun (A0283343E)
 
 **UI Testing (Playwright)**
 - **Registration**: `tests/ui/auth.spec.ts`. Form display → Field validation → Successful registration → Duplicate email handling.
 - **Login**: `tests/ui/auth.spec.ts`. Admin login → User login → Wrong password → Logout flow → Full user journey.
+- **Search**: `tests/ui/search.spec.ts`. Search flow → Add to cart → View details → Empty search handling.
 
 **Integration Testing (Jest)**
 - **Register Controller**: `tests/integration/auth/register.integration.test.js`. Model validation → Password hashing → Database persistence → Duplicate email handling.
 - **Login Controller**: `tests/integration/auth/login.integration.test.js`. User lookup → Password comparison → JWT token generation → Role-based response.
 - **Forgot Password**: `tests/integration/auth/forgotPassword.integration.test.js`. Email+answer validation → Password hashing → Database update.
+
+## MS3 Contributions
+
+### Tay Kai Jun (A0283343E)
+
+**Non-Functional Testing: Spike Testing (Grafana k6)**
+- **Search API Spike Test**: `tests/nft/spike-search-k6.js`. Simulates sudden traffic spikes (2→100→2 VUs) to measure search API 
 
 ### Lum Yi Ren Johannsen
 
