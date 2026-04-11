@@ -95,13 +95,8 @@ test.describe("Product browsing and details E2E", () => {
     page,
   }) => {
     // Basil Boh A0273232M
-    await page.goto("/");
-
-    await expect(page.locator(".home-page .col-md-9 .card-title").first()).toBeVisible({
-      timeout: 10000,
-    });
-
-    await page.getByRole("button", { name: "More Details" }).first().click();
+    // Navigate directly to a seeded product guaranteed to have similar products
+    await page.goto("/product/playwright-alpha-product");
     await expect(
       page.getByRole("heading", { name: "Product Details" })
     ).toBeVisible({ timeout: 10000 });
@@ -110,11 +105,7 @@ test.describe("Product browsing and details E2E", () => {
       .locator(".similar-products")
       .getByRole("button", { name: "More Details" })
       .first();
-
-    if (!(await similarMoreDetails.isVisible())) {
-      test.skip();
-      return;
-    }
+    await expect(similarMoreDetails).toBeVisible({ timeout: 15000 });
 
     const similarCardTitle = page.locator(".similar-products .card-title").first();
     const relatedName = (await similarCardTitle.textContent())?.trim();
