@@ -205,10 +205,7 @@ test.describe("Product browsing and details E2E", () => {
     await expect(productCards.first()).toBeVisible({ timeout: 10000 });
 
     const loadMore = page.getByRole("button", { name: /Loadmore/i });
-    if (!(await loadMore.isVisible())) {
-      test.skip();
-      return;
-    }
+    await expect(loadMore).toBeVisible({ timeout: 10000 });
 
     const countBefore = await productCards.count();
     await loadMore.click();
