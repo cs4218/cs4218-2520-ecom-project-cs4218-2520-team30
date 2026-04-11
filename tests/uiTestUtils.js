@@ -103,6 +103,33 @@ const PLAYWRIGHT_SEED_PRODUCTS = [
     shipping: true,
     categorySlug: PLAYWRIGHT_SEED_CATEGORY_SLUG
   },
+  {
+    slug: "playwright-delta-product",
+    name: "Playwright Delta Product",
+    description: "A seeded Playwright delta item for load-more coverage.",
+    price: 39,
+    quantity: 6,
+    shipping: true,
+    categorySlug: PLAYWRIGHT_SEED_CATEGORY_SLUG
+  },
+  {
+    slug: "playwright-epsilon-product",
+    name: "Playwright Epsilon Product",
+    description: "A seeded Playwright epsilon item for load-more coverage.",
+    price: 49,
+    quantity: 4,
+    shipping: false,
+    categorySlug: PLAYWRIGHT_SEED_CATEGORY_SLUG
+  },
+  {
+    slug: "playwright-zeta-product",
+    name: "Playwright Zeta Product",
+    description: "A seeded Playwright zeta item for load-more coverage.",
+    price: 59,
+    quantity: 3,
+    shipping: true,
+    categorySlug: PLAYWRIGHT_SEED_CATEGORY_SLUG
+  },
 ];
 
 export function getPlaywrightMongoUrl() {
