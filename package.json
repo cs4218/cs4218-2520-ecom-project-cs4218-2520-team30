@@ -18,6 +18,9 @@
     "test:backend": "jest --config jest.backend.config.js",
     "test:integration": "jest --config jest.integration.config.js",
     "test:ui": "npx playwright test --config playwright.config.mjs",
+    "test:spike-search": "k6 run tests/nft/spike/spike-search-k6.js",
+    "test:spike-login": "k6 run tests/nft/spike/spike-login-k6.js",
+    "test:spike-frontend": "npx playwright test tests/nft/spike/spike-search-frontend.spec.js --config playwright.spike.config.mjs",
     "test:volume": "bash tests/volume/run-volume-tests.sh",
     "test:volume:seed": "node tests/volume/seed-data.js",
     "test:volume:clean": "node tests/volume/seed-data.js --clean"
