@@ -12,3 +12,8 @@ coverage/
 **/lcov-report/
 .nvmrc
 .playwright_mongo_uri
+
+# Volume test output (large JSON/HTML reports)
+tests/volume/results/*.json
+tests/volume/results/*.html
+tests/volume/results/*.txt

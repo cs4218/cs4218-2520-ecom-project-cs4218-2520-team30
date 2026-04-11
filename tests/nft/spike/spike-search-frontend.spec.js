@@ -1,32 +1,3 @@
-/**
- * Playwright Spike Test - Frontend Search Rendering
- * 
- * Author: Tay Kai Jun, A0283343E
- * Module: CS4218 Software Testing - Milestone 3
- * Test Type: Spike Testing - Frontend Performance (Non-Functional Testing)
- * 
- * Purpose:
- * Simulate multiple concurrent browsers interacting with the Search Bar
- * to measure client-side rendering bottlenecks including:
- * - First Contentful Paint (FCP)
- * - DOM Content Loaded time
- * - Search results rendering time
- * - UI responsiveness under concurrent load
- * 
- * Usage:
- *   1. Start servers first:
- *      Terminal 1: npm start
- *      Terminal 2: npm run client
- *   
- *   2. Run spike test:
- *      npm run test:spike-frontend
- * 
- *   3. View report:
- *      Open tests/nft/spike/spike-report/index.html
- * 
- * Note: This tests FRONTEND rendering performance, not backend API.
- */
-
 // Tay Kai Jun, A0283343E
 import { test, expect } from '@playwright/test';
 
