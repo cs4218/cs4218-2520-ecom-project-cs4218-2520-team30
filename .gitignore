@@ -16,3 +16,8 @@ coverage/
 docker-compose.override.yml
 k6-results/
 k6/summary.json
+
+# Volume test output (large JSON/HTML reports)
+tests/volume/results/*.json
+tests/volume/results/*.html
+tests/volume/results/*.txt
