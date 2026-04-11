@@ -110,40 +110,64 @@ GET **/api/v1/product/braintree/token
 GET **/api.braintreegateway.com/**/configuration
 → Minimal Braintree client config JSON
 ```
-Key field: `"paypal": { "environmentNoNetwork": true }` — this tells the Drop-in to operate in offline/test mode, resolving `requestPaymentMethod()` without opening a real PayPal popup.
+**Note (implementation correction):** `environmentNoNetwork: true` triggers a `PAYPAL_SANDBOX_ACCOUNT_NOT_LINKED` BraintreeError in `braintree-web@3.99.0` and must NOT be set. The PayPal popup is bypassed instead by intercepting the PayPal JS SDK script (see intercept 3).
 
-Full config shape:
+Config shape (no `environmentNoNetwork`):
 ```json
 {
-  "analyticsUrl": "",
+  "analyticsUrl": "https://origin-analytics-sand.sandbox.braintree-api.com/fake-merchant",
   "assetsUrl": "https://assets.braintreegateway.com",
   "clientApiUrl": "https://api.braintreegateway.com/merchants/fake-merchant/client_api",
+  "analytics": { "url": "https://origin-analytics-sand.sandbox.braintree-api.com/fake-merchant" },
   "challenges": [],
   "creditCards": { "supportedCardTypes": [] },
   "paypal": {
     "displayName": "Test Store",
-    "clientId": "fake-client-id",
-    "assetsUrl": "https://assets.braintreegateway.com",
-    "currencyIsoCode": "USD",
-    "environment": "offline",
-    "environmentNoNetwork": true,
-    "allowHttp": true,
+    "clientId": "fake-paypal-client-id",
+    "assetsUrl": "https://checkout.paypal.com",
+    "currencyCode": "USD",
+    "environment": "sandbox",
+    "allowHttp": false,
     "unvettedMerchant": false
   },
+  "paypalEnabled": true,
   "applePayWeb": null,
   "googlePay": null,
   "threeDSecure": null,
   "environment": "sandbox",
-  "version": "3.94.0"
+  "merchantId": "fake-merchant",
+  "version": "3.99.0"
 }
 ```
 
-#### 3. PayPal nonce endpoint
+#### 3. PayPal JS SDK script
+```
+GET **/paypal.com/sdk/js**
+→ JavaScript: stub window.paypal with Buttons({ createOrder, onApprove }).render() that
+  inserts a clickable button into the container and, on click, resolves createOrder then
+  immediately calls onApprove({ billingToken, payerID }) — no popup opens.
+```
+The stub button gets `data-testid="mock-paypal-btn"` so the test can click it by that selector.
+
+---
+
+#### 4. Braintree billing agreement endpoint
+```
+POST **/paypal_hermes/setup_billing_agreement
+→ { "agreementSetup": { "tokenId": "fake-billing-token-abc" } }
+```
+Called by the Drop-in's `createOrder` handler; returns the billing token passed to `onApprove`.
+
+---
+
+#### 5. PayPal nonce endpoint
 ```
 POST **/client_api/v1/payment_methods/paypal_accounts
-→ { "paypalAccounts": [{ "nonce": "fake-paypal-nonce", "type": "PayPalAccount", "details": {} }] }
+→ { "paypalAccounts": [{ "nonce": "fake-paypal-nonce-xyz", "type": "PayPalAccount",
+    "description": "PayPal", "details": { "email": "test@example.com", "payerId": "FakePayerID12345",
+    "firstName": "Test", "lastName": "User" } }] }
 ```
-This is called by the Drop-in when `requestPaymentMethod()` resolves in offline mode.
+Called by `tokenizePayment()` after `onApprove` fires; provides the nonce for `handlePayment`.
 
 #### 4. Backend payment endpoint
 ```
