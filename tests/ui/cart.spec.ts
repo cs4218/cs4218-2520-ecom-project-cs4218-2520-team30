@@ -45,42 +45,46 @@ const FAKE_BRAINTREE_CONFIG = {
   version: "3.99.0",
 };
 
-// Minimal PayPal JS SDK stub — renders a real button that fires onApprove
-// immediately on click without opening a popup.
+// Stub for PayPal Checkout.js v4 (checkout.min.js from paypalobjects.com).
+// The Drop-in uses the v4 API: paypal.Button.render(config, selector).
+// config.payment() → returns a billing token (via setup_billing_agreement)
+// config.onAuthorize({ billingToken, payerID }) → triggers tokenizePayment
 // The button gets data-testid="mock-paypal-btn" for unambiguous targeting.
 const MOCK_PAYPAL_SDK_JS = `
 (function() {
   window.paypal = {
-    version: '5.0.0',
-    FUNDING: { PAYPAL: 'paypal', CREDIT: 'credit', CARD: 'card' },
-    Buttons: function(opts) {
-      return {
-        isEligible: function() { return true; },
-        render: function(container) {
-          var el = typeof container === 'string'
-            ? document.querySelector(container)
-            : container;
-          if (!el) return Promise.resolve();
-          while (el.firstChild) { el.removeChild(el.firstChild); }
-          var btn = document.createElement('button');
-          btn.setAttribute('data-testid', 'mock-paypal-btn');
-          btn.setAttribute('type', 'button');
-          btn.style.cssText = 'width:100%;padding:14px;background:#0070ba;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:16px;margin-top:8px;';
-          btn.textContent = 'PayPal';
-          btn.addEventListener('click', function() {
-            var createFn = opts.createOrder || function() { return Promise.resolve('fake-billing-token-abc'); };
-            Promise.resolve(createFn()).then(function(token) {
-              return opts.onApprove({
-                billingToken: token,
-                orderID: token,
-                payerID: 'FakePayerID12345'
-              });
-            }).catch(function(err) { console.error('[mock-paypal] onApprove error', err); });
+    FUNDING: {
+      PAYPAL: 'paypal', CREDIT: 'credit', CARD: 'card',
+      ELK: 'elk', SOFORT: 'sofort', BANCONTACT: 'bancontact',
+      GIROPAY: 'giropay', IDEAL: 'ideal', MYBANK: 'mybank',
+      P24: 'p24', EPS: 'eps', WECHATPAY: 'wechatpay', VENMO: 'venmo'
+    },
+    Button: {
+      render: function(config, selector) {
+        var el = typeof selector === 'string'
+          ? document.querySelector(selector)
+          : selector;
+        if (!el) return Promise.resolve();
+        while (el.firstChild) { el.removeChild(el.firstChild); }
+        var btn = document.createElement('button');
+        btn.setAttribute('data-testid', 'mock-paypal-btn');
+        btn.setAttribute('type', 'button');
+        btn.style.cssText = 'width:100%;padding:14px;background:#0070ba;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:16px;';
+        btn.textContent = 'PayPal';
+        btn.addEventListener('click', function() {
+          var payFn = config.payment || function() { return Promise.resolve('fake-billing-token-abc'); };
+          Promise.resolve(payFn()).then(function(token) {
+            return config.onAuthorize({
+              billingToken: token,
+              payerID: 'FakePayerID12345'
+            });
+          }).catch(function(err) {
+            if (config.onError) { config.onError(err); }
           });
-          el.appendChild(btn);
-          return Promise.resolve();
-        }
-      };
+        });
+        el.appendChild(btn);
+        return Promise.resolve();
+      }
     }
   };
 })();
@@ -105,8 +109,8 @@ async function setupBraintreePayPalMocks(page: Page): Promise<void> {
     });
   });
 
-  // 3. PayPal JS SDK script → stub that fires onApprove on click, no popup
-  await page.route("**/paypal.com/sdk/js**", async (route) => {
+  // 3. PayPal Checkout.js v4 (paypalobjects.com) → stub that fires onAuthorize on click, no popup
+  await page.route("**paypalobjects.com**", async (route) => {
     await route.fulfill({
       status: 200,
       contentType: "application/javascript",
@@ -636,10 +640,14 @@ test.describe("Cart shopping flow E2E", () => {
       page.locator(".braintree-dropin-container, [class*='braintree-dropin']").first()
     ).toBeVisible({ timeout: 30000 });
 
-    // Open the PayPal payment sheet inside the Drop-in
+    // With only PayPal configured (no card options), the Drop-in renders the PayPal
+    // sheet directly — no .braintree-option__paypal click needed.
+    // If the option button appears (e.g. with card also enabled), click it first.
     const paypalOption = page.locator(".braintree-option__paypal").first();
-    await expect(paypalOption).toBeVisible({ timeout: 20000 });
-    await paypalOption.click();
+    const hasOption = await paypalOption.isVisible().catch(() => false);
+    if (hasOption) {
+      await paypalOption.click();
+    }
 
     // Wait for our mock PayPal button rendered by the stub SDK
     const mockPaypalBtn = page.locator('[data-testid="mock-paypal-btn"]');
