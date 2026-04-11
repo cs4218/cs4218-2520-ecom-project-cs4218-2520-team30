@@ -11,11 +11,12 @@
  * performance bottlenecks in the search functionality.
  * 
  * Spike Pattern:
- * - Starts with minimal load (2 VUs)
- * - Rapidly spikes to 100 VUs in 10 seconds
- * - Holds peak load for 30 seconds
- * - Rapidly drops back to 2 VUs
- * - Cool down period
+ * - Warm-up at low traffic
+ * - First spike to 300 VUs
+ * - Cool-down and second spike to 400 VUs
+ * - Third spike to 500 VUs (higher than previous peak)
+ * - Stepped ramp-down (500 -> 350 -> 200)
+ * - Maintains at 50 VUs post-spike
  * 
  * Metrics Measured:
  * - Response time (p90, p95, p99, avg, min, max, med)
@@ -64,17 +65,33 @@ export const options = {
         // Stage 1: Warm-up with minimal load
         { duration: '10s', target: 2 },
         
-        // Stage 2: SPIKE - Rapid increase to peak load of 100 VUs
-        { duration: '10s', target: 100 },
+        // Stage 2: First spike - rapid increase to 300 VUs
+        { duration: '10s', target: 300 },
         
-        // Stage 3: Hold at peak load to observe system behavior
-        { duration: '30s', target: 100 },
+        // Stage 3: Hold first peak 
+        { duration: '10s', target: 300 },
         
-        // Stage 4: Rapid decrease - observe recovery
-        { duration: '10s', target: 2 },
+        // Stage 4: Cool down after first spike
+        { duration: '10s', target: 20 },
         
-        // Stage 5: Cool down period
-        { duration: '20s', target: 2 },
+        // Stage 5: Second spike to 400 VUs
+        { duration: '10s', target: 400 },
+
+        // Stage 6: Hold second peak 
+        { duration: '10s', target: 400 },
+
+        // Stage 7: Third spike to 500 VUs 
+        { duration: '10s', target: 500 },
+
+        // Stage 8: Hold highest peak 
+        { duration: '10s', target: 500 },
+
+        // Stage 9-10: Stepped ramp-down
+        { duration: '10s', target: 350 },
+        { duration: '10s', target: 200 },
+
+        // Stage 11: Post-spike steady state at 50 VUs
+        { duration: '20s', target: 50 },
       ],
       gracefulRampDown: '5s',
     },
@@ -229,8 +246,8 @@ export function setup() {
   console.log('='.repeat(70));
   console.log(`Target URL: ${BASE_URL}`);
   console.log(`Test Keywords: ${SEARCH_KEYWORDS.length} different search terms`);
-  console.log('Spike Pattern: 2 VUs -> 100 VUs (peak) -> 2 VUs');
-  console.log('Peak Load: 100 concurrent virtual users');
+  console.log('Spike Pattern: 2 -> 300 -> 20 -> 400 -> 500 -> 350 -> 200 -> 50 VUs');
+  console.log('Peak Load: 500 concurrent virtual users');
   console.log('='.repeat(70));
   console.log('Key Metrics Tracked:');
   console.log('  - Response Time: p90, p95, p99, avg, min, max, med');
@@ -275,7 +292,7 @@ export function handleSummary(data) {
       module: 'CS4218 Software Testing - Milestone 3',
       testType: 'Spike Test',
       component: 'Search API',
-      peakLoad: '100 VUs',
+      peakLoad: '500 VUs',
       timestamp: new Date().toISOString(),
     },
     metrics: {
@@ -322,7 +339,7 @@ function textSummary(data, options) {
   const metrics = data.metrics;
   let output = '\n';
   output += '='.repeat(70) + '\n';
-  output += 'SPIKE TEST SUMMARY - Search API (Peak: 100 VUs)\n';
+  output += 'SPIKE TEST SUMMARY - Search API (Peak: 500 VUs)\n';
   output += 'Author: Tay Kai Jun, A0283343E\n';
   output += '='.repeat(70) + '\n\n';
   

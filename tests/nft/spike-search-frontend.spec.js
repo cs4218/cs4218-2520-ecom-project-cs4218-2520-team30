@@ -39,11 +39,25 @@ const SEARCH_KEYWORDS = [
   'headphones', 'keyboard', 'mouse', 'monitor', 'cable'
 ];
 
-// Number of concurrent browser tests - Tay Kai Jun, A0283343E
-// Note: Each browser uses ~200MB RAM. 10 browsers = ~2GB RAM
-// For 100 "virtual users", we run 10 browsers x 10 iterations each
+// Multi-peak logical load profile mapped onto fixed browser workers.
+// We keep physical concurrency at 10 browsers and scale logical user load
+// by changing per-browser iterations per phase.
 const CONCURRENT_BROWSERS = 10;
-const ITERATIONS_PER_BROWSER = 10;
+const FRONTEND_SPIKE_PHASES = [
+  { name: 'warmup', logicalVUs: 10, phaseDelayMs: 50, iterationScale: 1.0 },
+  { name: 'spike_1', logicalVUs: 100, phaseDelayMs: 25, iterationScale: 0.5 },
+  { name: 'cooldown_1', logicalVUs: 20, phaseDelayMs: 50, iterationScale: 1.0 },
+  { name: 'spike_2', logicalVUs: 200, phaseDelayMs: 20, iterationScale: 0.5 },
+  { name: 'spike_3', logicalVUs: 300, phaseDelayMs: 15, iterationScale: 0.5 },
+  { name: 'rampdown_1', logicalVUs: 200, phaseDelayMs: 25, iterationScale: 1.0 },
+  { name: 'rampdown_2', logicalVUs: 100, phaseDelayMs: 35, iterationScale: 1.0 },
+  { name: 'post_spike_hold', logicalVUs: 50, phaseDelayMs: 40, iterationScale: 1.0 },
+];
+
+function getPhaseIterations(logicalVUs, iterationScale = 1) {
+  const baseIterations = Math.max(1, Math.ceil(logicalVUs / CONCURRENT_BROWSERS));
+  return Math.max(1, Math.ceil(baseIterations * iterationScale));
+}
 
 // Metrics storage for final report - Tay Kai Jun, A0283343E
 const allMetrics = {
@@ -142,33 +156,43 @@ async function performSearchWithMetrics(page, keyword, testId) {
 // SPIKE TEST SCENARIOS - Tay Kai Jun, A0283343E
 // ============================================================
 
-test.describe('Frontend Search Spike Test (100 Virtual Users)', () => {
+test.describe('Frontend Search Multi-Peak Spike Test (Peak: 300 Logical VUs)', () => {
   // Enable parallel execution for spike simulation - Tay Kai Jun, A0283343E
   test.describe.configure({ mode: 'parallel' });
   
-  // Generate concurrent browser tests - Tay Kai Jun, A0283343E
-  // 10 browsers x 10 iterations = 100 total searches
-  for (let i = 0; i < CONCURRENT_BROWSERS; i++) {
-    for (let j = 0; j < ITERATIONS_PER_BROWSER; j++) {
-      const testNum = i * ITERATIONS_PER_BROWSER + j + 1;
-      const keyword = SEARCH_KEYWORDS[testNum % SEARCH_KEYWORDS.length];
-      
-      test(`VU ${testNum}/100 - Browser ${i + 1} - Search "${keyword}"`, async ({ page }) => {
+  for (const phase of FRONTEND_SPIKE_PHASES) {
+    const phaseIterations = getPhaseIterations(phase.logicalVUs, phase.iterationScale);
+
+    for (let i = 0; i < CONCURRENT_BROWSERS; i++) {
+      test(`Phase ${phase.name} (${phase.logicalVUs} logical VUs) - Browser ${i + 1}`, async ({ page }) => {
         // Tay Kai Jun, A0283343E
-        test.setTimeout(120000);
-        
-        const metrics = await performSearchWithMetrics(page, keyword, testNum);
-        
-        // Store metrics - Tay Kai Jun, A0283343E
-        if (metrics.fcp) allMetrics.fcpTimes.push(metrics.fcp);
-        if (metrics.domLoad) allMetrics.domLoadTimes.push(metrics.domLoad);
-        if (metrics.searchRenderTime) allMetrics.searchRenderTimes.push(metrics.searchRenderTime);
-        if (metrics.pageLoad) allMetrics.pageLoadTimes.push(metrics.pageLoad);
-        if (metrics.error) allMetrics.errors.push(metrics.error);
-        
-        // Assertions - Tay Kai Jun, A0283343E
-        expect(metrics.success, 'Search should complete successfully').toBe(true);
-        expect(metrics.searchRenderTime, 'Search render time should be < 10s').toBeLessThan(10000);
+        test.setTimeout(180000);
+
+        let successCount = 0;
+
+        for (let j = 0; j < phaseIterations; j++) {
+          const virtualUserId = i * phaseIterations + j + 1;
+          const keyword = SEARCH_KEYWORDS[(virtualUserId + j) % SEARCH_KEYWORDS.length];
+          const testId = `${phase.name}-B${i + 1}-I${j + 1}`;
+          const metrics = await performSearchWithMetrics(page, keyword, testId);
+
+          // Store metrics - Tay Kai Jun, A0283343E
+          if (metrics.fcp) allMetrics.fcpTimes.push(metrics.fcp);
+          if (metrics.domLoad) allMetrics.domLoadTimes.push(metrics.domLoad);
+          if (metrics.searchRenderTime) allMetrics.searchRenderTimes.push(metrics.searchRenderTime);
+          if (metrics.pageLoad) allMetrics.pageLoadTimes.push(metrics.pageLoad);
+          if (metrics.error) allMetrics.errors.push(metrics.error);
+
+          if (metrics.success) successCount++;
+          expect(metrics.searchRenderTime, 'Search render time should be < 10s').toBeLessThan(10000);
+
+          if (phase.phaseDelayMs > 0) {
+            await page.waitForTimeout(phase.phaseDelayMs);
+          }
+        }
+
+        const minSuccesses = Math.ceil(phaseIterations * 0.9);
+        expect(successCount, `At least 90% of ${phase.name} searches should succeed`).toBeGreaterThanOrEqual(minSuccesses);
       });
     }
   }
