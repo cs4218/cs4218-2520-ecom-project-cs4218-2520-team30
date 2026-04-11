@@ -1,31 +1,4 @@
-/**
- * K6 Spike Test - Login API (Flash Sale Scenario)
- * 
- * Author: Tay Kai Jun, A0283343E
- * Module: CS4218 Software Testing - Milestone 3
- * Test Type: Spike Testing (Non-Functional Testing)
- * 
- * Purpose:
- * Simulate a "Flash Sale" login spike where thousands of users try to 
- * authenticate simultaneously. Tests if Node.js server and MongoDB 
- * connection pool can handle extreme authentication load.
- * 
- * Scenario:
- * - Warm-up at low traffic
- * - First spike to 200 VUs
- * - Cool-down and second spike to 300 VUs
- * - Third spike to 400 VUs (higher than previous peak)
- * - Stepped ramp-down (400 -> 300 -> 200)
- * - Post-spike steady hold at 50 VUs
- * 
- * Usage:
- *   k6 run tests/nft/spike/spike-login-k6.js
- *   k6 run --env BASE_URL=http://localhost:6060 tests/nft/spike/spike-login-k6.js
- * 
- * Prerequisites:
- *   - Server must be running on the specified port
- *   - Test will create temporary test users in setup phase
- */
+
 
 // Tay Kai Jun, A0283343E
 import http from 'k6/http';

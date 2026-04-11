@@ -155,7 +155,10 @@ test.describe('Frontend Search Multi-Peak Spike Test (Peak: 300 Logical VUs)', (
           if (metrics.error) allMetrics.errors.push(metrics.error);
 
           if (metrics.success) successCount++;
-          expect(metrics.searchRenderTime, 'Search render time should be < 10s').toBeLessThan(10000);
+          if (metrics.success) {
+            expect(metrics.searchRenderTime, 'Search render time should be recorded for successful searches').not.toBeNull();
+            expect(metrics.searchRenderTime, 'Search render time should be < 10s').toBeLessThan(10000);
+          }
 
           if (phase.phaseDelayMs > 0) {
             await page.waitForTimeout(phase.phaseDelayMs);

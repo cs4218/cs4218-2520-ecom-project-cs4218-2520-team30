@@ -1,35 +1,4 @@
-/**
- * Spike Test for Search API - Frontend Search Rendering Performance
- * 
- * Author: Tay Kai Jun, A0283343E
- * Module: CS4218 Software Testing - Milestone 3
- * Test Type: Spike Testing (Non-Functional Testing)
- * 
- * Purpose:
- * This spike test simulates a sudden surge of users performing search operations
- * to measure the system's ability to handle rapid traffic increases and identify
- * performance bottlenecks in the search functionality.
- * 
- * Spike Pattern:
- * - Warm-up at low traffic
- * - First spike to 300 VUs
- * - Cool-down and second spike to 400 VUs
- * - Third spike to 500 VUs (higher than previous peak)
- * - Stepped ramp-down (500 -> 350 -> 200)
- * - Maintains at 50 VUs post-spike
- * 
- * Metrics Measured:
- * - Response time (p90, p95, p99, avg, min, max, med)
- * - Request throughput (requests per second)
- * - Error rate during spike
- * - Data transfer (bytes sent/received)
- * - Connection time, TLS handshake time, waiting time
- * - Recovery time after spike
- * 
- * Usage:
- *   k6 run tests/nft/spike/spike-search-k6.js
- *   k6 run --env BASE_URL=http://localhost:6060 tests/nft/spike/spike-search-k6.js
- */
+
 
 // Tay Kai Jun, A0283343E
 import http from 'k6/http';
