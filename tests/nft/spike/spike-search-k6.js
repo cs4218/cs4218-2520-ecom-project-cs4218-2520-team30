@@ -27,8 +27,8 @@
  * - Recovery time after spike
  * 
  * Usage:
- *   k6 run tests/nft/spike-search-k6.js
- *   k6 run --env BASE_URL=http://localhost:6060 tests/nft/spike-search-k6.js
+ *   k6 run tests/nft/spike/spike-search-k6.js
+ *   k6 run --env BASE_URL=http://localhost:6060 tests/nft/spike/spike-search-k6.js
  */
 
 // Tay Kai Jun, A0283343E
@@ -329,7 +329,7 @@ export function handleSummary(data) {
   
   return {
     'stdout': textSummary(data, { indent: ' ', enableColors: true }),
-    'tests/nft/spike-search-results.json': JSON.stringify(summary, null, 2),
+    'tests/nft/spike/spike-search-results.json': JSON.stringify(summary, null, 2),
   };
 }
 

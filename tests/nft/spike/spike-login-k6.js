@@ -19,8 +19,8 @@
  * - Post-spike steady hold at 50 VUs
  * 
  * Usage:
- *   k6 run tests/nft/spike-login-k6.js
- *   k6 run --env BASE_URL=http://localhost:6060 tests/nft/spike-login-k6.js
+ *   k6 run tests/nft/spike/spike-login-k6.js
+ *   k6 run --env BASE_URL=http://localhost:6060 tests/nft/spike/spike-login-k6.js
  * 
  * Prerequisites:
  *   - Server must be running on the specified port
@@ -360,7 +360,7 @@ export function handleSummary(data) {
   
   return {
     'stdout': textSummary(data),
-    'tests/nft/spike-login-results.json': JSON.stringify(summary, null, 2),
+    'tests/nft/spike/spike-login-results.json': JSON.stringify(summary, null, 2),
   };
 }
 

@@ -93,11 +93,11 @@
 ### Tay Kai Jun (A0283343E)
 
 **Non-Functional Testing: Spike Testing (Grafana k6)**
-- **Search API Spike Test**: `tests/nft/spike-search-k6.js`. Simulates sudden traffic spikes (2→100→2 VUs) to evaluate search API latency, throughput, and error behavior under peak load.
-- **Login API Flash-Sale Spike Test**: `tests/nft/spike-login-k6.js`. Simulates a flash-sale authentication surge (0→200→0 VUs) to assess login stability, token issuance rate, and recovery after extreme load.
+- **Search API Spike Test**: `tests/nft/spike/spike-search-k6.js`. Simulates sudden traffic spikes (2→100→2 VUs) to evaluate search API latency, throughput, and error behavior under peak load.
+- **Login API Flash-Sale Spike Test**: `tests/nft/spike/spike-login-k6.js`. Simulates a flash-sale authentication surge (0→200→0 VUs) to assess login stability, token issuance rate, and recovery after extreme load.
 
 **Non-Functional Testing: Frontend Spike Testing (Playwright)**
-- **Search Rendering Spike Test**: `tests/nft/spike-search-frontend.spec.js`. Simulates concurrent browser-driven searches and rapid typing to measure frontend rendering performance (FCP, DOM timing, search render time) and UI responsiveness.
+- **Search Rendering Spike Test**: `tests/nft/spike/spike-search-frontend.spec.js`. Simulates concurrent browser-driven searches and rapid typing to measure frontend rendering performance (FCP, DOM timing, search render time) and UI responsiveness.
 
 ### Lum Yi Ren Johannsen
 

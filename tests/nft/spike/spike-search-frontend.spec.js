@@ -22,7 +22,7 @@
  *      npm run test:spike-frontend
  * 
  *   3. View report:
- *      Open tests/nft/spike-report/index.html
+ *      Open tests/nft/spike/spike-report/index.html
  * 
  * Note: This tests FRONTEND rendering performance, not backend API.
  */
