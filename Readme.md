@@ -172,6 +172,17 @@
 - `tests/stress/login.js`
 - `tests/stress/view-products.js`
 
+### Basil Boh (A0273232M)
+
+**Volume Testing (Grafana k6)**
+
+- **End-to-End User Scenarios**: Developed comprehensive volume tests under `tests/volume/scenarios/`, including `auth-flow.js`, `browse-catalog.js`, `mixed-workload.js`, `order-history.js`, and `search-products.js` to benchmark database lookup, document retrieval, and response size during scale.
+- **Actionable HTML Reporting**: Authored `tests/volume/summaryHtml.js` with structured HTML template generation to provide immediate visual feedback on pass/fail threshold metrics for the CI/CD pipeline runs. 
+- **Data Initialization & Bash Tooling**: Configured test infrastructure with `tests/volume/seed-data.js` and automated script execution wrapper `tests/volume/run-volume-tests.sh`.
+- **Test Configuration & Parameterization**: Established dynamic load profiles and environmental configurations in `tests/volume/config.js` to allow flexible scaling of Virtual Users (VUs) and test durations across environments.
+- **Shared Test Utilities**: Implemented robust helper functions in `tests/volume/helpers.js` for token lifecycle management, randomized data selection, and standardized assertions to maintain DRY principles across scenario files.
+- **Automated Artifact Management**: Configured structured result directories (`tests/volume/results/`) for archiving raw performance metrics to facilitate historical telemetry comparison across test iterations.
+
 ## 1. Project Introduction
 
 Virtual Vault is a full-stack MERN (MongoDB, Express.js, React.js, Node.js) e-commerce website, offering seamless connectivity and user-friendly features. The platform provides a robust framework for online shopping. The website is designed to adapt to evolving business needs and can be efficiently extended.
