@@ -263,6 +263,53 @@ To begin unit testing with Jest in your project, follow these steps:
      ```
 
    - **All the tests**
-     ```bash
-     npm run test
-     ```
+      ```bash
+      npm run test
+      ```
+
+## 6. Load Testing with k6
+
+k6 is used for load testing to assess the performance and scalability of the e-commerce platform under various traffic conditions.
+
+### Running Load Tests
+
+1. **Using Docker Compose**
+
+   Run the load test with JSON summary output:
+
+   ```bash
+   docker-compose -f docker-compose.k6.yml --profile loadtest up --exit-code-from k6 k6
+   ```
+
+2. **Using k6 Directly**
+
+   Install k6 or use Docker to run load tests:
+
+   ```bash
+   # Using Docker
+   docker run --rm -v $(pwd)/k6:/scripts grafana/k6:0.55.0 run \
+     --summary-export /scripts/summary.json \
+     /scripts/mixed-flows.js
+
+   # With custom config
+   docker run --rm -v $(pwd)/k6:/scripts grafana/k6:0.55.0 run \
+     --summary-export /scripts/summary.json \
+     --config /scripts/config.ecom-realistic.json \
+     /scripts/mixed-flows.js
+   ```
+
+3. **Available Scripts**
+
+   - `mixed-flows.js` - Mixed anonymous and authenticated user flows
+   - `anonymous-browsing.js` - Anonymous browsing scenarios
+   - `auth-user-flows.js` - Authenticated user scenarios
+
+4. **Config Files**
+
+   - `config.ecom-realistic.json` - Realistic load profile
+   - `config.ecom-very-high-load.json` - Very high load profile
+
+5. **Output**
+
+   - Summary exported to `k6/summary.json`
+   - Full results in `k6-results/` directory when using Docker Compose
