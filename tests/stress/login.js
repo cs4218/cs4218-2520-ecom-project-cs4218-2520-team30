@@ -28,16 +28,12 @@ export const options = {
     },
 };
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
 function jsonHeaders(token = null) {
     const headers = { "Content-Type": "application/json" };
     if (token) headers["Authorization"] = `Bearer ${token}`;
     return { headers };
 }
 
-// ─── Test Scenarios ───────────────────────────────────────────────────────────
-
-/** 1. Login — returns auth token or null on failure */
 function testLogin() {
     let token = null;
 
