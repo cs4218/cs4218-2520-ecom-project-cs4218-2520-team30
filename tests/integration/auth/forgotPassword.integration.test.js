@@ -4,6 +4,7 @@
  */
 
 import { jest, describe, beforeAll, afterAll, afterEach, it, expect } from "@jest/globals";
+import http from "http";
 import mongoose from "mongoose";
 import { MongoMemoryServer } from "mongodb-memory-server";
 import userModel from "../../../models/userModel.js";
@@ -33,6 +34,7 @@ const createFakeResponse = () => {
   res.status = jest.fn().mockReturnValue(res);
   res.send = jest.fn().mockReturnValue(res);
   res.json = jest.fn().mockReturnValue(res);
+  res.set = jest.fn().mockReturnValue(res);
   return res;
 };
 
@@ -71,7 +73,6 @@ const seedUser = async (overrides = {}) => {
  */
 const makeRequest = (baseUrl, method, path, body) => {
   return new Promise((resolve, reject) => {
-    const http = require("http");
     const data = JSON.stringify(body);
 
     const options = {

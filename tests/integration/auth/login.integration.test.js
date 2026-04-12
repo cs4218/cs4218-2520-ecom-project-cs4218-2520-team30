@@ -8,6 +8,7 @@ import { jest, describe, beforeAll, afterAll, afterEach, it, expect } from "@jes
 import mongoose from "mongoose";
 import { MongoMemoryServer } from "mongodb-memory-server";
 import JWT from "jsonwebtoken";
+import http from "http";
 import userModel from "../../../models/userModel.js";
 import { hashPassword, comparePassword } from "../../../helpers/authHelper.js";
 import { loginController } from "../../../controllers/authController.js";
@@ -38,6 +39,7 @@ const createFakeResponse = () => {
   res.status = jest.fn().mockReturnValue(res);
   res.send = jest.fn().mockReturnValue(res);
   res.json = jest.fn().mockReturnValue(res);
+  res.set = jest.fn().mockReturnValue(res);
   return res;
 };
 
@@ -77,7 +79,6 @@ const seedUser = async (overrides = {}) => {
  */
 const makeRequest = (baseUrl, method, path, body) => {
   return new Promise((resolve, reject) => {
-    const http = require("http");
     const data = JSON.stringify(body);
 
     const options = {

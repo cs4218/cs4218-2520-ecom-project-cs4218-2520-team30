@@ -1,0 +1,67 @@
+{
+  "run_summary": {
+    "total_tests": 147,
+    "passed": 143,
+    "failed": 3,
+    "skipped": 1,
+    "duration_ms": 18432,
+    "overall_health": "degraded",
+    "health_reason": "3 tests failing; 1 brittle test with hard-coded ID detected in product suite"
+  },
+  "failed_tests": [
+    {
+      "name": "categoryController > should return 500 if database throws",
+      "suite": "controllers/categoryController.test.js",
+      "failure_type": "assertion_error",
+      "error_message": "Expected: 500, Received: 200",
+      "fix_hint": "Mock mongoose to throw before calling the controller; ensure error handler returns 500 not 200"
+    },
+    {
+      "name": "authController > should reject login with invalid password",
+      "suite": "controllers/authController.test.js",
+      "failure_type": "timeout",
+      "error_message": "Exceeded timeout of 5000ms for a test. Use jest.setTimeout(n) to increase timeout",
+      "fix_hint": "Mock bcrypt.compare to resolve immediately instead of actually hashing; bcrypt is slow in tests"
+    },
+    {
+      "name": "Admin Orders > should display all orders in table",
+      "suite": "tests/admin-management.ui.spec.js",
+      "failure_type": "unexpected_exception",
+      "error_message": "page.waitForSelector: Timeout 30000ms exceeded",
+      "fix_hint": "Check that the admin orders route is accessible before waiting for the table selector"
+    }
+  ],
+  "brittle_tests": [
+    {
+      "name": "productController > should fetch product by id",
+      "suite": "controllers/productController.test.js",
+      "reason": "Hard-coded ID '64f1a2b3c4d5e6f7a8b9c0d1' in assertion — breaks across MongoDB instances",
+      "recommendation": "Use a dynamically generated ObjectId from the test setup instead of hard-coding the value"
+    },
+    {
+      "name": "authController > should register user",
+      "suite": "controllers/authController.test.js",
+      "reason": "Assertion on exact error message string 'Email is already taken' — fragile if message changes",
+      "recommendation": "Assert on status code only, or use expect.stringContaining() for partial message matching"
+    }
+  ],
+  "anti_patterns": [
+    {
+      "suite": "middlewares/authMiddleware.test.js",
+      "pattern": "Single-test suite",
+      "details": "Suite has only 1 test — likely incomplete coverage for auth middleware edge cases"
+    }
+  ],
+  "flaky_tests": [],
+  "suggested_new_test": {
+    "test_name": "categoryController > should return 400 when category name is empty string",
+    "target_suite": "controllers/categoryController.test.js",
+    "what_to_assert": "POST /api/v1/category/create with empty name body returns 400 status and validation error message",
+    "rationale": "Current suite only tests missing name; empty string is a distinct boundary case"
+  },
+  "top_priority_fixes": [
+    "Fix categoryController test mock — ensure error handler path returns 500 not 200 (line ~45 in categoryController.test.js)",
+    "Replace hard-coded MongoDB ObjectId in productController test with dynamic test fixture ID",
+    "Mock bcrypt.compare in authController tests to prevent timeout on slow hash operations"
+  ]
+}

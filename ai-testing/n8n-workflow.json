@@ -1,0 +1,503 @@
+{
+  "name": "CS4218 AI Test Result Analyser (With Memory)",
+  "nodes": [
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.github.com/repos/{{ $json.repo }}/issues/{{ $json.pr_number }}/comments",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/vnd.github+json"
+            },
+            {
+              "name": "X-GitHub-Api-Version",
+              "value": "2022-11-28"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ body: $json.pr_comment }) }}",
+        "options": {}
+      },
+      "id": "aa72cf50-5fd0-488c-9349-e706c0207229",
+      "name": "Post GitHub PR Comment",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        -4192,
+        -368
+      ],
+      "credentials": {
+        "githubApi": {
+          "id": "rEnPOIcNesTwvH1Y",
+          "name": "GitHub account"
+        },
+        "httpBearerAuth": {
+          "id": "96qyhGtzOH5UdZtS",
+          "name": "Github Org Pat"
+        }
+      },
+      "notes": "Uses your personal PAT — permanent, never expires. Replace YOUR_PAT_HERE with your github_pat_... token."
+    },
+    {
+      "parameters": {
+        "jsCode": "// NODE B — Attach history to webhook data\n// This merges the Google Sheets history with the incoming webhook payload\n// so Build Claude Payload can pass BOTH to Claude in one call.\n\nconst webhookBody = $('GitHub CI Webhook').first().json.body;\n\n// Read last 5 runs from Sheets (slice(-5) = most recent 5 rows)\nlet history = [];\ntry {\n  const rows = $('Get row(s) in sheet').all();\n  if (rows.length > 0 && rows[0].json.Failed_Tests !== undefined) {\n    history = rows\n      .slice(-5)\n      .map(r => ({\n        date: r.json.Date,\n        branch: r.json.Branch,\n        failed: r.json.Failed_Tests\n          ? r.json.Failed_Tests.split(',').map(s => s.trim()).filter(Boolean)\n          : []\n      }));\n  }\n} catch(e) {\n  // If sheet is empty or unreadable, just use empty history — don't crash\n  history = [];\n}\n\n// Return webhook data WITH history attached\nreturn [{ json: { ...webhookBody, history } }];"
+      },
+      "id": "40af37bf-ee16-4ee3-9cb1-37f5e63d404c",
+      "name": "Merge History1",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -5312,
+        -336
+      ],
+      "notes": "NODE B — Attaches Google Sheets history to the webhook payload. Build Claude Payload reads from this node."
+    },
+    {
+      "parameters": {
+        "jsCode": "// NODE C — Extract failed test names cleanly for logging to Sheets\n// Runs after Format PR Comment, feeds into Append Row to Sheets\n\nconst analysis = $('Format PR Comment').first().json.analysis;\nconst webhookBody = $('Format PR Comment').first().json;\n\n// Get unique failed test names as a comma-separated string\nconst failedNames = (analysis.failed_tests || [])\n  .map(t => t.name)\n  .filter((v, i, a) => a.indexOf(v) === i)  // remove duplicates\n  .join(', ');\n\n// Get flaky test names detected this run\nconst flakyNames = (analysis.flaky_tests || [])\n  .map(t => t.name)\n  .join(', ');\n\nreturn [{\n  json: {\n    Date: new Date().toLocaleString('en-SG', { timeZone: 'Asia/Singapore' }),\n    Branch: webhookBody.branch || '',\n    Run_ID: webhookBody.run_id || '',\n    Health: analysis.run_summary.overall_health,\n    Total: analysis.run_summary.total_tests,\n    Passed: analysis.run_summary.passed,\n    Failed: analysis.run_summary.failed,\n    Failed_Tests: failedNames,\n    Flaky_Tests: flakyNames\n  }\n}];"
+      },
+      "id": "8bb975c1-7fdd-4685-9a5f-2e9b5c06ce2b",
+      "name": "Extract Failed Names1",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -4416,
+        -176
+      ],
+      "notes": "NODE C — Prepares a clean row to write to Google Sheets. Runs in parallel with Post GitHub PR Comment."
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1cNxHVam74Ms5LXbS7xcuzWXfRap1SFBrxtOlfqqBICw",
+          "mode": "list",
+          "cachedResultName": "CS4218_Test_History",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1cNxHVam74Ms5LXbS7xcuzWXfRap1SFBrxtOlfqqBICw/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Sheet1",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Date": "={{ $json.Date }}",
+            "Branch": "={{ $json.Branch }}",
+            "Run_ID": "={{ $json.Run_ID }}",
+            "Health": "={{ $json.Health }}",
+            "Total": "={{ $json.Total }}",
+            "Passed": "={{ $json.Passed }}",
+            "Failed": "={{ $json.Failed }}",
+            "Failed_Tests": "={{ $json.Failed_Tests }}",
+            "Flaky_Tests": "={{ $json.Flaky_Tests }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Branch",
+              "displayName": "Branch",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Run_ID",
+              "displayName": "Run_ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Health",
+              "displayName": "Health",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Total",
+              "displayName": "Total",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Passed",
+              "displayName": "Passed",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Failed",
+              "displayName": "Failed",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Failed_Tests",
+              "displayName": "Failed_Tests",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Flaky_Tests",
+              "displayName": "Flaky_Tests",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "9717b2ec-f7ba-4ab9-8a5f-78293612d767",
+      "name": "Append Row to Sheets1",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.4,
+      "position": [
+        -4192,
+        -176
+      ],
+      "credentials": {
+        "googleApi": {
+          "id": "KV4njpX0HbErkv5c",
+          "name": "Google Sheets account"
+        }
+      },
+      "notes": "NODE D — Writes this run's results to Google Sheets so future runs can use it as history for flaky detection."
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "cs4218-test-results",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "4613d8e0-7433-4a9e-985c-50b6cb9f1bd6",
+      "name": "GitHub CI Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -5760,
+        -336
+      ],
+      "webhookId": "cs4218-test-results",
+      "notes": "Receives test results from GitHub Actions CI. Entry point of the workflow."
+    },
+    {
+      "parameters": {
+        "jsCode": "// Build Claude API request body — TRIMMED to avoid rate limits\n// Now reads from 'Merge History' instead of directly from webhook\nconst webhookBody = $input.first().json;\nconst testResults = webhookBody.test_results || [];\nconst history = webhookBody.history || [];\n\n// Trim: full detail for failed/skipped, name+suite only for passed\nconst trimmed = testResults.map(suite => {\n  const failed = (suite.tests || []).filter(t => t.status !== 'passed');\n  const passed = (suite.tests || []).filter(t => t.status === 'passed');\n  return {\n    source: suite.source,\n    summary: suite.summary,\n    failed_tests: failed,\n    passed_sample: passed.slice(0, 10).map(t => ({ name: t.name, suite: t.suite })),\n    total_passed_not_shown: Math.max(0, passed.length - 10)\n  };\n});\n\n// Detect if playwright data is present\nconst hasPW = testResults.some(r => r.source === 'playwright');\n\nconst systemPrompt = `You are a senior software testing analyst specialising in Jest and Playwright test suites. Return ONLY valid JSON matching the schema below — no markdown, no preamble, no explanation outside the JSON.\n\nSchema:\n{\"run_summary\":{\"total_tests\":0,\"passed\":0,\"failed\":0,\"skipped\":0,\"overall_health\":\"healthy|degraded|critical\",\"health_reason\":\"string\",\"suites\":{\"backend\":{\"total\":0,\"passed\":0,\"failed\":0},\"frontend\":{\"total\":0,\"passed\":0,\"failed\":0},\"integration\":{\"total\":0,\"passed\":0,\"failed\":0},\"playwright\":{\"total\":0,\"passed\":0,\"failed\":0}}},\"failed_tests\":[{\"name\":\"string\",\"suite\":\"string\",\"source\":\"backend|frontend|integration|playwright\",\"failure_type\":\"assertion_error|timeout|selector_not_found|navigation_error|import_error|setup_teardown|unexpected_exception|unknown\",\"error_message\":\"string max 100 chars\",\"fix_hint\":\"string max 150 chars\"}],\"brittle_tests\":[{\"name\":\"string\",\"suite\":\"string\",\"source\":\"string\",\"reason\":\"string\",\"recommendation\":\"string\"}],\"anti_patterns\":[{\"suite\":\"string\",\"source\":\"string\",\"pattern\":\"string\",\"details\":\"string\"}],\"flaky_tests\":[{\"name\":\"string\",\"suite\":\"string\",\"fail_count_last_5\":0,\"recommendation\":\"string\"}],\"suggested_new_test\":{\"test_name\":\"string\",\"target_suite\":\"string\",\"source\":\"string\",\"what_to_assert\":\"string\",\"rationale\":\"string\"},\"top_priority_fixes\":[\"string\"]}\n\nClassification rules:\n- selector_not_found: Playwright test where a UI element could not be located\n- navigation_error: Playwright test where page did not navigate to expected URL\n- timeout: test exceeded time limit (Jest or Playwright)\n- assertion_error: expect() mismatch in Jest\n- import_error: module or dependency failed to load\n- setup_teardown: beforeAll/afterEach/afterAll failure or missing fixture\n- unexpected_exception: unhandled error or crash\n\nBrittle test detection — flag a test if it has ANY of:\n- Hard-coded IDs, timestamps, secrets, or file paths in assertions\n- Only asserts toBeDefined() or toBeTruthy() (vacuous assertions)\n- More than 8 assertions in one test (over-specified)\n- Test name contains: todo, temp, fix, skip, wip\n- Depends on external services (PayPal, Stripe, email) without mocking\n- Implicitly depends on state from a previous test (inter-test coupling)\n\nAnti-pattern detection — flag a suite if it has ANY of:\n- Duplicate test names within the same suite\n- A test name contains \"and\" testing multiple unrelated behaviours\n- Suite has only 1 test (likely incomplete)\n- God test: one test covers more than 3 distinct responsibilities\n\nFlaky test detection:\n- Cross-reference current failed_tests against historical runs\n- Flag as flaky if the same test name appears in failed list across 2 or more of the last 5 runs\n- Set fail_count_last_5 to the exact count found in history\n\nMiscellaneous\n- If a failed test depends on external credentials unavailable in CI \n  (PayPal, Stripe, live APIs), classify fix_hint as: \n  \"Skip conditionally using test.skip() when credentials are absent, \n  or mock via page.route()\"\n- If a failed test depends on non-deterministic data (recommendations, \n  search rankings, dynamic content), classify fix_hint as:\n  \"Use a controlled fixture in beforeAll instead of relying on \n  database state\"\n\nOutput rules:\n- error_message: max 100 chars, write \"No error captured\" if empty — never explain why it is empty here\n- fix_hint: max 150 chars, must be specific and actionable — never generic like \"check your code\"\n- Each brittle_tests entry must have a UNIQUE reason — never repeat the same explanation for two tests\n- top_priority_fixes: exactly 3 items, ordered by severity (most critical first)\n- suggested_new_test: propose the single most impactful missing test based on what failed or was flagged\n- overall_health: healthy = 0 failures, degraded = 1-5 failures or brittle tests found, critical = 6+ failures or import errors\n- Empty arrays for sections with nothing found — never omit any field`;\n\n// Include history so Claude can detect flaky tests\nconst userMessage = `Analyse these test results.\nContext: branch: ${webhookBody.branch}, actor: ${webhookBody.actor}, playwright_present: ${hasPW}\n\nHistorical runs (last ${history.length}) for flaky detection:\n${JSON.stringify(history)}\n\nCurrent run:\n${JSON.stringify(trimmed)}`;\n\nconst claudeBody = {\n  model: 'claude-sonnet-4-6',\n  max_tokens: 2048,\n  system: systemPrompt,\n  messages: [{ role: 'user', content: userMessage }]\n};\n\nreturn [{ json: { claudeBody: JSON.stringify(claudeBody), webhookBody } }];"
+      },
+      "id": "7e79cda7-a4e4-4f4d-a8fd-a8d791d0f177",
+      "name": "Build Claude Payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -5088,
+        -336
+      ],
+      "notes": "Reads from Merge History node now (not directly from webhook). History is passed to Claude so it can detect flaky tests across runs."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.claudeBody }}",
+        "options": {}
+      },
+      "id": "a4d2f861-864f-4122-a7bb-479d1a97beb0",
+      "name": "Call Claude API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        -4864,
+        -336
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "8zARWY4PFSAIuuI1",
+          "name": "Claude"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const claudeResponse = $input.first().json;\nconst rawText = claudeResponse.content[0].text.trim();\nlet analysis;\ntry {\n  const cleaned = rawText.replace(/^```[\\w]*\\n?/, '').replace(/\\n?```$/, '').trim();\n  analysis = JSON.parse(cleaned);\n} catch(e) {\n  throw new Error(`Claude returned invalid JSON: ${rawText.substring(0, 300)}`);\n}\n\nconst s = analysis.run_summary;\nconst webhookBody = $('Build Claude Payload').first().json.webhookBody;\nconst healthEmoji = s.overall_health === 'healthy' ? '✅' : s.overall_health === 'degraded' ? '⚠️' : '🔴';\n\nlet comment = `## ${healthEmoji} AI Test Analysis — ${s.overall_health.toUpperCase()}\\n\\n`;\ncomment += `> ${s.health_reason}\\n\\n`;\n\n// Overall metrics table\ncomment += `| Metric | Value |\\n|--------|-------|\\n`;\ncomment += `| Total Tests | ${s.total_tests} |\\n`;\ncomment += `| ✅ Passed | ${s.passed} |\\n`;\ncomment += `| ❌ Failed | ${s.failed} |\\n`;\ncomment += `| ⏭ Skipped | ${s.skipped || 0} |\\n\\n`;\n\n// Per-suite breakdown (only show suites that have data)\nif (s.suites) {\n  const suiteRows = Object.entries(s.suites)\n    .filter(([_, v]) => v.total > 0)\n    .map(([name, v]) => {\n      const icon = name === 'playwright' ? '🎭' : name === 'backend' ? '⚙️' : name === 'frontend' ? '🖥️' : '🔗';\n      const status = v.failed > 0 ? '❌' : '✅';\n      return `| ${icon} ${name} | ${v.total} | ${v.passed} | ${v.failed} | ${status} |`;\n    });\n  if (suiteRows.length > 0) {\n    comment += `### 📊 Suite Breakdown\\n\\n`;\n    comment += `| Suite | Total | Passed | Failed | Status |\\n`;\n    comment += `|-------|-------|--------|--------|--------|\\n`;\n    comment += suiteRows.join('\\n') + '\\n\\n';\n  }\n}\n\n// Failed tests — split Jest and Playwright\nif (analysis.failed_tests && analysis.failed_tests.length > 0) {\n  const jestFailed = analysis.failed_tests.filter(t => t.source !== 'playwright');\n  const pwFailed = analysis.failed_tests.filter(t => t.source === 'playwright');\n  if (jestFailed.length > 0) {\n    comment += `### ❌ Failed Tests (Jest)\\n\\n`;\n    for (const t of jestFailed) {\n      comment += `**${t.name}** (\\`${t.suite}\\`)\\n`;\n      comment += `- Type: \\`${t.failure_type}\\` | Error: ${t.error_message}\\n`;\n      comment += `- 💡 ${t.fix_hint}\\n\\n`;\n    }\n  }\n  if (pwFailed.length > 0) {\n    comment += `### 🎭 Failed Tests (Playwright UI)\\n\\n`;\n    for (const t of pwFailed) {\n      comment += `**${t.name}** (\\`${t.suite}\\`)\\n`;\n      comment += `- Type: \\`${t.failure_type}\\` | Error: ${t.error_message}\\n`;\n      comment += `- 💡 ${t.fix_hint}\\n\\n`;\n    }\n  }\n}\n\n// Flaky tests — NEW section powered by memory\nif (analysis.flaky_tests && analysis.flaky_tests.length > 0) {\n  comment += `### 🎲 Flaky Tests (detected across runs)\\n\\n`;\n  for (const t of analysis.flaky_tests) {\n    comment += `- **${t.name}** — failed ${t.fail_count_last_5}/5 recent runs. ${t.recommendation}\\n`;\n  }\n  comment += '\\n';\n}\n\n// Brittle tests\nif (analysis.brittle_tests && analysis.brittle_tests.length > 0) {\n  comment += `### ⚠️ Brittle Tests\\n\\n`;\n  for (const t of analysis.brittle_tests) {\n    const src = t.source ? ` · ${t.source}` : '';\n    comment += `- **${t.name}**${src} — ${t.reason}\\n`;\n  }\n  comment += '\\n';\n}\n\n// Top priority fixes\nif (analysis.top_priority_fixes && analysis.top_priority_fixes.length > 0) {\n  comment += `### 🎯 Top Priority Fixes\\n\\n`;\n  analysis.top_priority_fixes.forEach((fix, i) => { comment += `${i+1}. ${fix}\\n`; });\n  comment += '\\n';\n}\n\n// Suggested new test\nif (analysis.suggested_new_test && analysis.suggested_new_test.test_name) {\n  const sug = analysis.suggested_new_test;\n  const srcLabel = sug.source ? ` (${sug.source})` : '';\n  comment += `### 💡 Suggested New Test${srcLabel}\\n`;\n  comment += `**${sug.test_name}** — ${sug.what_to_assert}\\n\\n`;\n}\n\ncomment += `---\\n*Powered by Claude AI · [View CI run](https://github.com/${webhookBody.repo}/actions/runs/${webhookBody.run_id})*`;\n\nreturn [{\n  json: {\n    ...webhookBody,\n    analysis,\n    pr_comment: comment,\n    has_pr: !!(webhookBody.pr_number && webhookBody.pr_number !== '' && webhookBody.pr_number !== 'undefined')\n  }\n}];"
+      },
+      "id": "935916a5-b93f-4dcb-8bcf-c80db8342495",
+      "name": "Format PR Comment",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -4640,
+        -336
+      ],
+      "notes": "Now includes a Flaky Tests section that only appears when memory has detected repeated failures."
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "has-pr",
+              "leftValue": "={{ $json.has_pr }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "cdeae295-7793-4e4e-8935-1923add8963c",
+      "name": "Is this a PR?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -4416,
+        -432
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ status: 'analysis_complete', health: $('Format PR Comment').first().json.analysis.run_summary.overall_health, pr_comment: $('Format PR Comment').first().json.pr_comment }) }}",
+        "options": {}
+      },
+      "id": "8f6360a3-ca19-49b7-a9b5-56dd9d87a0fa",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        -3968,
+        -432
+      ]
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "documentId": {
+          "__rl": true,
+          "value": "1cNxHVam74Ms5LXbS7xcuzWXfRap1SFBrxtOlfqqBICw",
+          "mode": "list",
+          "cachedResultName": "CS4218_Test_History",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1cNxHVam74Ms5LXbS7xcuzWXfRap1SFBrxtOlfqqBICw/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1cNxHVam74Ms5LXbS7xcuzWXfRap1SFBrxtOlfqqBICw/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -5536,
+        -336
+      ],
+      "id": "07708192-f2e0-4779-8469-c5f0e0f573d4",
+      "name": "Get row(s) in sheet",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleApi": {
+          "id": "KV4njpX0HbErkv5c",
+          "name": "Google Sheets account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Post GitHub PR Comment": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge History1": {
+      "main": [
+        [
+          {
+            "node": "Build Claude Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Failed Names1": {
+      "main": [
+        [
+          {
+            "node": "Append Row to Sheets1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GitHub CI Webhook": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Claude Payload": {
+      "main": [
+        [
+          {
+            "node": "Call Claude API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call Claude API": {
+      "main": [
+        [
+          {
+            "node": "Format PR Comment",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format PR Comment": {
+      "main": [
+        [
+          {
+            "node": "Is this a PR?",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Extract Failed Names1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is this a PR?": {
+      "main": [
+        [
+          {
+            "node": "Post GitHub PR Comment",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "Merge History1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "3bb47614-14b1-4f62-af39-c19d938fbf2d",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "11a0b8a4bdede886f10ea36d82ba980f770eec752f5d7c963e22d60bffcf4e36"
+  },
+  "id": "bBjMxkl7LKjvYcw0",
+  "tags": []
+}
