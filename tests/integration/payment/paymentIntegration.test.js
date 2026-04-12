@@ -57,12 +57,6 @@ const createFakeResponse = () => {
   return res;
 };
 
-/** Wait for async order.save() (controller does not await) */
-const flushAsyncWork = async () => {
-  await new Promise((resolve) => setImmediate(resolve));
-  await new Promise((resolve) => setImmediate(resolve));
-};
-
 const waitForOrderByBuyer = async (buyerId, { timeoutMs = 5000 } = {}) => {
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
@@ -94,7 +88,7 @@ describe("brainTreePaymentController (integration)", () => {
 
     // ACT
     await brainTreePaymentController(req, res);
-    await flushAsyncWork();
+
 
     // ASSERT
     expect(mockSale).toHaveBeenCalledWith(
@@ -134,7 +128,7 @@ describe("brainTreePaymentController (integration)", () => {
 
     // ACT
     await brainTreePaymentController(req, res);
-    await flushAsyncWork();
+
 
     // ASSERT
     expect(res.status).toHaveBeenCalledWith(500);
