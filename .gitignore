@@ -12,3 +12,4 @@ coverage/
 **/lcov-report/
 .nvmrc
 .playwright_mongo_uri
+k6-results/output.json
