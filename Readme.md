@@ -246,3 +246,65 @@ To begin unit testing with Jest in your project, follow these steps:
      ```bash
      npm run test
      ```
+
+## 6. AI-Driven Testing Usage
+
+This repository includes an AI-driven test analysis pipeline in [`ai-testing/`](./ai-testing) that is designed to work with CI and post a summary directly onto the pull request.
+
+### CI flow
+
+The intended MS3 workflow is:
+
+1. GitHub Actions runs the Jest and Playwright suites for a push or pull request.
+2. Test results are saved as JSON artifacts.
+3. GitHub Actions sends a webhook payload to the n8n workflow with the run metadata and parsed test results.
+4. The n8n workflow trims the payload, attaches recent failure history, and sends it to Claude for analysis.
+5. n8n formats the returned analysis into a human-readable PR summary.
+6. If the run belongs to a pull request, n8n posts the summary as a PR comment through the GitHub Issues Comments API.
+
+### What gets posted to the PR
+
+When `pr_number` is present in the webhook payload, the workflow generates a PR comment containing:
+
+- overall health status for the run
+- passed, failed, and skipped counts
+- per-suite breakdown for backend, frontend, integration, and Playwright UI tests
+- failed test classifications with short fix hints
+- flaky test warnings based on recent runs
+- brittle test warnings
+- top priority fixes
+- one suggested missing test
+- a link back to the originating GitHub Actions run
+
+If the workflow is triggered for a branch build without an associated pull request, it still completes the analysis but skips the PR comment step.
+
+### CI components in this repo
+
+- `ai-testing/n8n-workflow.json`: importable n8n workflow for receiving CI webhook data, calling Claude, formatting the summary, and posting the PR comment
+- `ai-testing/system_prompt.txt`: the analysis instructions used by the local Python analyser
+- `ai-testing/analyse_results.py`: local analyser used for manual runs and development
+- `playwright.config.mjs`: writes Playwright JSON results to `playwright-report/results.json`
+
+### History and flaky test detection
+
+The CI workflow keeps short-term memory of earlier failures so it can flag tests that keep reappearing across recent runs. In the exported n8n workflow, this history is stored in Google Sheets and merged into the Claude request before the PR comment is generated.
+
+### Local usage
+
+The repository also keeps a local analyser for manual inspection outside CI.
+
+1. Install the Python dependency:
+
+   ```bash
+   pip install anthropic
+   ```
+
+2. Set `ANTHROPIC_API_KEY` in your environment or project `.env`.
+
+3. Generate Jest and Playwright JSON outputs, then run:
+
+   ```bash
+   python ai-testing/analyse_results.py
+   ```
+
+This local script is useful for debugging the analysis prompt or validating the output format before wiring it into CI, but the main MS3 usage is the automated PR-comment flow above.
