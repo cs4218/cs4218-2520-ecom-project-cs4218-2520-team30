@@ -251,15 +251,29 @@ To begin unit testing with Jest in your project, follow these steps:
 
 k6 is used for load testing to assess the performance and scalability of the e-commerce platform under various traffic conditions.
 
+This load-testing contribution was implemented by **Alek Kwek, A0273471A**.
+
+### Load Testing Changes Added
+
+- Added dedicated `k6` scenarios for anonymous browsing, authenticated user flows, admin flows, and a mixed end-to-end workload.
+- Added shared helpers in `k6/helpers.js` for request headers, response checks, token login, seeded-product selection, and unique test-user generation.
+- Added external load profiles in `k6/config.ecom-realistic.json` and `k6/config.ecom-very-high-load.json` so `mixed-flows.js` can be reused for baseline and higher-load runs.
+- Added a Docker-based load-testing setup with `Dockerfile.k6` and `docker-compose.k6.yml` to run the backend, MongoDB, admin seeding, and k6 in one isolated workflow.
+- Added result export support for JSON summaries and raw output files to make it easier to capture evidence for performance reporting.
+
 ### Running Load Tests
 
 1. **Using Docker Compose**
 
-   Run the load test with JSON summary output:
+   Copy the Docker env file, then build and run the load test stack:
 
    ```bash
-   docker-compose -f docker-compose.k6.yml --profile loadtest up --exit-code-from k6 k6
+   cp .env.docker.example .env.docker
+   docker compose --env-file .env.docker -f docker-compose.k6.yml build k6
+   docker compose --env-file .env.docker -f docker-compose.k6.yml --profile loadtest up --exit-code-from k6 k6
    ```
+
+   If any file inside `k6/` changes, rebuild the `k6` image before running again so the container picks up the latest scripts.
 
 2. **Using k6 Directly**
 
@@ -280,16 +294,21 @@ k6 is used for load testing to assess the performance and scalability of the e-c
 
 3. **Available Scripts**
 
-   - `mixed-flows.js` - Mixed anonymous and authenticated user flows
+   - `mixed-flows.js` - Main reporting scenario with sustained baseline and peak-load stages
    - `anonymous-browsing.js` - Anonymous browsing scenarios
    - `auth-user-flows.js` - Authenticated user scenarios
+   - `admin-flows.js` - Admin authentication, order, and category-management scenarios
 
 4. **Config Files**
 
-   - `config.ecom-realistic.json` - Realistic load profile
-   - `config.ecom-very-high-load.json` - Very high load profile
+   - `config.ecom-realistic.json` - Business-hours baseline profile
+   - `config.ecom-very-high-load.json` - Higher-load profile for peak probing
 
 5. **Output**
 
    - Summary exported to `k6/summary.json`
    - Full results in `k6-results/` directory when using Docker Compose
+
+6. **Additional Documentation**
+
+   - See `k6/README.md` for script coverage, thresholds, Docker usage, and workload notes.
