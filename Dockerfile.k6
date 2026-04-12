@@ -1,3 +1,4 @@
+# Alek Kwek, A0273471A
 FROM grafana/k6:0.55.0
 
 WORKDIR /scripts
