@@ -193,13 +193,18 @@ describe("Phase 2 [Middle]: brainTreePaymentController + orderModel + mocked Bra
     const res = createFakeResponse();
 
     await brainTreePaymentController(req, res);
-    await new Promise((r) => setImmediate(r));
-    await new Promise((r) => setImmediate(r));
 
     expect(mockSale).toHaveBeenCalled();
-    expect(res.json).toHaveBeenCalledWith({ ok: true });
 
-    const orders = await orderModel.find({ buyer: buyer._id });
+    // Wait for the async callback's await .save() to complete
+    const deadline = Date.now() + 5000;
+    let orders = [];
+    while (Date.now() < deadline) {
+      orders = await orderModel.find({ buyer: buyer._id });
+      if (orders.length > 0) break;
+      await new Promise((r) => setTimeout(r, 50));
+    }
+    expect(res.json).toHaveBeenCalledWith({ ok: true });
     expect(orders).toHaveLength(1);
     expect(orders[0].products).toHaveLength(1);
     expect(orders[0].payment.success).toBe(true);

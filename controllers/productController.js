@@ -390,14 +390,19 @@ export const brainTreePaymentController = async (req, res) => {
           submitForSettlement: true,
         },
       },
-      function (error, result) {
+      async function (error, result) {
         if (result) {
-          const order = new orderModel({
-            products: cart,
-            payment: result,
-            buyer: req.user._id,
-          }).save();
-          res.json({ ok: true });
+          try {
+            await new orderModel({
+              products: cart,
+              payment: result,
+              buyer: req.user._id,
+            }).save();
+            res.json({ ok: true });
+          } catch (saveError) {
+            console.log(saveError);
+            res.status(500).send({ ok: false, error: "Order could not be saved" });
+          }
         } else {
           res.status(500).send(error);
         }
