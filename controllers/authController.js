@@ -213,20 +213,19 @@ export const updateProfileController = async (req, res) => {
     if (!req.user || !req.user._id) {
       throw new Error("User Id is Missing");
     }
-    const user = await userModel.findById(req.user._id);
     //password
     if (password && password.length < 6) {
       return res.json({ error: "Password is required and 6 character long" });
     }
-    const hashedPassword = password ? await hashPassword(password) : undefined;
+    // Alek Kwek, A0273471A
+    const update = {};
+    if (name) update.name = name;
+    if (phone) update.phone = phone;
+    if (address) update.address = address;
+    if (password) update.password = await hashPassword(password);
     const updatedUser = await userModel.findByIdAndUpdate(
       req.user._id,
-      {
-        name: name || user.name,
-        password: hashedPassword || user.password,
-        phone: phone || user.phone,
-        address: address || user.address,
-      },
+      update,
       { new: true }
     );
     res.status(200).send({
@@ -270,11 +269,17 @@ export const getOrdersController = async (req, res) => {
 //orders
 export const getAllOrdersController = async (req, res) => {
   try {
+    // Alek Kwek, A0273471A
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 50;
     const orders = await orderModel
       .find({})
       .populate("products", "-photo")
       .populate("buyer", "name")
-      .sort({ createdAt: -1 }); // Leong Soon Mun Stephane, A0273409B
+      // Alek Kwek, A0273471A
+      .sort({ createdAt: -1 }) // Leong Soon Mun Stephane, A0273409B
+      .skip((page - 1) * limit)
+      .limit(limit);
     res.json(orders);
   } catch (error) {
     console.log(error);
@@ -312,7 +317,7 @@ export const getAllUsersController = async (req, res) => { // Leong Soon Mun Ste
   try {
     const users = await userModel
       .find({})
-      .select('name email phone address role') 
+      .select('name email phone address role')
       .sort({ createdAt: -1 });
 
     res.json(users); // Leong Soon Mun Stephane, A0273409B, MS2 Fix

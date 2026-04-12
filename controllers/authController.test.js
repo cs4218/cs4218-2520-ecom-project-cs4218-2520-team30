@@ -371,6 +371,48 @@ describe("Auth Controller - Register", () => {
     });
 
     //Tay Kai Jun, A0283343E
+    test("should register new admin user successfully", async () => {
+      // Arrange
+      userModel.findOne.mockResolvedValue(null);
+      hashPassword.mockResolvedValue("hashed_password_123");
+      const mockSavedUser = {
+        _id: "mockAdminId123",
+        name: "Admin User",
+        email: "admin@admin.com",
+        phone: "9876543210",
+        address: "456 Admin St",
+        password: "hashed_password_123",
+        answer: "admin answer",
+        role: 1
+      };
+      userModel.prototype.save.mockResolvedValue(mockSavedUser);
+      const body = {
+        name: "Admin User",
+        email: "admin@admin.com",
+        password: "password123",
+        phone: "9876543210",
+        address: "456 Admin St",
+        answer: "admin answer",
+      };
+      const fakeReq = createFakeRequest({ body });
+      const fakeRes = createFakeResponse();
+
+      // Act
+      await registerController(fakeReq, fakeRes);
+
+      // Assert
+      expect(userModel.findOne).toHaveBeenCalledWith({ email: "admin@admin.com" });
+      expect(hashPassword).toHaveBeenCalledWith("password123");
+      expect(userModel.prototype.save).toHaveBeenCalled();
+      expect(fakeRes.status).toHaveBeenCalledWith(201);
+      expect(fakeRes.send).toHaveBeenCalledWith({
+        success: true,
+        message: "User registered successfully",
+        user: mockSavedUser,
+      });
+    });
+
+    //Tay Kai Jun, A0283343E
     test("should hash password before saving", async () => {
       // Arrange
       userModel.findOne.mockResolvedValue(null);
@@ -1162,8 +1204,6 @@ describe('Auth Controller - Order', () => { // Leong Soon Mun Stephane, A0273409
   let req, res;
 
   describe('updateProfileController', () => { // Leong Soon Mun Stephane, A0273409B
-    let existingUser;
-
     beforeEach(() => {
       req = {
         user: {},
@@ -1173,13 +1213,6 @@ describe('Auth Controller - Order', () => { // Leong Soon Mun Stephane, A0273409
         status: jest.fn().mockReturnThis(),
         send: jest.fn(),
         json: jest.fn(),
-      }
-      existingUser = {
-        name: "old tester",
-        email: "oldtest@gmail.com",
-        password: "oldpassword",
-        address: "old address",
-        phone: "12345678",
       }
       consoleLogSpy = jest.spyOn(console, 'log');
       jest.clearAllMocks();
@@ -1200,16 +1233,14 @@ describe('Auth Controller - Order', () => { // Leong Soon Mun Stephane, A0273409
         phone: "87654321",
       }
       let updatedUser = { flag: "new user" }
-      userModel.findById.mockResolvedValueOnce(existingUser);
       hashPassword.mockResolvedValueOnce("hashnewpassword");
       userModel.findByIdAndUpdate.mockResolvedValueOnce(updatedUser);
-
 
       // Act
       await updateProfileController(req, res);
 
       // Assert
-      expect(userModel.findById).toHaveBeenCalledWith(1);
+      expect(userModel.findById).not.toHaveBeenCalled();
       expect(hashPassword).toHaveBeenCalledWith("newpassword");
       expect(userModel.findByIdAndUpdate).toHaveBeenCalledWith(
         1,
@@ -1232,27 +1263,22 @@ describe('Auth Controller - Order', () => { // Leong Soon Mun Stephane, A0273409
     it('should respond with 200 if there are no updates', async () => { // Leong Soon Mun Stephane, A0273409B
       // Arrange
       req.user._id = 1
+      // body is empty — no fields provided
       let updatedUser = { flag: "old user" }
-      userModel.findById.mockResolvedValueOnce(existingUser);
       userModel.findByIdAndUpdate.mockResolvedValueOnce(updatedUser);
-
 
       // Act
       await updateProfileController(req, res);
 
       // Assert
-      expect(userModel.findById).toHaveBeenCalledWith(1);
+      expect(userModel.findById).not.toHaveBeenCalled();
       expect(hashPassword).not.toHaveBeenCalled();
+      // update object is empty when no body fields are provided
       expect(userModel.findByIdAndUpdate).toHaveBeenCalledWith(
         1,
-        {
-          name: "old tester",
-          password: "oldpassword",
-          address: "old address",
-          phone: "12345678",
-        }, {
-        new: true
-      });
+        {},
+        { new: true }
+      );
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.send).toHaveBeenCalledWith({
         success: true,
@@ -1271,13 +1297,12 @@ describe('Auth Controller - Order', () => { // Leong Soon Mun Stephane, A0273409
         address: "new address",
         phone: "87654321",
       }
-      userModel.findById.mockResolvedValueOnce(existingUser);
 
       // Act
       await updateProfileController(req, res);
 
       // Assert
-      expect(userModel.findById).toHaveBeenCalledWith(1);
+      expect(userModel.findById).not.toHaveBeenCalled();
       expect(hashPassword).not.toHaveBeenCalled();
       expect(userModel.findByIdAndUpdate).not.toHaveBeenCalled();
       expect(res.json).toHaveBeenCalledWith({
@@ -1296,10 +1321,8 @@ describe('Auth Controller - Order', () => { // Leong Soon Mun Stephane, A0273409
         phone: "87654321",
       }
       let updatedUser = { flag: "new user" }
-      userModel.findById.mockResolvedValueOnce(existingUser);
       hashPassword.mockResolvedValueOnce("hashnewpassword");
       userModel.findByIdAndUpdate.mockResolvedValueOnce(updatedUser);
-
 
       // Act
       await updateProfileController(req, res);
@@ -1324,10 +1347,8 @@ describe('Auth Controller - Order', () => { // Leong Soon Mun Stephane, A0273409
         phone: "87654321",
       }
       let updatedUser = { flag: "new user" }
-      userModel.findById.mockResolvedValueOnce(existingUser);
       hashPassword.mockResolvedValueOnce("hashnewpassword");
       userModel.findByIdAndUpdate.mockResolvedValueOnce(updatedUser);
-
 
       // Act
       await updateProfileController(req, res);
@@ -1347,12 +1368,13 @@ describe('Auth Controller - Order', () => { // Leong Soon Mun Stephane, A0273409
       req.body = {
         name: "new tester",
         email: "newtest@gmail.com",
-        password: "short",
+        password: "validpassword",
         address: "new address",
         phone: "87654321",
       }
-      let mockError = new Error('findById updateProfileController error');
-      userModel.findById.mockRejectedValueOnce(mockError);
+      let mockError = new Error('findByIdAndUpdate updateProfileController error');
+      hashPassword.mockResolvedValueOnce("hashedpassword");
+      userModel.findByIdAndUpdate.mockRejectedValueOnce(mockError);
       consoleLogSpy.mockImplementation(() => { });
 
       // Act
@@ -1434,7 +1456,9 @@ describe('Auth Controller - Order', () => { // Leong Soon Mun Stephane, A0273409
 
   describe('getAllOrdersController', () => { // Leong Soon Mun Stephane, A0273409B
     beforeEach(() => {
-      req = {};
+      req = {
+        query: {}
+      };
       res = {
         status: jest.fn().mockReturnThis(),
         send: jest.fn(),
@@ -1450,9 +1474,12 @@ describe('Auth Controller - Order', () => { // Leong Soon Mun Stephane, A0273409
 
     it('should respond with orders in json if successful', async () => { // Leong Soon Mun Stephane, A0273409B
       // Arrange
+      const mockOrders = [{ _id: 'order1' }];
       let orderObject = {
         populate: jest.fn().mockReturnThis(),
-        sort: jest.fn().mockResolvedValueOnce([]),
+        sort: jest.fn().mockReturnThis(),
+        skip: jest.fn().mockReturnThis(),
+        limit: jest.fn().mockResolvedValueOnce(mockOrders),
       };
       orderModel.find.mockReturnValue(orderObject);
 
@@ -1464,7 +1491,30 @@ describe('Auth Controller - Order', () => { // Leong Soon Mun Stephane, A0273409
       expect(orderObject.populate).toHaveBeenCalledWith('products', '-photo');
       expect(orderObject.populate).toHaveBeenCalledWith('buyer', 'name');
       expect(orderObject.sort).toHaveBeenCalledWith({ createdAt: -1 });
-      expect(res.json).toHaveBeenCalled();
+      expect(orderObject.skip).toHaveBeenCalledWith(0);   // page 1 default
+      expect(orderObject.limit).toHaveBeenCalledWith(50); // limit 50 default
+      expect(res.json).toHaveBeenCalledWith(mockOrders);
+    });
+
+    it('should use page and limit query params when provided', async () => { // Alek Kwek, A0273471A
+      // Arrange
+      req.query = { page: '2', limit: '10' };
+      const mockOrders = [{ _id: 'order2' }];
+      let orderObject = {
+        populate: jest.fn().mockReturnThis(),
+        sort: jest.fn().mockReturnThis(),
+        skip: jest.fn().mockReturnThis(),
+        limit: jest.fn().mockResolvedValueOnce(mockOrders),
+      };
+      orderModel.find.mockReturnValue(orderObject);
+
+      // Act
+      await getAllOrdersController(req, res);
+
+      // Assert
+      expect(orderObject.skip).toHaveBeenCalledWith(10);  // (2-1)*10
+      expect(orderObject.limit).toHaveBeenCalledWith(10);
+      expect(res.json).toHaveBeenCalledWith(mockOrders);
     });
 
     it('should respond with 500 and message if error occurs', async () => { // Leong Soon Mun Stephane, A0273409B
@@ -1472,7 +1522,9 @@ describe('Auth Controller - Order', () => { // Leong Soon Mun Stephane, A0273409
       let mockError = new Error('find orders error');
       let orderObject = {
         populate: jest.fn().mockReturnThis(),
-        sort: jest.fn().mockRejectedValueOnce(mockError),
+        sort: jest.fn().mockReturnThis(),
+        skip: jest.fn().mockReturnThis(),
+        limit: jest.fn().mockRejectedValueOnce(mockError),
       };
       orderModel.find.mockReturnValue(orderObject);
       consoleLogSpy.mockImplementation(() => { })

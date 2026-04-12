@@ -75,9 +75,9 @@ describe("HomePage integration (useCategory + axios stub)", () => {
       // ASSERT
       await waitFor(() => {
         expect(screen.getByRole("checkbox", { name: /Electronics/i })).toBeInTheDocument();
+        expect(screen.getByRole("checkbox", { name: /Books/i })).toBeInTheDocument();
+        expect(screen.getAllByRole("checkbox")).toHaveLength(2);
       });
-      expect(screen.getByRole("checkbox", { name: /Books/i })).toBeInTheDocument();
-      expect(screen.getAllByRole("checkbox")).toHaveLength(2);
       expect(screen.getByText(/Filter By Category/i)).toBeInTheDocument();
       expect(screen.getByText(/All Products/i)).toBeInTheDocument();
     });

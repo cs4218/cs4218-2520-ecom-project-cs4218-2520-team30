@@ -37,5 +37,10 @@ const productSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+// Alek Kwek, A0273471A
+productSchema.index({ slug: 1 });
+productSchema.index({ category: 1 });
+productSchema.index({ createdAt: -1 });
+productSchema.index({ name: "text", description: "text" });
 
 export default mongoose.model("Products", productSchema);

@@ -67,7 +67,7 @@ test.describe("Orders Feature E2E Tests", () => {
         await page.getByRole("link", { name: "Orders" }).click();
 
         // Assert
-        await expect(page).toHaveURL("dashboard/user/orders");
+        await expect(page).toHaveURL(/\/dashboard\/user\/orders/);
         await expect(
             page.getByRole("heading", { name: "All Orders" }),
         ).toBeVisible({
@@ -176,10 +176,21 @@ test.describe("Orders Feature E2E Tests", () => {
         const payButton = page.getByRole("button", { name: "Make Payment" });
         await expect(payButton).toBeEnabled({ timeout: 60000 });
         await page.waitForTimeout(2000);
-        await payButton.click();
+        // Wait for the payment API call to complete before navigating so the
+        // order is persisted in the DB before we assert on the orders page.
+        await Promise.all([
+            page.waitForResponse(
+                (resp) =>
+                    resp.url().includes("/braintree/payment") &&
+                    resp.status() === 200,
+                { timeout: 30000 },
+            ),
+            payButton.click(),
+        ]);
+        await page.goto('/dashboard/user/orders');
 
         // Assert
-        await expect(page).toHaveURL("dashboard/user/orders");
+        await expect(page).toHaveURL(/\/dashboard\/user\/orders/);
         await expect(page.getByRole("columnheader", { name: "#" })).toBeVisible(
             {
                 timeout: 5000,

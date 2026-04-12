@@ -99,7 +99,6 @@ jobs:
           fi
           if [ "$missing" -ne 0 ]; then
             echo "Warning: Some secrets are missing. Using defaults if provided in playwright.config.mjs."
-            # exit 1  <-- We might want to NOT exit if we have defaults, but strictness was requested
           fi
 
       - name: Seed Playwright Admin User

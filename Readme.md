@@ -93,18 +93,32 @@
 - **Contact**: `tests/ui/contact.spec.ts`. Contact page content (heading, details, hero) → footer **Contact** link from About.
 - **Policy**: `tests/ui/policy.spec.ts`. Privacy policy page → footer **Privacy Policy** link from About.
 
-### Tay Kai Jun
+### Tay Kai Jun (A0283343E)
 
 **UI Testing (Playwright)**
 
 - **Registration**: `tests/ui/auth.spec.ts`. Form display → Field validation → Successful registration → Duplicate email handling.
 - **Login**: `tests/ui/auth.spec.ts`. Admin login → User login → Wrong password → Logout flow → Full user journey.
+- **Search**: `tests/ui/search.spec.ts`. Search flow → Add to cart → View details → Empty search handling.
 
 **Integration Testing (Jest)**
 
 - **Register Controller**: `tests/integration/auth/register.integration.test.js`. Model validation → Password hashing → Database persistence → Duplicate email handling.
 - **Login Controller**: `tests/integration/auth/login.integration.test.js`. User lookup → Password comparison → JWT token generation → Role-based response.
 - **Forgot Password**: `tests/integration/auth/forgotPassword.integration.test.js`. Email+answer validation → Password hashing → Database update.
+
+## MS3 Contributions
+
+### Tay Kai Jun (A0283343E)
+
+**Non-Functional Testing: Spike Testing (Grafana k6)**
+
+- **Search API Spike Test**: `tests/nft/spike/spike-search-k6.js`. Simulates sudden traffic spikes (2→100→2 VUs) to evaluate search API latency, throughput, and error behavior under peak load.
+- **Login API Flash-Sale Spike Test**: `tests/nft/spike/spike-login-k6.js`. Simulates a flash-sale authentication surge (0→200→0 VUs) to assess login stability, token issuance rate, and recovery after extreme load.
+
+**Non-Functional Testing: Frontend Spike Testing (Playwright)**
+
+- **Search Rendering Spike Test**: `tests/nft/spike/spike-search-frontend.spec.js`. Simulates concurrent browser-driven searches and rapid typing to measure frontend rendering performance (FCP, DOM timing, search render time) and UI responsiveness.
 
 ### Lum Yi Ren Johannsen
 
@@ -119,6 +133,15 @@
 - **Category Backend**: `tests/integration/category/categoryIntegration.test.js`. Validate input (BVA / EP) → Controller → Persist to in-memory MongoDB.
 - **Home Page Frontend**: `client/src/pages/HomePageIntegration.test.js`. Stub HTTP → Render page → Hook loads mock data → Assert UI.
 - **Payment Backend**: `tests/integration/payment/paymentIntegration.test.js`. Nonce + cart → Stub gateway → Poll DB for order → Gateway failure handling.
+
+## MS3 Contributions
+
+### Leong Soon Mun Stephane (A0273409B)
+
+**Stress Testing**
+
+- `tests/stress/login.js`
+- `tests/stress/view-products.js`
 
 ## 1. Project Introduction
 
@@ -273,3 +296,131 @@ To begin unit testing with Jest in your project, follow these steps:
      ```bash
      npm run test
      ```
+
+## 6. AI-Driven Testing Usage
+
+This repository includes an AI-driven test analysis pipeline in [`ai-testing/`](./ai-testing) that is designed to work with CI and post a summary directly onto the pull request.
+
+### CI flow
+
+The intended MS3 workflow is:
+
+1. GitHub Actions runs the Jest and Playwright suites for a push or pull request.
+2. Test results are saved as JSON artifacts.
+3. GitHub Actions sends a webhook payload to the n8n workflow with the run metadata and parsed test results.
+4. The n8n workflow trims the payload, attaches recent failure history, and sends it to Claude for analysis.
+5. n8n formats the returned analysis into a human-readable PR summary.
+6. If the run belongs to a pull request, n8n posts the summary as a PR comment through the GitHub Issues Comments API.
+
+### What gets posted to the PR
+
+When `pr_number` is present in the webhook payload, the workflow generates a PR comment containing:
+
+- overall health status for the run
+- passed, failed, and skipped counts
+- per-suite breakdown for backend, frontend, integration, and Playwright UI tests
+- failed test classifications with short fix hints
+- flaky test warnings based on recent runs
+- brittle test warnings
+- top priority fixes
+- one suggested missing test
+- a link back to the originating GitHub Actions run
+
+If the workflow is triggered for a branch build without an associated pull request, it still completes the analysis but skips the PR comment step.
+
+### CI components in this repo
+
+- `ai-testing/n8n-workflow.json`: importable n8n workflow for receiving CI webhook data, calling Claude, formatting the summary, and posting the PR comment
+- `ai-testing/system_prompt.txt`: the analysis instructions used by the local Python analyser
+- `ai-testing/analyse_results.py`: local analyser used for manual runs and development
+- `playwright.config.mjs`: writes Playwright JSON results to `playwright-report/results.json`
+
+### History and flaky test detection
+
+The CI workflow keeps short-term memory of earlier failures so it can flag tests that keep reappearing across recent runs. In the exported n8n workflow, this history is stored in Google Sheets and merged into the Claude request before the PR comment is generated.
+
+### Local usage
+
+The repository also keeps a local analyser for manual inspection outside CI.
+
+1. Install the Python dependency:
+
+   ```bash
+   pip install anthropic
+   ```
+
+2. Set `ANTHROPIC_API_KEY` in your environment or project `.env`.
+
+3. Generate Jest and Playwright JSON outputs, then run:
+
+   ```bash
+   python ai-testing/analyse_results.py
+   ```
+
+This local script is useful for debugging the analysis prompt or validating the output format before wiring it into CI, but the main MS3 usage is the automated PR-comment flow above.
+
+## 7. Load Testing with k6
+
+k6 is used for load testing to assess the performance and scalability of the e-commerce platform under various traffic conditions.
+
+This load-testing contribution was implemented by **Alek Kwek, A0273471A**.
+
+### Load Testing Changes Added
+
+- Added dedicated `k6` scenarios for anonymous browsing, authenticated user flows, admin flows, and a mixed end-to-end workload.
+- Added shared helpers in `k6/helpers.js` for request headers, response checks, token login, seeded-product selection, and unique test-user generation.
+- Added external load profiles in `k6/config.ecom-realistic.json` and `k6/config.ecom-very-high-load.json` so `mixed-flows.js` can be reused for baseline and higher-load runs.
+- Added a Docker-based load-testing setup with `Dockerfile.k6` and `docker-compose.k6.yml` to run the backend, MongoDB, admin seeding, and k6 in one isolated workflow.
+- Added result export support for JSON summaries and raw output files to make it easier to capture evidence for performance reporting.
+
+### Running Load Tests
+
+1. **Using Docker Compose**
+
+   Copy the Docker env file, then build and run the load test stack:
+
+   ```bash
+   cp .env.docker.example .env.docker
+   docker compose --env-file .env.docker -f docker-compose.k6.yml build k6
+   docker compose --env-file .env.docker -f docker-compose.k6.yml --profile loadtest up --exit-code-from k6 k6
+   ```
+
+   If any file inside `k6/` changes, rebuild the `k6` image before running again so the container picks up the latest scripts.
+
+2. **Using k6 Directly**
+
+   Install k6 or use Docker to run load tests:
+
+   ```bash
+   # Using Docker
+   docker run --rm -v $(pwd)/k6:/scripts grafana/k6:0.55.0 run \
+     --summary-export /scripts/summary.json \
+     /scripts/mixed-flows.js
+
+   # With custom config
+   docker run --rm -v $(pwd)/k6:/scripts grafana/k6:0.55.0 run \
+     --summary-export /scripts/summary.json \
+     --config /scripts/config.ecom-realistic.json \
+     /scripts/mixed-flows.js
+   ```
+
+3. **Available Scripts**
+
+   - `mixed-flows.js` - Main reporting scenario with sustained baseline and peak-load stages
+   - `anonymous-browsing.js` - Anonymous browsing scenarios
+   - `auth-user-flows.js` - Authenticated user scenarios
+   - `admin-flows.js` - Admin authentication, order, and category-management scenarios
+
+4. **Config Files**
+
+   - `config.ecom-realistic.json` - Business-hours baseline profile
+   - `config.ecom-very-high-load.json` - Higher-load profile for peak probing
+
+5. **Output**
+
+   - Summary exported to `k6/summary.json`
+   - Full results in `k6-results/` directory when using Docker Compose
+
+6. **Additional Documentation**
+
+   - See `k6/README.md` for script coverage, thresholds, Docker usage, and workload notes.

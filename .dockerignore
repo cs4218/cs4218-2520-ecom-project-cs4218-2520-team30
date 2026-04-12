@@ -1,0 +1,14 @@
+node_modules
+client/node_modules
+.git
+.github
+.env
+.env.docker
+coverage
+playwright-report
+test-results
+blob-report
+reports
+venv
+k6-results
+client/build
