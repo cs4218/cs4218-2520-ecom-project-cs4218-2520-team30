@@ -11,6 +11,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
       unique: true,
+      index: true, // Tay Kai Jun, A0283343E - Added index for faster login lookups
     },
     password: {
       type: String,

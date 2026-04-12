@@ -30,16 +30,19 @@
 ### Alek Kwek (A0273471A)
 
 **Integration Testing**
+
 - Admin Category Actions: `controllers/categoryController.integration.test.js` and `client/src/pages/admin/CreateCategory.integration.test.js`.
 - Admin Product Management: Top-down integration tests for `client/src/pages/admin/CreateProduct.js` and `client/src/pages/admin/UpdateProduct.js`.
 - Verified backend route integration for admin product create, update, and delete flows in `controllers/productController.integration.test.js`, including authentication and admin-authorization checks on delete.
 
 **UI Testing**
+
 - Developed and organized a comprehensive Playwright UI test suite, including `admin-management.ui.spec.js`, `adminFlow.ui.spec.js`, `create-category.ui.spec.js`, `create-product.ui.spec.js`, and `admin-orders.ui.spec.js`.
 - Reorganized the test directory by moving all UI specification files to the `tests/ui/` folder and updating all internal paths, imports, and asset resolutions.
 - Standardized UI-test setup to use isolated MongoDB instances and strict ownership markers for reliable data cleanup.
 
 **Bug Fixes / Notes**
+
 - Resolved a critical race condition in Admin Login UI tests by implementing an auto-admin policy in `authController.js` for `@admin.com` accounts.
 - Fixed a module mismatch (ESM/CommonJS) in Playwright configuration that was preventing test execution.
 - Fixed missing product catalog items ("NUS T-shirt") in `uiTestUtils.js` that was causing `orders.spec.ts` failures.
@@ -52,12 +55,14 @@
 ### Leong Soon Mun Stephane (A0273409B)
 
 **Integration Testing**
+
 - Profile Feature: `routes/authRoute.updateprofile.integration.test.js`, `controllers/authController.updateprofile.integration.test.js`, `client/src/pages/user/Profile.integration.test.js`.
 - Order Feature: `routes/authRoute.getorders.integration.test.js`, `controllers/authController.getorders.integration.test.js`, `client/src/pages/user/Orders.integration.test.js`.
 - Admin View Users Feature: `routes/authRoute.getallusers.integration.test.js`, `controllers/authController.getallusers.integration.test.js`, `client/src/pages/admin/Users.integration.test.js`.
 - General Feature: `routes/authRoute.userauth.integration.test.js`, `client/src/pages/user/Dashboard.integration.test.js`.
 
 **UI Testing**
+
 - `tests/ui/general.spec.ts`
 - `tests/ui/orders.spec.ts`
 - `tests/ui/profile.spec.ts`
@@ -66,44 +71,74 @@
 ### Basil Boh (A0273232M)
 
 **Integration Testing (Jest)**
+
 - **Payment (Braintree + orders)**: `tests/integration/product/payment.integration.test.js`. JWT/auth → cart POST to `/braintree/payment` → mocked Braintree gateway (`setup-braintree-mock.cjs`) → order persistence with `ObjectId` product refs → success vs 401 vs gateway failure partitions.
 - **Cart–product flow**: `tests/integration/product/cart-product.integration.test.js`. Seed category/product in MongoMemoryServer → GET product for cart-shaped payload → authenticated payment → order references match catalog response.
 - **Product details ↔ category**: `tests/integration/product/product-details-category.integration.test.js`. Category listing by slug → single product with category alignment → related products (same category, exclude current) → chained GET consistency.
 
 **UI Testing (Playwright)**
+
 - **Browsing & product details**: `tests/ui/browsing.spec.ts`. Homepage catalog → category/price filters → More Details → product page → similar products section (and navigation where applicable).
 - **Cart & checkout**: `tests/ui/cart.spec.ts`. Empty cart → add/remove from homepage or details → guest vs logged-in checkout behaviour → cart badge → successful checkout → orders destination.
 - **Contact**: `tests/ui/contact.spec.ts`. Contact page content (heading, details, hero) → footer **Contact** link from About.
 - **Policy**: `tests/ui/policy.spec.ts`. Privacy policy page → footer **Privacy Policy** link from About.
 
-### Tay Kai Jun
+### Tay Kai Jun (A0283343E)
 
 **UI Testing (Playwright)**
+
 - **Registration**: `tests/ui/auth.spec.ts`. Form display → Field validation → Successful registration → Duplicate email handling.
 - **Login**: `tests/ui/auth.spec.ts`. Admin login → User login → Wrong password → Logout flow → Full user journey.
+- **Search**: `tests/ui/search.spec.ts`. Search flow → Add to cart → View details → Empty search handling.
 
 **Integration Testing (Jest)**
+
 - **Register Controller**: `tests/integration/auth/register.integration.test.js`. Model validation → Password hashing → Database persistence → Duplicate email handling.
 - **Login Controller**: `tests/integration/auth/login.integration.test.js`. User lookup → Password comparison → JWT token generation → Role-based response.
 - **Forgot Password**: `tests/integration/auth/forgotPassword.integration.test.js`. Email+answer validation → Password hashing → Database update.
 
+## MS3 Contributions
+
+### Tay Kai Jun (A0283343E)
+
+**Non-Functional Testing: Spike Testing (Grafana k6)**
+
+- **Search API Spike Test**: `tests/nft/spike/spike-search-k6.js`. Simulates sudden traffic spikes (2→100→2 VUs) to evaluate search API latency, throughput, and error behavior under peak load.
+- **Login API Flash-Sale Spike Test**: `tests/nft/spike/spike-login-k6.js`. Simulates a flash-sale authentication surge (0→200→0 VUs) to assess login stability, token issuance rate, and recovery after extreme load.
+
+**Non-Functional Testing: Frontend Spike Testing (Playwright)**
+
+- **Search Rendering Spike Test**: `tests/nft/spike/spike-search-frontend.spec.js`. Simulates concurrent browser-driven searches and rapid typing to measure frontend rendering performance (FCP, DOM timing, search render time) and UI responsiveness.
+
 ### Lum Yi Ren Johannsen
 
 **UI Testing (Playwright)**
+
 - **Home Page Filtering**: `tests/ui/HomePageFiltering.spec.ts`. Category filter → Price filter → Reset filters.
 - **General Navigation & Error**: `tests/ui/GeneralNavigation.spec.ts`. Header Cart link → Footer About link → Invalid URL (404) → Recovery routing.
 - **Mobile Responsiveness**: `tests/ui/ResponsiveMobile.spec.ts`. Mobile viewport → Hamburger menu → Cart navigation.
 
 **Integration Testing (Jest)**
+
 - **Category Backend**: `tests/integration/category/categoryIntegration.test.js`. Validate input (BVA / EP) → Controller → Persist to in-memory MongoDB.
 - **Home Page Frontend**: `client/src/pages/HomePageIntegration.test.js`. Stub HTTP → Render page → Hook loads mock data → Assert UI.
 - **Payment Backend**: `tests/integration/payment/paymentIntegration.test.js`. Nonce + cart → Stub gateway → Poll DB for order → Gateway failure handling.
+
+## MS3 Contributions
+
+### Leong Soon Mun Stephane (A0273409B)
+
+**Stress Testing**
+
+- `tests/stress/login.js`
+- `tests/stress/view-products.js`
 
 ## 1. Project Introduction
 
 Virtual Vault is a full-stack MERN (MongoDB, Express.js, React.js, Node.js) e-commerce website, offering seamless connectivity and user-friendly features. The platform provides a robust framework for online shopping. The website is designed to adapt to evolving business needs and can be efficiently extended.
 
 ## Continuous Integration
+
 1. [MS1 CI](https://github.com/cs4218/cs4218-2520-ecom-project-cs4218-2520-team30/actions/runs/22283565578/job/64458019580)
 
 ## 2. Website Features
@@ -130,6 +165,7 @@ Virtual Vault is a full-stack MERN (MongoDB, Express.js, React.js, Node.js) e-co
 
 2. **Verify Installation**:
    - Open your terminal and check the installed versions of Node.js and npm:
+
      ```bash
      node -v
      npm -v
@@ -174,9 +210,11 @@ To download and use the MERN (MongoDB, Express.js, React.js, Node.js) app from G
    - Click on the "Code" button and copy the URL of the repository.
    - Open your terminal or command prompt.
    - Use the `git clone` command followed by the repository URL to clone the repository to your local machine:
+
      ```bash
      git clone <repository_url>
      ```
+
    - Navigate into the cloned directory.
 
 2. **Install Frontend and Backend Dependencies**
@@ -190,6 +228,7 @@ To download and use the MERN (MongoDB, Express.js, React.js, Node.js) app from G
 3. **Add database connection string to `.env`**
 
    - Add the connection string copied from MongoDB Atlas to the `.env` file inside the project directory (replace the necessary placeholders):
+
      ```env
      MONGO_URL = <connection string>
      ```
@@ -243,6 +282,7 @@ To begin unit testing with Jest in your project, follow these steps:
      ```
 
    - **All the tests**
+
      ```bash
      npm run test
      ```
@@ -308,3 +348,50 @@ The repository also keeps a local analyser for manual inspection outside CI.
    ```
 
 This local script is useful for debugging the analysis prompt or validating the output format before wiring it into CI, but the main MS3 usage is the automated PR-comment flow above.
+
+## 7. Load Testing with k6
+
+k6 is used for load testing to assess the performance and scalability of the e-commerce platform under various traffic conditions.
+
+### Running Load Tests
+
+1. **Using Docker Compose**
+
+   Run the load test with JSON summary output:
+
+   ```bash
+   docker-compose -f docker-compose.k6.yml --profile loadtest up --exit-code-from k6 k6
+   ```
+
+2. **Using k6 Directly**
+
+   Install k6 or use Docker to run load tests:
+
+   ```bash
+   # Using Docker
+   docker run --rm -v $(pwd)/k6:/scripts grafana/k6:0.55.0 run \
+     --summary-export /scripts/summary.json \
+     /scripts/mixed-flows.js
+
+   # With custom config
+   docker run --rm -v $(pwd)/k6:/scripts grafana/k6:0.55.0 run \
+     --summary-export /scripts/summary.json \
+     --config /scripts/config.ecom-realistic.json \
+     /scripts/mixed-flows.js
+   ```
+
+3. **Available Scripts**
+
+   - `mixed-flows.js` - Mixed anonymous and authenticated user flows
+   - `anonymous-browsing.js` - Anonymous browsing scenarios
+   - `auth-user-flows.js` - Authenticated user scenarios
+
+4. **Config Files**
+
+   - `config.ecom-realistic.json` - Realistic load profile
+   - `config.ecom-very-high-load.json` - Very high load profile
+
+5. **Output**
+
+   - Summary exported to `k6/summary.json`
+   - Full results in `k6-results/` directory when using Docker Compose

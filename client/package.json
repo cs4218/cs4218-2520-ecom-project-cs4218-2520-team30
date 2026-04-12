@@ -10,6 +10,7 @@
     "antd": "^5.15.0",
     "axios": "^1.6.7",
     "braintree-web-drop-in-react": "^1.2.1",
+    "ecom": "file:..",
     "markbind-cli": "^5.5.2",
     "moment": "^2.30.1",
     "react": "^18.2.0",
