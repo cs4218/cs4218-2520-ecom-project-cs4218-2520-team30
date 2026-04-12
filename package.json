@@ -23,7 +23,8 @@
     "test:spike-frontend": "npx playwright test tests/nft/spike/spike-search-frontend.spec.js --config playwright.spike.config.mjs",
     "test:volume": "bash tests/volume/run-volume-tests.sh",
     "test:volume:seed": "node tests/volume/seed-data.js",
-    "test:volume:clean": "node tests/volume/seed-data.js --clean"
+    "test:volume:clean": "node tests/volume/seed-data.js --clean",
+    "test:nft": "jest --config jest.nft.config.js"
   },
   "keywords": [],
   "author": "RP",
