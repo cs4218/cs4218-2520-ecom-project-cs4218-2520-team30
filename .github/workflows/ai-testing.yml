@@ -1,0 +1,313 @@
+# This workflow runs tests and triggers the AI analysis agent after each run.
+# AI agent (n8n + Claude) reads the JSON test results and posts analysis to the PR.
+# This workflow will do a clean installation of node dependencies, cache/restore them, build the source code and run tests across different versions of Node.js
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-nodejs
+
+name: AI-Enhanced Testing
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["main", "MS2-3-implement-ai-testing"]
+  pull_request:
+    branches: ["main", "MS2-3-implement-ai-testing"]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+
+    env:
+      PORT: 6060
+      DEV_MODE: test
+      MONGO_URL: mongodb://localhost:27017/ecom-test
+      PLAYWRIGHT_DB_NAME: ecom-playwright-ui
+      JWT_SECRET: test-jwt-secret
+      BRAINTREE_MERCHANT_ID: test-merchant-id
+      BRAINTREE_PUBLIC_KEY: test-public-key
+      BRAINTREE_PRIVATE_KEY: test-private-key
+
+    services:
+      mongodb:
+        image: mongo:7
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --eval 'db.adminCommand({ ping: 1 })'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    strategy:
+      matrix:
+        node-version: [24.x]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+
+      - name: Install Dependencies
+        run: |
+          npm ci
+          npm install --prefix ./client
+
+      # Create reports directory for JSON output
+      - name: Create reports directory
+        run: mkdir -p reports
+
+      # Run backend tests and save JSON results for AI analysis
+      - name: Run Backend Tests
+        continue-on-error: true
+        run: |
+          npx jest --config jest.backend.config.js \
+            --json --outputFile=reports/jest-backend-results.json
+        id: backend-tests
+
+      # Run frontend tests and save JSON results for AI analysis
+      - name: Run Frontend Tests
+        continue-on-error: true
+        run: |
+          npx jest --config jest.frontend.config.js \
+            --json --outputFile=reports/jest-frontend-results.json
+        id: frontend-tests
+
+      # Run integration tests and save JSON results for AI analysis
+      - name: Run Integration Tests
+        continue-on-error: true
+        run: |
+          npx jest --config jest.integration.config.js \
+            --json --outputFile=reports/jest-integration-results.json
+        id: integration-tests
+
+      # Fail the build if any Jest suite failed
+      - name: Check Jest Results
+        run: |
+          FAILED=0
+          if [ "${{ steps.backend-tests.outcome }}" = "failure" ]; then
+            echo "Backend tests failed"
+            FAILED=1
+          fi
+          if [ "${{ steps.frontend-tests.outcome }}" = "failure" ]; then
+            echo "Frontend tests failed"
+            FAILED=1
+          fi
+          if [ "${{ steps.integration-tests.outcome }}" = "failure" ]; then
+            echo "Integration tests failed"
+            FAILED=1
+          fi
+          exit $FAILED
+
+      # Upload all Jest JSON results as a single artifact for the AI agent to fetch
+      - name: Upload Jest Results (for AI analysis)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jest-results
+          path: reports/
+          if-no-files-found: ignore
+          retention-days: 30
+      - name: Install Playwright Browser
+        run: npx playwright install --with-deps chromium
+
+      - name: Detect Playwright UI Tests
+        id: playwright-tests
+        shell: bash
+        run: |
+          if find tests -name "*.spec.js" -o -name "*.spec.ts" | grep . > /dev/null; then
+            echo "found=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "found=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Verify Playwright Secrets
+        if: steps.playwright-tests.outputs.found == 'true'
+        shell: bash
+        env:
+          MONGO_URL: ${{ secrets.MONGO_URL }}
+          BRAINTREE_MERCHANT_ID: ${{ secrets.BRAINTREE_MERCHANT_ID }}
+          BRAINTREE_PUBLIC_KEY: ${{ secrets.BRAINTREE_PUBLIC_KEY }}
+          BRAINTREE_PRIVATE_KEY: ${{ secrets.BRAINTREE_PRIVATE_KEY }}
+        run: |
+          missing=0
+          if [ -z "$MONGO_URL" ]; then
+            echo "Missing MONGO_URL"
+            missing=1
+          fi
+          if [ -z "$BRAINTREE_MERCHANT_ID" ]; then
+            echo "Missing BRAINTREE_MERCHANT_ID"
+            missing=1
+          fi
+          if [ -z "$BRAINTREE_PUBLIC_KEY" ]; then
+            echo "Missing BRAINTREE_PUBLIC_KEY"
+            missing=1
+          fi
+          if [ -z "$BRAINTREE_PRIVATE_KEY" ]; then
+            echo "Missing BRAINTREE_PRIVATE_KEY"
+            missing=1
+          fi
+          if [ "$missing" -ne 0 ]; then
+            echo "Warning: Some secrets are missing. Using defaults if provided in playwright.config.mjs."
+          fi
+
+      - name: Seed Playwright Admin User
+        if: steps.playwright-tests.outputs.found == 'true'
+        env:
+          PLAYWRIGHT_MONGO_URL: mongodb://localhost:27017/ecom-test
+        run: node setupAdmin.js
+
+      # Run Playwright with JSON reporter so AI agent can read results
+      - name: Run Playwright UI Tests
+        if: steps.playwright-tests.outputs.found == 'true'
+        continue-on-error: true
+        id: ui-tests
+        env:
+          DEBUG: pw:webserver
+          PLAYWRIGHT_MONGO_URL: mongodb://localhost:27017/ecom-test
+          BRAINTREE_MERCHANT_ID: ${{ secrets.BRAINTREE_MERCHANT_ID }}
+          BRAINTREE_PUBLIC_KEY: ${{ secrets.BRAINTREE_PUBLIC_KEY }}
+          BRAINTREE_PRIVATE_KEY: ${{ secrets.BRAINTREE_PRIVATE_KEY }}
+          PLAYWRIGHT_JSON_OUTPUT_NAME: playwright-report/results.json
+        run: npm run test:ui
+
+      - name: Skip Playwright UI Tests
+        if: steps.playwright-tests.outputs.found != 'true'
+        run: echo "No Playwright UI test files found under tests/. Skipping UI test run."
+
+      - name: Upload Playwright Report
+        if: always() && steps.playwright-tests.outputs.found == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          if-no-files-found: ignore
+
+      - name: Trigger AI Analysis and Post Comment
+        if: always() && vars.N8N_ENABLED == 'true'
+        continue-on-error: true
+        run: |
+          python3 - <<'PYEOF'
+          import json, os, sys, urllib.request
+
+          def load_json(path):
+              if not os.path.exists(path): return None
+              try:
+                  with open(path) as f:
+                      raw = json.load(f)
+                  tests = []
+                  source = os.path.basename(path).replace("-results.json","").replace(".json","")
+                  if "testResults" in raw: # Jest format
+                      source = os.path.basename(path).replace("-results.json","").replace(".json","")
+                      for suite in raw.get("testResults", []):
+                          file_path = suite.get("testFilePath", "")
+                          short = "/".join(file_path.replace("\\","/").split("/")[-2:])
+                          for t in suite.get("assertionResults", []):
+                              entry = {"name": t.get("fullName",""), "suite": short, "status": t.get("status",""), "error": ""}
+                              if t.get("status") != "passed":
+                                  msgs = t.get("failureMessages", [])
+                                  entry["error"] = msgs[0].split("\n")[0][:150] if msgs else ""
+                              tests.append(entry)
+                      return {
+                          "source": source,
+                          "summary": {"total": raw.get("numTotalTests",0), "passed": raw.get("numPassedTests",0), "failed": raw.get("numFailedTests",0)},
+                          "tests": tests
+                      }
+                  elif "suites" in raw: # Playwright format
+                      total = passed = failed = skipped = 0
+                      def walk(suite, p_file=""):
+                          nonlocal total, passed, failed, skipped
+                          f_path = suite.get("file", p_file)
+                          short = "/".join(f_path.replace("\\","/").split("/")[-2:]) if f_path else ""
+                          for spec in suite.get("specs", []):
+                              for t in spec.get("tests", []):
+                                  status = t.get("status", "unknown")
+                                  total += 1
+                                  if status == "expected":
+                                      passed += 1
+                                      s_mapped = "passed"
+                                  elif status == "skipped":
+                                      skipped += 1
+                                      s_mapped = "skipped"
+                                  else:
+                                      failed += 1
+                                      s_mapped = "failed"
+                                  res = t.get("results", [{}])
+                                  err = ""
+                                  if res and res[0].get("error"):
+                                      err = res[0].get("error", {}).get("message", "").split("\n")[0][:150]
+                                  tests.append({"name": spec.get("title",""), "suite": short, "status": s_mapped, "error": err})
+                          for s in suite.get("suites", []):
+                              walk(s, f_path)
+                      for s in raw.get("suites", []): walk(s)
+                      return {"source": "playwright", "summary": {"total": total, "passed": passed, "failed": failed, "skipped": skipped}, "tests": tests}
+              except Exception as e:
+                  print(f"Could not load {path}: {e}")
+              return None
+
+          results = []
+          for f in ["reports/jest-backend-results.json", "reports/jest-frontend-results.json",
+                    "reports/jest-integration-results.json", "playwright-report/results.json"]:
+              r = load_json(f)
+              if r: results.append(r)
+
+          if not results:
+              print("No test results found.")
+              sys.exit(0)
+
+          payload = {
+              "run_id": os.environ.get("GITHUB_RUN_ID"),
+              "repo": os.environ.get("GITHUB_REPOSITORY"),
+              "branch": os.environ.get("GITHUB_REF_NAME"),
+              "commit_sha": os.environ.get("GITHUB_SHA"),
+              "pr_number": os.environ.get("PR_NUMBER"),
+              "actor": os.environ.get("GITHUB_ACTOR"),
+              "test_results": results
+          }
+
+          webhook_url = os.environ.get("N8N_WEBHOOK_URL")
+          if not webhook_url:
+              print("N8N_WEBHOOK_URL not set.")
+              sys.exit(0)
+
+          req = urllib.request.Request(webhook_url, data=json.dumps(payload).encode(), headers={"Content-Type": "application/json"}, method="POST")
+          try:
+              with urllib.request.urlopen(req, timeout=120) as resp:
+                  data = json.loads(resp.read().decode())
+                  print(f"Health: {data.get('health')}")
+                  pr_comment = data.get("pr_comment")
+          except Exception as e:
+              print(f"Webhook failed: {e}")
+              sys.exit(0)
+
+          pr_number = os.environ.get("PR_NUMBER")
+          if pr_number and pr_comment:
+              repo = os.environ.get("GITHUB_REPOSITORY")
+              github_token = os.environ.get("GITHUB_TOKEN")
+              comment_url = f"https://api.github.com/repos/{repo}/issues/{pr_number}/comments"
+              comment_req = urllib.request.Request(
+                  comment_url,
+                  data=json.dumps({"body": pr_comment}).encode(),
+                  headers={
+                      "Authorization": f"Bearer {github_token}",
+                      "Accept": "application/vnd.github+json",
+                      "X-GitHub-Api-Version": "2022-11-28",
+                      "Content-Type": "application/json"
+                  },
+                  method="POST"
+              )
+              try:
+                  with urllib.request.urlopen(comment_req, timeout=30) as resp:
+                      res_data = json.loads(resp.read().decode())
+                      print(f"Comment URL: {res_data.get('html_url')}")
+              except Exception as e:
+                  print(f"Github post failed: {e}")
+          PYEOF
+        env:
+          N8N_WEBHOOK_URL: ${{ secrets.N8N_WEBHOOK_URL }}
+          PR_NUMBER: ${{ github.event.number }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -46,7 +46,7 @@ export default defineConfig({
   retries: isCI ? 2 : 0,
   workers: isCI ? 1 : undefined,
   timeout: 90_000,
-  reporter: "html",
+  reporter: [["html"], ["json", { outputFile: "playwright-report/results.json" }]],
   expect: {
     timeout: 15_000,
   },

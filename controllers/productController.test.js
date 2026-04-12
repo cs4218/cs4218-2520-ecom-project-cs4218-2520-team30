@@ -118,7 +118,8 @@ describe('createProductController', () => {
 
         res = {
             status: jest.fn().mockReturnThis(),
-            send: jest.fn()
+            send: jest.fn(), set: jest.fn().mockReturnThis(),
+            set: jest.fn().mockReturnThis()
         };
 
         slugify.mockReturnValue('test-product');
@@ -363,7 +364,7 @@ describe('deleteProductController', () => {
         // Mock Response
         res = {
             status: jest.fn().mockReturnThis(),
-            send: jest.fn(),
+            send: jest.fn(), set: jest.fn().mockReturnThis(),
         };
     });
 
@@ -450,7 +451,7 @@ describe('updateProductController', () => {
 
         res = {
             status: jest.fn().mockReturnThis(),
-            send: jest.fn(),
+            send: jest.fn(), set: jest.fn().mockReturnThis(),
         };
 
         // Mock slugify
@@ -684,7 +685,7 @@ describe("Payment Controller Unit Tests", () => {
         req = { user: { _id: "123" }, body: {}, params: {} };
         res = {
             status: jest.fn().mockReturnThis(),
-            send: jest.fn(),
+            send: jest.fn(), set: jest.fn().mockReturnThis(),
             json: jest.fn(),
             set: jest.fn(),
         };
@@ -1425,7 +1426,7 @@ describe("Payment Controller Unit Tests", () => {
             req = { user: { _id: "123" }, body: {} };
             res = {
                 status: jest.fn().mockReturnThis(),
-                send: jest.fn(),
+                send: jest.fn(), set: jest.fn().mockReturnThis(),
                 json: jest.fn(),
             };
         });
@@ -1571,7 +1572,7 @@ describe("Product Controller - Core Product APIs", () => {
         };
         res = {
             status: jest.fn().mockReturnThis(),
-            send: jest.fn(),
+            send: jest.fn(), set: jest.fn().mockReturnThis(),
             json: jest.fn(),
             set: jest.fn(),
         };

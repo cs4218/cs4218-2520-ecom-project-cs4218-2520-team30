@@ -8,6 +8,160 @@ import {
   type BrowserContext,
 } from "@playwright/test";
 
+// ─── Braintree / PayPal mock constants ───────────────────────────────────────
+
+const FAKE_MERCHANT_ID = "fake-merchant";
+
+const FAKE_CLIENT_TOKEN = Buffer.from(
+  JSON.stringify({
+    version: 2,
+    authorizationFingerprint: "fake-fingerprint-for-testing",
+    configUrl: `https://api.braintreegateway.com/merchants/${FAKE_MERCHANT_ID}/client_api/v1/configuration`,
+  })
+).toString("base64");
+
+const FAKE_BRAINTREE_CONFIG = {
+  analyticsUrl: `https://origin-analytics-sand.sandbox.braintree-api.com/${FAKE_MERCHANT_ID}`,
+  assetsUrl: "https://assets.braintreegateway.com",
+  clientApiUrl: `https://api.braintreegateway.com/merchants/${FAKE_MERCHANT_ID}/client_api`,
+  analytics: { url: `https://origin-analytics-sand.sandbox.braintree-api.com/${FAKE_MERCHANT_ID}` },
+  challenges: [],
+  creditCards: { supportedCardTypes: [] },
+  paypal: {
+    displayName: "Test Store",
+    clientId: "fake-paypal-client-id",
+    assetsUrl: "https://checkout.paypal.com",
+    currencyCode: "USD",
+    environment: "sandbox",
+    allowHttp: false,
+    unvettedMerchant: false,
+  },
+  paypalEnabled: true,
+  applePayWeb: null,
+  googlePay: null,
+  threeDSecure: null,
+  environment: "sandbox",
+  merchantId: FAKE_MERCHANT_ID,
+  version: "3.99.0",
+};
+
+// Stub for PayPal Checkout.js v4 (checkout.min.js from paypalobjects.com).
+// The Drop-in uses the v4 API: paypal.Button.render(config, selector).
+// config.payment() → returns a billing token (via setup_billing_agreement)
+// config.onAuthorize({ billingToken, payerID }) → triggers tokenizePayment
+// The button gets data-testid="mock-paypal-btn" for unambiguous targeting.
+const MOCK_PAYPAL_SDK_JS = `
+(function() {
+  window.paypal = {
+    FUNDING: {
+      PAYPAL: 'paypal', CREDIT: 'credit', CARD: 'card',
+      ELK: 'elk', SOFORT: 'sofort', BANCONTACT: 'bancontact',
+      GIROPAY: 'giropay', IDEAL: 'ideal', MYBANK: 'mybank',
+      P24: 'p24', EPS: 'eps', WECHATPAY: 'wechatpay', VENMO: 'venmo'
+    },
+    Button: {
+      render: function(config, selector) {
+        var el = typeof selector === 'string'
+          ? document.querySelector(selector)
+          : selector;
+        if (!el) return Promise.resolve();
+        while (el.firstChild) { el.removeChild(el.firstChild); }
+        var btn = document.createElement('button');
+        btn.setAttribute('data-testid', 'mock-paypal-btn');
+        btn.setAttribute('type', 'button');
+        btn.style.cssText = 'width:100%;padding:14px;background:#0070ba;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:16px;';
+        btn.textContent = 'PayPal';
+        btn.addEventListener('click', function() {
+          var payFn = config.payment || function() { return Promise.resolve('fake-billing-token-abc'); };
+          Promise.resolve(payFn()).then(function(token) {
+            return config.onAuthorize({
+              billingToken: token,
+              payerID: 'FakePayerID12345'
+            });
+          }).catch(function(err) {
+            if (config.onError) { config.onError(err); }
+          });
+        });
+        el.appendChild(btn);
+        return Promise.resolve();
+      }
+    }
+  };
+})();
+`;
+
+async function setupBraintreePayPalMocks(page: Page): Promise<void> {
+  // 1. Backend token endpoint → fake clientToken
+  await page.route("**/api/v1/product/braintree/token", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ clientToken: FAKE_CLIENT_TOKEN }),
+    });
+  });
+
+  // 2. Braintree gateway configuration (no environmentNoNetwork — that triggers an error)
+  await page.route("**/api.braintreegateway.com/**/configuration**", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify(FAKE_BRAINTREE_CONFIG),
+    });
+  });
+
+  // 3. PayPal Checkout.js v4 (paypalobjects.com) → stub that fires onAuthorize on click, no popup
+  await page.route("**paypalobjects.com**", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/javascript",
+      body: MOCK_PAYPAL_SDK_JS,
+    });
+  });
+
+  // 4. Braintree billing agreement → fake billing token
+  await page.route("**/paypal_hermes/setup_billing_agreement**", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        agreementSetup: { tokenId: "fake-billing-token-abc" },
+      }),
+    });
+  });
+
+  // 5. Braintree PayPal tokenization → fake nonce
+  await page.route("**/payment_methods/paypal_accounts**", async (route) => {
+    await route.fulfill({
+      status: 201,
+      contentType: "application/json",
+      body: JSON.stringify({
+        paypalAccounts: [
+          {
+            nonce: "fake-paypal-nonce-xyz",
+            type: "PayPalAccount",
+            description: "PayPal",
+            details: {
+              email: "test@example.com",
+              payerId: "FakePayerID12345",
+              firstName: "Test",
+              lastName: "User",
+            },
+          },
+        ],
+      }),
+    });
+  });
+
+  // 6. Backend payment endpoint → immediate success
+  await page.route("**/api/v1/product/braintree/payment", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ success: true }),
+    });
+  });
+}
+
 interface TestUser {
   name: string;
   email: string;
@@ -466,6 +620,53 @@ test.describe("Cart shopping flow E2E", () => {
       page.getByText("Payment Completed Successfully")
     ).toBeVisible({ timeout: 5000 });
 
+    await expect(page.locator(".ant-badge")).toContainText("0");
+  });
+
+  test("should complete checkout with mocked PayPal and navigate to All Orders", async ({
+    page,
+    request,
+  }) => {
+    // Basil Boh A0273232M
+    test.setTimeout(120000);
+
+    // Routes MUST be registered before navigation — the token fetch happens on CartPage mount.
+    await setupBraintreePayPalMocks(page);
+
+    await setupLoggedInUserWithItemInCart(page, request, "_paypal_mocked");
+
+    // Wait for the Braintree Drop-in container to appear (uses our mocked token)
+    await expect(
+      page.locator(".braintree-dropin-container, [class*='braintree-dropin']").first()
+    ).toBeVisible({ timeout: 30000 });
+
+    // With only PayPal configured (no card options), the Drop-in renders the PayPal
+    // sheet directly — no .braintree-option__paypal click needed.
+    // If the option button appears (e.g. with card also enabled), click it first.
+    const paypalOption = page.locator(".braintree-option__paypal").first();
+    const hasOption = await paypalOption.isVisible().catch(() => false);
+    if (hasOption) {
+      await paypalOption.click();
+    }
+
+    // Wait for our mock PayPal button rendered by the stub SDK
+    const mockPaypalBtn = page.locator('[data-testid="mock-paypal-btn"]');
+    await expect(mockPaypalBtn).toBeVisible({ timeout: 30000 });
+    await mockPaypalBtn.click();
+
+    // Drop-in needs a moment to process onApprove and enable the Make Payment button
+    const payButton = page.getByRole("button", { name: "Make Payment" });
+    await expect(payButton).toBeEnabled({ timeout: 30000 });
+    await page.waitForTimeout(500);
+    await payButton.click();
+
+    await expect(page.getByText("Payment Completed Successfully")).toBeVisible({
+      timeout: 30000,
+    });
+    await expect(page).toHaveURL(/\/dashboard\/user\/orders/, { timeout: 20000 });
+    await expect(
+      page.getByRole("heading", { name: "All Orders" })
+    ).toBeVisible({ timeout: 10000 });
     await expect(page.locator(".ant-badge")).toContainText("0");
   });
 });

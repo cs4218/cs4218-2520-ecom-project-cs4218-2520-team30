@@ -10,8 +10,14 @@ coverage/
 **/coverage-final.json
 **/lcov.info
 **/lcov-report/
+
+# AI testing — generated files, do not commit
+reports/
+venv/
+ai-testing/run_history.json
 .nvmrc
 .playwright_mongo_uri
+k6-results/output.json
 
 # Volume test output (large JSON/HTML reports)
 tests/volume/results/*.json
