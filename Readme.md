@@ -76,16 +76,28 @@
 - **Contact**: `tests/ui/contact.spec.ts`. Contact page content (heading, details, hero) → footer **Contact** link from About.
 - **Policy**: `tests/ui/policy.spec.ts`. Privacy policy page → footer **Privacy Policy** link from About.
 
-### Tay Kai Jun
+### Tay Kai Jun (A0283343E)
 
 **UI Testing (Playwright)**
 - **Registration**: `tests/ui/auth.spec.ts`. Form display → Field validation → Successful registration → Duplicate email handling.
 - **Login**: `tests/ui/auth.spec.ts`. Admin login → User login → Wrong password → Logout flow → Full user journey.
+- **Search**: `tests/ui/search.spec.ts`. Search flow → Add to cart → View details → Empty search handling.
 
 **Integration Testing (Jest)**
 - **Register Controller**: `tests/integration/auth/register.integration.test.js`. Model validation → Password hashing → Database persistence → Duplicate email handling.
 - **Login Controller**: `tests/integration/auth/login.integration.test.js`. User lookup → Password comparison → JWT token generation → Role-based response.
 - **Forgot Password**: `tests/integration/auth/forgotPassword.integration.test.js`. Email+answer validation → Password hashing → Database update.
+
+## MS3 Contributions
+
+### Tay Kai Jun (A0283343E)
+
+**Non-Functional Testing: Spike Testing (Grafana k6)**
+- **Search API Spike Test**: `tests/nft/spike/spike-search-k6.js`. Simulates sudden traffic spikes (2→100→2 VUs) to evaluate search API latency, throughput, and error behavior under peak load.
+- **Login API Flash-Sale Spike Test**: `tests/nft/spike/spike-login-k6.js`. Simulates a flash-sale authentication surge (0→200→0 VUs) to assess login stability, token issuance rate, and recovery after extreme load.
+
+**Non-Functional Testing: Frontend Spike Testing (Playwright)**
+- **Search Rendering Spike Test**: `tests/nft/spike/spike-search-frontend.spec.js`. Simulates concurrent browser-driven searches and rapid typing to measure frontend rendering performance (FCP, DOM timing, search render time) and UI responsiveness.
 
 ### Lum Yi Ren Johannsen
 
@@ -98,6 +110,14 @@
 - **Category Backend**: `tests/integration/category/categoryIntegration.test.js`. Validate input (BVA / EP) → Controller → Persist to in-memory MongoDB.
 - **Home Page Frontend**: `client/src/pages/HomePageIntegration.test.js`. Stub HTTP → Render page → Hook loads mock data → Assert UI.
 - **Payment Backend**: `tests/integration/payment/paymentIntegration.test.js`. Nonce + cart → Stub gateway → Poll DB for order → Gateway failure handling.
+
+## MS3 Contributions
+
+### Leong Soon Mun Stephane (A0273409B)
+
+**Stress Testing**
+- `tests/stress/login.js`
+- `tests/stress/view-products.js`
 
 ## 1. Project Introduction
 
@@ -243,6 +263,53 @@ To begin unit testing with Jest in your project, follow these steps:
      ```
 
    - **All the tests**
-     ```bash
-     npm run test
-     ```
+      ```bash
+      npm run test
+      ```
+
+## 6. Load Testing with k6
+
+k6 is used for load testing to assess the performance and scalability of the e-commerce platform under various traffic conditions.
+
+### Running Load Tests
+
+1. **Using Docker Compose**
+
+   Run the load test with JSON summary output:
+
+   ```bash
+   docker-compose -f docker-compose.k6.yml --profile loadtest up --exit-code-from k6 k6
+   ```
+
+2. **Using k6 Directly**
+
+   Install k6 or use Docker to run load tests:
+
+   ```bash
+   # Using Docker
+   docker run --rm -v $(pwd)/k6:/scripts grafana/k6:0.55.0 run \
+     --summary-export /scripts/summary.json \
+     /scripts/mixed-flows.js
+
+   # With custom config
+   docker run --rm -v $(pwd)/k6:/scripts grafana/k6:0.55.0 run \
+     --summary-export /scripts/summary.json \
+     --config /scripts/config.ecom-realistic.json \
+     /scripts/mixed-flows.js
+   ```
+
+3. **Available Scripts**
+
+   - `mixed-flows.js` - Mixed anonymous and authenticated user flows
+   - `anonymous-browsing.js` - Anonymous browsing scenarios
+   - `auth-user-flows.js` - Authenticated user scenarios
+
+4. **Config Files**
+
+   - `config.ecom-realistic.json` - Realistic load profile
+   - `config.ecom-very-high-load.json` - Very high load profile
+
+5. **Output**
+
+   - Summary exported to `k6/summary.json`
+   - Full results in `k6-results/` directory when using Docker Compose

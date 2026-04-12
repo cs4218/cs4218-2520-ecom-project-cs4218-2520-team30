@@ -58,12 +58,6 @@ const createFakeResponse = () => {
   return res;
 };
 
-/** Wait for async order.save() (controller does not await) */
-const flushAsyncWork = async () => {
-  await new Promise((resolve) => setImmediate(resolve));
-  await new Promise((resolve) => setImmediate(resolve));
-};
-
 const waitForOrderByBuyer = async (buyerId, { timeoutMs = 5000 } = {}) => {
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
@@ -95,7 +89,7 @@ describe("brainTreePaymentController (integration)", () => {
 
     // ACT
     await brainTreePaymentController(req, res);
-    await flushAsyncWork();
+
 
     // ASSERT
     expect(mockSale).toHaveBeenCalledWith(
@@ -106,10 +100,11 @@ describe("brainTreePaymentController (integration)", () => {
       }),
       expect.any(Function)
     );
+    // Wait for the async callback's await .save() to complete
+    const saved = await waitForOrderByBuyer(buyerId);
     // 200 OK: controller uses res.json({ ok: true }) (Express default status 200)
     expect(res.json).toHaveBeenCalledWith({ ok: true });
     expect(res.status).not.toHaveBeenCalledWith(500);
-    const saved = await waitForOrderByBuyer(buyerId);
     expect(saved).not.toBeNull();
     expect(saved.payment).toMatchObject({ success: true, id: "fake-tx-id" });
     expect(String(saved.buyer)).toBe(String(buyerId));
@@ -135,7 +130,7 @@ describe("brainTreePaymentController (integration)", () => {
 
     // ACT
     await brainTreePaymentController(req, res);
-    await flushAsyncWork();
+
 
     // ASSERT
     expect(res.status).toHaveBeenCalledWith(500);

@@ -1480,7 +1480,7 @@ describe("Payment Controller Unit Tests", () => {
 
                 // ACT
                 await brainTreePaymentController(req, res);
-                await new Promise(setImmediate);
+                await new Promise((r) => setTimeout(r, 50));
 
                 // ASSERT
                 expect(mockSale).toHaveBeenCalledWith(
@@ -1505,11 +1505,43 @@ describe("Payment Controller Unit Tests", () => {
 
                 // ACT
                 await brainTreePaymentController(req, res);
-                await new Promise(setImmediate);
+                await new Promise((r) => setTimeout(r, 50));
 
                 // ASSERT
                 expect(res.status).toHaveBeenCalledWith(500);
                 expect(res.send).toHaveBeenCalledWith(fakeError);
+            });
+
+            it("should return 500 when order save fails after successful payment", async () => {
+                // Lum Yi Ren Johannsen, A0273503L
+                // ARRANGE
+                req.body = {
+                    nonce: "fake-nonce",
+                    cart: [{ price: 10 }, { price: 20 }],
+                };
+                const fakeResult = { success: true };
+                mockSale.mockImplementation((opts, callback) =>
+                    callback(null, fakeResult)
+                );
+
+                // Make the order save reject
+                const orderModel = (await import("../models/orderModel.js")).default;
+                const saveError = new Error("DB save failed");
+                orderModel.mockImplementation(() => ({
+                    save: jest.fn().mockRejectedValue(saveError),
+                }));
+                const consoleSpy = jest.spyOn(console, "log").mockImplementation(() => {});
+
+                // ACT
+                await brainTreePaymentController(req, res);
+                await new Promise((r) => setTimeout(r, 50));
+
+                // ASSERT
+                expect(res.status).toHaveBeenCalledWith(500);
+                expect(res.send).toHaveBeenCalledWith({ ok: false, error: "Order could not be saved" });
+                expect(res.json).not.toHaveBeenCalledWith({ ok: true });
+
+                consoleSpy.mockRestore();
             });
 
             it("should trigger catch block if try block throws", async () => {
