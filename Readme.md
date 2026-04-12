@@ -25,7 +25,7 @@
 | **Category** | Johannsen Lum | - `hooks/useCategory.js`<br>- `pages/Categories.js` | - `controllers/categoryController.js`<br>  1. categoryController<br>  2. singleCategoryController<br>- `models/categoryModel.js` |
 | **Payment** | Johannsen Lum | | - `controllers/productController.js`<br>  1. braintreeTokenController<br>  2. brainTreePaymentController |
 
-## MS2 and 3 Contributions
+## MS2 Contributions
 
 ### Alek Kwek (A0273471A)
 
@@ -51,16 +51,6 @@
 - Fixed UI bugs in `UpdateProduct.js` and `AdminOrders.js` including incorrect page titles, shipping selection bindings, and typo in order date field (`createdAt`).
 - Switched the status Select in `AdminOrders.js` from `defaultValue` to `value` so the UI stays in sync after status updates.
 - Resolved React rendering warnings by adding missing `key` props and updating Ant Design modal properties.
-
-**AI-Driven Testing**
-
-- Designed the AI-driven test analysis workflow for CI so Jest and Playwright results can be summarised automatically after each run.
-- Added documentation for the PR-comment flow, where the AI analysis classifies failures, highlights brittle or flaky tests, and posts a review summary back to the pull request.
-
-**Load Testing**
-
-- Added load testing documentation for k6-based performance testing, covering the execution flow, supported scenarios, and expected output artifacts.
-- Documented Docker-based load test execution and summary export so the team can run repeatable performance checks during MS3.
 
 ### Leong Soon Mun Stephane (A0273409B)
 
@@ -108,7 +98,37 @@
 - **Forgot Password**: `tests/integration/auth/forgotPassword.integration.test.js`. Email+answer validation → Password hashing → Database update.
 
 ## MS3 Contributions
+### Alek Kwek (A0273471A)
 
+**AI-Driven Testing**
+
+- Implemented the MS3 AI-driven testing pipeline under `ai-testing/`, including `analyse_results.py` for reading Jest and Playwright JSON outputs, `system_prompt.txt` for the agent instructions, `n8n-workflow.json` for the webhook-to-PR-comment automation flow, `sample-output.json`, and the accompanying `ai-testing/README.md`.
+- Integrated CI support in `.github/workflows/main.yml` so backend, frontend, and integration Jest runs can emit JSON reports for the AI agent, and aligned Playwright output through `playwright.config.mjs` so `playwright-report/results.json` is generated for automated analysis.
+- Added the PR-comment automation path for AI analysis, where CI results are sent to n8n, analysed by Claude, and summarised back onto the pull request with failure classification, brittle test detection, flaky test tracking, and prioritised fix suggestions.
+- Documented the local developer workflow for generating test JSON artifacts and running `python ai-testing/analyse_results.py` for manual inspection outside CI.
+
+**Load Testing (Grafana k6)**
+
+- Added a k6 load testing suite targeting the Express backend at `http://localhost:6060` across major ecommerce flows.
+- Implemented `k6/anonymous-browsing.js` for catalog, product detail, related products, photo, filters, and search flows, peaking at 100 VUs over about 5 minutes.
+- Implemented `k6/auth-user-flows.js` for register, login, JWT user-auth checks, profile update, and orders flows, peaking at 30 VUs over about 5 minutes.
+- Implemented `k6/admin-flows.js` for admin auth, all-orders retrieval, order-status updates, category CRUD, and product list flows, peaking at 10 VUs over about 5 minutes.
+- Implemented `k6/mixed-flows.js` as the main MS3 scenario covering browse → login → checkout-init behaviour, peaking at 40 VUs over about 11 minutes.
+- Implemented `k6/bottleneck-stress.js` to isolate five bottlenecks as named scenarios: product photo delivery, unindexed search, bcrypt-heavy registration, admin order retrieval, and profile updates.
+- Added `k6/helpers.js` with shared utilities for auth, request headers, response checks, JSON parsing, and unique ID generation.
+
+**Docker and Config Support**
+
+- Added `Dockerfile.k6`, `docker-compose.k6.yml`, and `.env.docker.example` to run MongoDB, the app, seed-admin setup, and k6 together with health checks and resource limits.
+- Added external config support for `mixed-flows.js`, including `k6/config.ecom-realistic.json` and `k6/config.ecom-very-high-load.json` for business-hours and peak-load profiles.
+- Documented runtime overrides for `K6_BASE_URL`, `K6_MAX_DURATION_MS`, `K6_ADMIN_EMAIL`, and `K6_ADMIN_PASSWORD`.
+
+**Performance Fixes Driven by Load Testing**
+
+- Updated `getAllOrdersController` to support `page` and `limit` query parameters, reducing unbounded admin-order result sets and improving pass rate under concurrent load.
+- Optimised `updateProfileController` by replacing a two-query update flow with a single `findByIdAndUpdate` plus sparse `$set` updates, reducing profile-update latency under stress.
+- Added indexes in `productModel.js` for `slug`, `category`, `createdAt`, and text search on `name` plus `description` to improve product lookup, pagination, related products, and search behaviour under load.
+  
 ### Tay Kai Jun (A0283343E)
 
 **Non-Functional Testing: Spike Testing (Grafana k6)**
