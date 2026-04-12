@@ -57,10 +57,6 @@ const createFakeRes = () => {
   return res;
 };
 
-/** Wait for the un-awaited order.save() to settle */
-const flushAsync = () =>
-  new Promise((r) => setTimeout(r, 200));
-
 const ensureConnected = async () => {
   if (mongoose.connection.readyState !== 1) {
     await mongoose.connect(mongoUri);
@@ -146,7 +142,7 @@ describe("Story 88 — DB / Internal Recovery", () => {
   // Test 1: DB disconnects during order save after payment
   // ----------------------------------------------------------
   describe("Test 1: DB disconnect during order save after successful payment", () => {
-    it("should handle DB failure during order save — server says ok but order is lost", async () => {
+    it("should return 500 when DB fails during order save after successful payment", async () => {
       // ms3
       // Lum Yi Ren Johannsen, A0273503L
 
@@ -162,21 +158,10 @@ describe("Story 88 — DB / Internal Recovery", () => {
       const res = createFakeRes();
 
       // Simulate DB failure by making orderModel.prototype.save reject.
-      // The controller's .save() is NOT awaited, so the rejection becomes
-      // an unhandled promise rejection (a real bug). We catch it here to
-      // prevent it from crashing the test runner, while proving the bug.
       const dbError = new Error("MongoNotConnectedError: simulated DB crash");
-      const savePromises = [];
       jest
         .spyOn(orderModel.prototype, "save")
-        .mockImplementation(function () {
-          // Return a promise that we control — catch it ourselves to prevent
-          // the unhandled rejection from bubbling to Jest
-          const p = Promise.reject(dbError);
-          p.catch(() => {}); // suppress unhandled rejection
-          savePromises.push(p);
-          return p;
-        });
+        .mockRejectedValue(dbError);
 
       // Mock Braintree to succeed — payment goes through
       mockSale.mockImplementation((opts, callback) => {
@@ -184,12 +169,11 @@ describe("Story 88 — DB / Internal Recovery", () => {
       });
 
       await brainTreePaymentController(req, res);
-      await flushAsync();
 
-      // BUG DEMONSTRATED: .save() is NOT awaited — the controller responds
-      // { ok: true } even though the order save failed / DB was down.
-      // The user is charged but the order is never recorded.
-      expect(res.json).toHaveBeenCalledWith({ ok: true });
+      // FIX VERIFIED: controller now awaits .save() and catches the error,
+      // returning 500 instead of a false { ok: true }
+      expect(res.status).toHaveBeenCalledWith(500);
+      expect(res.json).not.toHaveBeenCalledWith({ ok: true });
 
       // The save was called but rejected
       expect(orderModel.prototype.save).toHaveBeenCalled();

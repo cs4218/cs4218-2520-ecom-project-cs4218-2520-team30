@@ -54,10 +54,6 @@ const createFakeRes = () => {
   return res;
 };
 
-/** Wait for the un-awaited order.save() to settle */
-const flushAsync = () =>
-  new Promise((r) => setTimeout(r, 200));
-
 const waitForOrderByBuyer = async (buyerId, { timeoutMs = 5000 } = {}) => {
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
@@ -199,7 +195,7 @@ describe("Story 89 — External / Network Recovery", () => {
       const res = createFakeRes();
 
       await brainTreePaymentController(req, res);
-      await flushAsync();
+
 
       // Should return 500
       expect(res.status).toHaveBeenCalledWith(500);
@@ -243,7 +239,7 @@ describe("Story 89 — External / Network Recovery", () => {
       const res = createFakeRes();
 
       await brainTreePaymentController(req, res);
-      await flushAsync();
+
 
       // Controller does `res.status(500).send(error)` where error is null
       expect(res.status).toHaveBeenCalledWith(500);
@@ -292,7 +288,7 @@ describe("Story 89 — External / Network Recovery", () => {
       const res1 = createFakeRes();
 
       await brainTreePaymentController(req1, res1);
-      await flushAsync();
+
 
       // Should fail
       expect(res1.status).toHaveBeenCalledWith(500);
@@ -314,13 +310,13 @@ describe("Story 89 — External / Network Recovery", () => {
       const res2 = createFakeRes();
 
       await brainTreePaymentController(req2, res2);
-      await flushAsync();
 
-      // Should succeed
-      expect(res2.json).toHaveBeenCalledWith({ ok: true });
-
-      // Wait for the un-awaited .save() to complete
+      // Wait for the async callback's await .save() to complete
       const savedOrder = await waitForOrderByBuyer(testUser._id);
+
+      // Should succeed — check after order is persisted since the
+      // async callback needs time to await .save() then call res.json
+      expect(res2.json).toHaveBeenCalledWith({ ok: true });
       expect(savedOrder).not.toBeNull();
       expect(savedOrder.payment).toMatchObject({
         success: true,
