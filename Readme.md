@@ -97,6 +97,20 @@
 - **Login Controller**: `tests/integration/auth/login.integration.test.js`. User lookup → Password comparison → JWT token generation → Role-based response.
 - **Forgot Password**: `tests/integration/auth/forgotPassword.integration.test.js`. Email+answer validation → Password hashing → Database update.
 
+### Lum Yi Ren Johannsen (A0273503L)
+
+**UI Testing (Playwright)**
+
+- **Home Page Filtering**: `tests/ui/HomePageFiltering.spec.ts`. Category filter → Price filter → Reset filters.
+- **General Navigation & Error**: `tests/ui/GeneralNavigation.spec.ts`. Header Cart link → Footer About link → Invalid URL (404) → Recovery routing.
+- **Mobile Responsiveness**: `tests/ui/ResponsiveMobile.spec.ts`. Mobile viewport → Hamburger menu → Cart navigation.
+
+**Integration Testing (Jest)**
+
+- **Category Backend**: `tests/integration/category/categoryIntegration.test.js`. Validate input (BVA / EP) → Controller → Persist to in-memory MongoDB.
+- **Home Page Frontend**: `client/src/pages/HomePageIntegration.test.js`. Stub HTTP → Render page → Hook loads mock data → Assert UI.
+- **Payment Backend**: `tests/integration/payment/paymentIntegration.test.js`. Nonce + cart → Stub gateway → Poll DB for order → Gateway failure handling.
+
 ## MS3 Contributions
 ### Alek Kwek (A0273471A)
 
@@ -140,19 +154,16 @@
 
 - **Search Rendering Spike Test**: `tests/nft/spike/spike-search-frontend.spec.js`. Simulates concurrent browser-driven searches and rapid typing to measure frontend rendering performance (FCP, DOM timing, search render time) and UI responsiveness.
 
-### Lum Yi Ren Johannsen
+### Lum Yi Ren Johannsen (A0273503L)
 
-**UI Testing (Playwright)**
+**Non-Functional Testing: Recovery Testing (Jest)**
 
-- **Home Page Filtering**: `tests/ui/HomePageFiltering.spec.ts`. Category filter → Price filter → Reset filters.
-- **General Navigation & Error**: `tests/ui/GeneralNavigation.spec.ts`. Header Cart link → Footer About link → Invalid URL (404) → Recovery routing.
-- **Mobile Responsiveness**: `tests/ui/ResponsiveMobile.spec.ts`. Mobile viewport → Hamburger menu → Cart navigation.
+- **DB/Internal Recovery (Story 88)**: `tests/nft/recovery/db-recovery.test.js`. Simulates MongoDB disconnects during order save, product listing, login, and verifies full data integrity after crash/reconnect.
+- **External/Network Recovery (Story 89)**: `tests/nft/recovery/network-recovery.test.js`. Simulates Braintree gateway failures during token generation, payment processing, declined transactions, and retry-after-failure flow.
 
-**Integration Testing (Jest)**
+**Bug Fix**
 
-- **Category Backend**: `tests/integration/category/categoryIntegration.test.js`. Validate input (BVA / EP) → Controller → Persist to in-memory MongoDB.
-- **Home Page Frontend**: `client/src/pages/HomePageIntegration.test.js`. Stub HTTP → Render page → Hook loads mock data → Assert UI.
-- **Payment Backend**: `tests/integration/payment/paymentIntegration.test.js`. Nonce + cart → Stub gateway → Poll DB for order → Gateway failure handling.
+- **Await order save in payment controller**: Fixed un-awaited `orderModel.save()` in `brainTreePaymentController` (`controllers/productController.js`). Previously, the server responded `{ ok: true }` before the order was persisted — if the DB was down, users were charged but no order was recorded.
 
 ### Leong Soon Mun Stephane (A0273409B)
 
