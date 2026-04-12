@@ -154,8 +154,6 @@
 - **Home Page Frontend**: `client/src/pages/HomePageIntegration.test.js`. Stub HTTP → Render page → Hook loads mock data → Assert UI.
 - **Payment Backend**: `tests/integration/payment/paymentIntegration.test.js`. Nonce + cart → Stub gateway → Poll DB for order → Gateway failure handling.
 
-## MS3 Contributions
-
 ### Leong Soon Mun Stephane (A0273409B)
 
 **Stress Testing**
